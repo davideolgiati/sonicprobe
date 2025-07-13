@@ -1,49 +1,27 @@
+mod flac_file;
+
 extern crate flac;
 
 use flac::StreamReader;
 use std::fs::File;
 
-const MAX_INT: f64 = i16::MAX as f64;
-
-fn to_dbfs(rms: f64) -> f64 {
-    20.0 * rms.log10()
-}
+use crate::flac_file::new_flac_file;
 
 fn main() {
-    match StreamReader::<File>::from_file("/home/davide/Musica/test.flac") {
-        Ok(mut stream) => {
-            let info = stream.info();
-            let samples: Vec<f64> = stream.iter::<i16>()
-                .map(|sample| sample as f64 / MAX_INT)
-                .collect();
+    let flac_details = match StreamReader::<File>::from_file("/home/davide/Musica/test.flac") {
+        Ok(stream) => new_flac_file(stream),
+        Err(error)     => panic!("error: {:?}", error),
+    };
 
-            let rms: f64 = (samples.iter()
-                .map(|sample| sample.powi(2))
-                .sum::<f64>() / info.total_samples as f64)
-                .sqrt();
-
-            let peak: f64 = samples.iter().max_by(|a, b| a.total_cmp(b)).map(|value| to_dbfs(*value)).unwrap();
-
-            let clip_count: f64 = (samples.iter()
-                .map(|sample| {
-                    if to_dbfs(*sample) > 0.0 {
-                        1.0
-                    } else {
-                        0.0
-                    }
-                })
-                .sum::<f64>() / info.total_samples as f64) * 100.0;
-        
-            let dbfs_rms = to_dbfs(rms);
-        
-            let dc_offset: f64 = samples.iter().sum::<f64>() / samples.len() as f64;
-
-            println!("Channels: {}\nSample Rate: {} Hz\nDepth: {} bit", info.channels, info.sample_rate, info.bits_per_sample);
-            println!("DBFS: {:.2} db", dbfs_rms);
-            println!("Peak: {:.2} db", peak);
-            println!("Samples clipping: {:.2} %", clip_count);
-            println!("DC Offset: {:.5}", dc_offset);
-        }
-        Err(error)     => println!("error: {:?}", error),
-    }
+    println!("Channels: {}\nSample Rate: {} Hz\nDepth: {} bit", flac_details.channels, flac_details.sample_rate, flac_details.bit_depth);
+    println!("\nLEFT CHANNEL:");
+    println!("DBFS: {:.2} db", flac_details.left.rms);
+    println!("Peak: {:.2} db", flac_details.left.peak);
+    println!("Samples clipping: {:.2} %", flac_details.left.clip_sample_count);
+    println!("DC Offset: {:.5}", flac_details.left.dc_offset);
+    println!("\nRIGHT CHANNEL:");
+    println!("DBFS: {:.2} db", flac_details.right.rms);
+    println!("Peak: {:.2} db", flac_details.right.peak);
+    println!("Samples clipping: {:.2} %", flac_details.right.clip_sample_count);
+    println!("DC Offset: {:.5}", flac_details.right.dc_offset);
 }

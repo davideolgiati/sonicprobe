@@ -10,6 +10,7 @@ pub struct Channel {
         pub peak: f64,
         pub clip_sample_count: i32,
         pub dc_offset: f64,
+        pub samples_count: i32,
 }
 
 pub struct FlacFile {
@@ -21,31 +22,46 @@ pub struct FlacFile {
         pub bit_depth: u8,
 }
 
+fn compute_rms(samples: &[f64]) -> f64 {
+        let processed_samples = {
+                let mut new_vec: Vec<f64> = samples.iter()
+                        .map(|sample| sample.powi(2))
+                        .collect();
+                new_vec.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
+                new_vec
+        };
+
+        let sample_sum = processed_samples.iter().sum::<f64>();
+        let sample_avarage = sample_sum / samples.len() as f64;
+
+        to_dbfs(sample_avarage.sqrt())
+}
 
 fn new_channel_from_samples(samples: Vec<f64>) -> Channel {
-        let rms: f64 = to_dbfs((samples.iter()
-                .map(|sample| sample.powi(2))
-                .sum::<f64>() / samples.len() as f64)
-                .sqrt());
+        let sorted_samples: Vec<f64> = {
+                let mut new_vec = samples.clone();
+                new_vec.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-        let peak: f64 = samples.iter()
-                .max_by(|a, b| a.total_cmp(b))
-                .map(|value| to_dbfs(*value))
-                .unwrap();
+                new_vec
+        };
+
+        let rms: f64 = compute_rms(&samples);
+        let peak: f64 = to_dbfs(sorted_samples[sorted_samples.len()-1]);
 
         let clip_sample_count: i32 = samples.iter()
                 .filter(|&&x| x >= CLIP_THRESH || x <= -CLIP_THRESH)
                 .count() as i32;
 
-        let dc_offset: f64 = samples.iter()
+        let dc_offset: f64 = sorted_samples.iter()
                 .sum::<f64>() / samples.len() as f64;
 
         Channel {
                 rms, 
                 peak, 
                 clip_sample_count, 
-                dc_offset 
+                dc_offset,
+                samples_count: samples.len() as i32
         }
 }
 

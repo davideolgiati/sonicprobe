@@ -13,7 +13,7 @@ impl RMSBuilder {
                         accumulator: BinaryHeap::new()
                 }
         }
-        pub async fn add(&mut self, value: f64) {
+        pub fn add(&mut self, value: f64) {
                 let processed_value = Reverse(NotNan::new(value.powi(2)).expect("NaN not allowed"));
                 self.accumulator.push(processed_value);
         }

@@ -1,4 +1,12 @@
-use crate::{audio_utils::{is_clipping, to_dbfs}, dc_offset_builder::DCOffsetBuilder, flac_file::Channel, rms_builder::RMSBuilder};
+use crate::{
+        audio_utils::is_clipping, 
+        channel::{
+                dc_offset_builder::DCOffsetBuilder, 
+                rms_builder::RMSBuilder, 
+                Channel
+        }
+};
+
 
 pub struct ChannelBuilder {
         rms_builder: RMSBuilder,
@@ -15,13 +23,13 @@ impl ChannelBuilder {
                         peak: f64::MIN, 
                         clip_samples_counter: 0, 
                         dc_offset_builder: DCOffsetBuilder::new(), 
-                        sample_counter: 0
+                        sample_counter: 0,
                 }
         }
 
         pub async fn add(&mut self, sample: f64) {
-                let rms_promise = self.rms_builder.add(sample);
-                let dc_offset_promise = self.dc_offset_builder.add(sample);
+                self.rms_builder.add(sample);
+                self.dc_offset_builder.add(sample);
 
                 if is_clipping(sample) {
                         self.clip_samples_counter += 1
@@ -32,19 +40,16 @@ impl ChannelBuilder {
                 }
 
                 self.sample_counter += 1;
-
-                rms_promise.await;
-                dc_offset_promise.await;
         }
 
-        pub async fn build(&self) -> Channel {
+        pub async fn build(&mut self) -> Channel {
                 let rms = self.rms_builder.build();
                 let dc_offset = self.dc_offset_builder.build();
                 
                 Channel {
-                        rms : to_dbfs(rms.await),
+                        rms : rms.await,
                         clip_sample_count: self.clip_samples_counter,
-                        peak: to_dbfs(self.peak),
+                        peak: self.peak,
                         dc_offset: dc_offset.await,
                         samples_count: self.sample_counter
                 }

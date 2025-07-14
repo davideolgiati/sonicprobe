@@ -1,8 +1,6 @@
+mod channel;
 mod flac_file;
 mod audio_utils;
-mod rms_builder;
-mod channel_builder;
-mod dc_offset_builder;
 
 extern crate flac;
 
@@ -19,14 +17,16 @@ async fn main() {
     };
 
     println!("Channels: {}\nSample Rate: {} Hz\nDepth: {} bit", flac_details.channels, flac_details.sample_rate, flac_details.bit_depth);
-    println!("\nLEFT CHANNEL:");
-    println!("DBFS: {:.2} db", flac_details.left.rms);
-    println!("Peak: {:.2} db", flac_details.left.peak);
-    println!("Samples clipping: {:.3} %", (flac_details.left.clip_sample_count as f64 / flac_details.left.samples_count as f64) * 100.0);
-    println!("DC Offset: {:.5}", flac_details.left.dc_offset);
-    println!("\nRIGHT CHANNEL:");
-    println!("DBFS: {:.2} db", flac_details.right.rms);
-    println!("Peak: {:.2} db", flac_details.right.peak);
-    println!("Samples clipping: {:.3} %", (flac_details.right.clip_sample_count as f64 / flac_details.right.samples_count as f64) * 100.0);
-    println!("DC Offset: {:.5}", flac_details.right.dc_offset);
+    println!("\nLeft channel:");
+    println!("\tDBFS: {:.2} db", flac_details.left.rms());
+    println!("\tPeak: {:.2} db", flac_details.left.peak());
+    println!("\tSamples clipping: {:.3} %", flac_details.left.clip_samples_quota());
+    println!("\tDC Offset: {:.5}", flac_details.left.dc_offset());
+    println!("\tCrest Factor: {:.2} db", flac_details.left.crest_factor());
+    println!("\nRight channel:");
+    println!("\tDBFS: {:.2} db", flac_details.right.rms());
+    println!("\tPeak: {:.2} db", flac_details.right.peak());
+    println!("\tSamples clipping: {:.3} %", flac_details.right.clip_samples_quota());
+    println!("\tDC Offset: {:.5}", flac_details.right.dc_offset());
+    println!("\tCrest Factor: {:.2} db", flac_details.right.crest_factor());
 }

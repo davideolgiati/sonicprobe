@@ -2,18 +2,10 @@ use std::fs::File;
 
 use flac::{ReadStream, Stream};
 
-use crate::channel_builder::ChannelBuilder;
+use crate::channel::Channel;
+use crate::channel::channel_builder::ChannelBuilder;
 
 const MAX_INT: f64 = i16::MAX as f64;
-
-
-pub struct Channel {
-        pub rms: f64,
-        pub peak: f64,
-        pub clip_sample_count: i32,
-        pub dc_offset: f64,
-        pub samples_count: i32,
-}
 
 pub struct FlacFile {
         // TODO: the channel numbers needs to be set looking at the file

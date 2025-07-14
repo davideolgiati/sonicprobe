@@ -9,33 +9,59 @@ const MAX_INT: f64 = i16::MAX as f64;
 
 pub struct FlacFile {
         // TODO: the channel numbers needs to be set looking at the file
-        pub left: Channel,
-        pub right: Channel,
-        pub channels: u8,
-        pub sample_rate: u32,
-        pub bit_depth: u8,
+        left: Channel,
+        right: Channel,
+        channels: u8,
+        sample_rate: u32,
+        bit_depth: u8,
 }
 
-pub async fn new_flac_file(mut data_stream: Stream<ReadStream<File>>) -> FlacFile {
-        let mut left_channel_builder = ChannelBuilder::new();
-        let mut right_channel_builder = ChannelBuilder::new();
+impl FlacFile {
+        pub async fn new(mut data_stream: Stream<ReadStream<File>>) -> FlacFile {
+                let mut left_channel_builder = ChannelBuilder::new();
+                let mut right_channel_builder = ChannelBuilder::new();
 
-        for (counter, sample) in data_stream.iter::<i16>().enumerate() {
-                match counter % 2 {
-                        0 => left_channel_builder.add(sample as f64 / MAX_INT).await,
-                        _ => right_channel_builder.add(sample as f64 / MAX_INT).await,
+                for (counter, sample) in data_stream.iter::<i16>().enumerate() {
+                        match counter % 2 {
+                                0 => left_channel_builder.add(sample as f64 / MAX_INT).await,
+                                _ => right_channel_builder.add(sample as f64 / MAX_INT).await,
+                        }
+                }
+
+                let bit_depth = data_stream.info().bits_per_sample;
+                let channels = data_stream.info().channels;
+                let sample_rate = data_stream.info().sample_rate;
+
+                FlacFile {
+                        left: left_channel_builder.build().await,
+                        right: right_channel_builder.build().await,
+                        bit_depth,
+                        channels,
+                        sample_rate
                 }
         }
 
-        let bit_depth = data_stream.info().bits_per_sample;
-        let channels = data_stream.info().channels;
-        let sample_rate = data_stream.info().sample_rate;
+        pub fn left(&self) -> &Channel {
+                &self.left
+        }
 
-        FlacFile {
-                left: left_channel_builder.build().await,
-                right: right_channel_builder.build().await,
-                bit_depth,
-                channels,
-                sample_rate
+        pub fn right(&self) -> &Channel {
+                &self.right
+        }
+
+        pub fn channel_count(&self) -> u8 {
+                self.channels
+        }
+
+        pub fn sample_rate(&self) -> u32 {
+                self.sample_rate
+        }
+
+        pub fn bit_depth(&self) -> u8 {
+                self.bit_depth
+        }
+
+        pub fn channel_balance(&self) -> f64 {
+                self.left.rms() - self.right.rms()
         }
 }

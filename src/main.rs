@@ -7,9 +7,10 @@ use std::fs::File;
 
 use crate::flac_file::new_flac_file;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let flac_details = match StreamReader::<File>::from_file("/home/davide/Musica/test1.flac") {
-        Ok(stream) => new_flac_file(stream),
+        Ok(stream) => new_flac_file(stream).await,
         Err(error)     => panic!("error: {:?}", error),
     };
 

@@ -1,4 +1,8 @@
 mod flac_file;
+mod audio_utils;
+mod rms_builder;
+mod channel_builder;
+mod dc_offset_builder;
 
 extern crate flac;
 

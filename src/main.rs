@@ -6,12 +6,21 @@ extern crate flac;
 
 use flac::StreamReader;
 use std::fs::File;
+use std::env;
 
 use crate::flac_file::FlacFile;
 
 #[tokio::main]
 async fn main() {
-    let flac_details = match StreamReader::<File>::from_file("/home/davide/Musica/test1.flac") {
+    let args: Vec<String> = env::args().collect();
+
+    if args.len() < 2 {
+        panic!("No input file specified")
+    }
+
+    let input_file = &args[1];
+
+    let flac_details = match StreamReader::<File>::from_file(input_file) {
         Ok(stream) => FlacFile::new(stream).await,
         Err(error)     => panic!("error: {:?}", error),
     };

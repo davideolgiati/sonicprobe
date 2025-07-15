@@ -31,15 +31,20 @@ async fn main() {
     println!("Channels balance: {:.2} db", flac_details.channel_balance());
 
     println!("\nLeft channel:");
-    println!("\tDBFS: {:.2} db", flac_details.left().rms());
+    println!("\tRMS: {:.2} db", flac_details.left().rms());
     println!("\tPeak: {:.2} db", flac_details.left().peak());
+    println!("\tTrue Peak: {:.2} db", flac_details.left().true_peak());
     println!("\tSamples clipping: {:.3} %", flac_details.left().clip_samples_quota());
+    println!("\tTrue Samples clipping: {:.3} %", flac_details.right().true_clip_samples_quota());
     println!("\tDC Offset: {:.5}", flac_details.left().dc_offset());
     println!("\tCrest Factor: {:.2} db", flac_details.left().crest_factor());
+
     println!("\nRight channel:");
-    println!("\tDBFS: {:.2} db", flac_details.right().rms());
+    println!("\tRMS: {:.2} db", flac_details.right().rms());
     println!("\tPeak: {:.2} db", flac_details.right().peak());
+    println!("\tTrue Peak: {:.2} db", flac_details.right().true_peak());
     println!("\tSamples clipping: {:.3} %", flac_details.right().clip_samples_quota());
+    println!("\tTrue Samples clipping: {:.3} %", flac_details.right().true_clip_samples_quota());
     println!("\tDC Offset: {:.5}", flac_details.right().dc_offset());
     println!("\tCrest Factor: {:.2} db", flac_details.right().crest_factor());
 }

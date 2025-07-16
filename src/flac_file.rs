@@ -64,4 +64,21 @@ impl FlacFile {
         pub fn channel_balance(&self) -> f64 {
                 self.left.rms() - self.right.rms()
         }
+
+        pub fn to_json_string(&self) -> String {
+                let inner_tab: String = "\t".to_string();
+                let output = [
+                        format!("{}\"channel_count\": {}\n", inner_tab, self.channel_count()),
+                        format!("{}\"sample_rate\": {}\n", inner_tab, self.sample_rate()),
+                        format!("{}\"bit_depth\": {}\n", inner_tab, self.bit_depth()),
+                        format!("{}\"channel_balance\": {}\n", inner_tab, self.channel_balance()),
+                        format!("{}\"left\": {}\n", inner_tab, self.left.to_json_string(1)),
+                        format!("{}\"right\": {}\n", inner_tab, self.right.to_json_string(1)),     
+                ].concat();
+
+                format!(
+                        "{{\n{}}}",
+                        output,
+                )
+        }
 }

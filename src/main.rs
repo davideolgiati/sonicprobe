@@ -8,7 +8,34 @@ use flac::StreamReader;
 use std::fs::File;
 use std::env;
 
+use crate::channel::Channel;
 use crate::flac_file::FlacFile;
+
+fn print_file_details(file: &FlacFile) {
+    let output = [
+        format!("Channels: {}\n", file.channel_count()),
+        format!("Sample Rate: {} Hz\n", file.sample_rate()),
+        format!("Depth: {} bit\n", file.bit_depth()),
+        format!("Channels balance: {:.2} db", file.channel_balance())
+    ].concat();
+
+    println!("{}", output);
+}
+
+fn print_channel_details(channel: &Channel, name: &str) {
+    let output = [
+        format!("{} channel:\n", name),
+        format!("\tRMS: {:.2} db\n", channel.rms()),
+        format!("\tPeak: {:.2} db\n", channel.peak()),
+        format!("\tClipping: {:.3} %\n", channel.clip_samples_quota()),
+        format!("\tDC Offset: {:.5}\n", channel.dc_offset()),
+        format!("\tTrue Peak: {:.2} db\n", channel.true_peak()),
+        format!("\tTrue Clipping: {:.3} %\n", channel.true_clip_samples_quota()),
+        format!("\tCrest Factor: {:.2} db\n", channel.crest_factor()),
+    ].concat();
+
+    println!("{}", output);
+}
 
 #[tokio::main]
 async fn main() {
@@ -25,26 +52,9 @@ async fn main() {
         Err(error)     => panic!("error: {:?}", error),
     };
 
-    println!("Channels: {}", flac_details.channel_count());
-    println!("Sample Rate: {} Hz", flac_details.sample_rate());
-    println!("Depth: {} bit", flac_details.bit_depth());
-    println!("Channels balance: {:.2} db", flac_details.channel_balance());
+    print_file_details(&flac_details);
+    print_channel_details(flac_details.left(), "Left");
+    print_channel_details(flac_details.right(), "Right");
 
-    println!("\nLeft channel:");
-    println!("\tRMS: {:.2} db", flac_details.left().rms());
-    println!("\tPeak: {:.2} db", flac_details.left().peak());
-    println!("\tTrue Peak: {:.2} db", flac_details.left().true_peak());
-    println!("\tSamples clipping: {:.3} %", flac_details.left().clip_samples_quota());
-    println!("\tTrue Samples clipping: {:.3} %", flac_details.right().true_clip_samples_quota());
-    println!("\tDC Offset: {:.5}", flac_details.left().dc_offset());
-    println!("\tCrest Factor: {:.2} db", flac_details.left().crest_factor());
-
-    println!("\nRight channel:");
-    println!("\tRMS: {:.2} db", flac_details.right().rms());
-    println!("\tPeak: {:.2} db", flac_details.right().peak());
-    println!("\tTrue Peak: {:.2} db", flac_details.right().true_peak());
-    println!("\tSamples clipping: {:.3} %", flac_details.right().clip_samples_quota());
-    println!("\tTrue Samples clipping: {:.3} %", flac_details.right().true_clip_samples_quota());
-    println!("\tDC Offset: {:.5}", flac_details.right().dc_offset());
-    println!("\tCrest Factor: {:.2} db", flac_details.right().crest_factor());
+    println!("{}", flac_details.to_json_string())
 }

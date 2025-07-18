@@ -8,7 +8,7 @@ use crate::{
 
 pub struct ChannelBuilder {
         rms_builder: RMSBuilder,
-        peak: f64,
+        peak: f32,
         clip_samples_counter: i32,
         dc_offset_builder: DCOffsetBuilder,
         sample_counter: i32,
@@ -19,7 +19,7 @@ impl ChannelBuilder {
         pub fn new() -> ChannelBuilder {
                 ChannelBuilder { 
                         rms_builder: RMSBuilder::new(), 
-                        peak: f64::MIN, 
+                        peak: f32::MIN, 
                         clip_samples_counter: 0, 
                         dc_offset_builder: DCOffsetBuilder::new(), 
                         sample_counter: 0,
@@ -27,7 +27,7 @@ impl ChannelBuilder {
                 }
         }
 
-        pub async fn add(&mut self, sample: f64) {
+        pub async fn add(&mut self, sample: f32) {
                 self.rms_builder.add(sample);
                 self.dc_offset_builder.add(sample);
                 self.upsampler.add(sample);

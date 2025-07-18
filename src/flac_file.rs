@@ -5,7 +5,10 @@ use flac::{ReadStream, Stream};
 use crate::channel::Channel;
 use crate::channel::channel_builder::ChannelBuilder;
 
-const MAX_INT: f64 = i16::MAX as f64;
+const MAX_8_BIT: f32 = i8::MAX as f32;
+const MAX_16_BIT: f32 = i16::MAX as f32;
+const MAX_24_BIT: f32 = ((1 << 23) - 1) as f32;
+const MAX_32_BIT: f32 = i32::MAX as f32;
 
 pub struct FlacFile {
         // TODO: the channel numbers needs to be set looking at the file
@@ -18,19 +21,26 @@ pub struct FlacFile {
 
 impl FlacFile {
         pub async fn new(mut data_stream: Stream<ReadStream<File>>) -> FlacFile {
-                let mut left_channel_builder = ChannelBuilder::new();
-                let mut right_channel_builder = ChannelBuilder::new();
-
-                for (counter, sample) in data_stream.iter::<i16>().enumerate() {
-                        match counter % 2 {
-                                0 => left_channel_builder.add(sample as f64 / MAX_INT).await,
-                                _ => right_channel_builder.add(sample as f64 / MAX_INT).await,
-                        }
-                }
-
                 let bit_depth = data_stream.info().bits_per_sample;
                 let channels = data_stream.info().channels;
                 let sample_rate = data_stream.info().sample_rate;
+                
+                let mut left_channel_builder = ChannelBuilder::new();
+                let mut right_channel_builder = ChannelBuilder::new();
+                let mapped_stream: Box<dyn Iterator<Item = f32>> = match bit_depth {
+                        8 => Box::new(data_stream.iter::<i8>().map(|sample| sample as f32 / MAX_8_BIT)),
+                        16 => Box::new(data_stream.iter::<i16>().map(|sample| sample as f32 / MAX_16_BIT)),
+                        24 => Box::new(data_stream.iter::<i32>().map(|sample| sample as f32 /  MAX_24_BIT)),
+                        32 => Box::new(data_stream.iter::<i32>().map(|sample| sample as f32 / MAX_32_BIT)),
+                        _ => panic!("Unkown bit depth: {}", bit_depth)
+                    };
+
+                for (counter, sample) in mapped_stream.enumerate() {
+                        match counter % 2 {
+                                0 => left_channel_builder.add(sample).await,
+                                _ => right_channel_builder.add(sample).await,
+                        }
+                }
 
                 FlacFile {
                         left: left_channel_builder.build().await,
@@ -61,7 +71,7 @@ impl FlacFile {
                 self.bit_depth
         }
 
-        pub fn channel_balance(&self) -> f64 {
+        pub fn channel_balance(&self) -> f32 {
                 self.left.rms() - self.right.rms()
         }
 

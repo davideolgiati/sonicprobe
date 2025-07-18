@@ -1,11 +1,11 @@
 use crate::audio_utils::{cubic_interpolation, is_clipping};
 
 pub struct Upsampler {
-        pub signal: Vec<f64>,
-        pub peak: f64,
+        pub signal: Vec<f32>,
+        pub peak: f32,
         pub clipping_samples: i32,
         samples_seen: i32,
-        window: Vec<f64>,
+        window: Vec<f32>,
         factor: u8,
 }
 
@@ -13,7 +13,7 @@ impl Upsampler {
         pub fn new(factor: u8) -> Upsampler {
                 Upsampler {
                         signal: Vec::new(),
-                        peak: f64::MIN,
+                        peak: f32::MIN,
                         clipping_samples: 0,
                         samples_seen: 0,
                         window: Vec::new(),
@@ -21,7 +21,7 @@ impl Upsampler {
                 }
         }
 
-        fn add_new_sample(&mut self, sample: f64, upsampled: bool) {
+        fn add_new_sample(&mut self, sample: f32, upsampled: bool) {
                 if sample > self.peak {
                         self.peak = sample;
                 }
@@ -37,7 +37,7 @@ impl Upsampler {
                 }
         }
 
-        fn update_upsampling_window(&mut self, sample: f64) {
+        fn update_upsampling_window(&mut self, sample: f32) {
                 if self.window.len() == 4 {
                         self.window.remove(0);
                 }
@@ -49,7 +49,7 @@ impl Upsampler {
                 }
         }
 
-        pub fn add(&mut self, sample: f64) {
+        pub fn add(&mut self, sample: f32) {
                 self.update_upsampling_window(sample);
                 
                 if self.window.len() < 4 {
@@ -59,14 +59,14 @@ impl Upsampler {
                 self.add_new_sample(self.window[1], false);
                 
                 let upsamples = (1..self.factor)
-                        .map(|k| k as f64 / self.factor as f64)
+                        .map(|k| k as f32 / self.factor as f32)
                         .map(|t| cubic_interpolation(
                                 self.window[0], 
                                 self.window[1], 
                                 self.window[2], 
                                 self.window[3], 
                                 t)
-                        ).collect::<Vec<f64>>();
+                        ).collect::<Vec<f32>>();
                 
                 for upsample in upsamples {
                         self.add_new_sample(upsample, true)

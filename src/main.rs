@@ -37,6 +37,12 @@ fn print_channel_details(channel: &Channel, name: &str) {
     println!("{}", output);
 }
 
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+enum OutputFormat {
+    PlainText,
+    Json,
+}
+
 #[tokio::main]
 async fn main() {
     let args: Vec<String> = env::args().collect();
@@ -46,15 +52,24 @@ async fn main() {
     }
 
     let input_file = &args[1];
+    let output_format: OutputFormat = {
+        if args.len() >= 3 && args.iter().any(|option| option.eq_ignore_ascii_case("--json")) {
+            OutputFormat::Json
+        } else {
+            OutputFormat::PlainText
+        }
+    };
 
     let flac_details = match StreamReader::<File>::from_file(input_file) {
         Ok(stream) => FlacFile::new(stream).await,
         Err(error)     => panic!("error: {:?}", error),
     };
 
-    print_file_details(&flac_details);
-    print_channel_details(flac_details.left(), "Left");
-    print_channel_details(flac_details.right(), "Right");
-
-    println!("{}", flac_details.to_json_string())
+    if output_format == OutputFormat::Json {
+        println!("{}", flac_details.to_json_string())
+    } else {
+        print_file_details(&flac_details);
+        print_channel_details(flac_details.left(), "Left");
+        print_channel_details(flac_details.right(), "Right");
+    }
 }

@@ -1,15 +1,19 @@
 mod channel;
+mod cli_args;
 mod flac_file;
 mod audio_utils;
+mod output_format;
 
 extern crate flac;
 
-use flac::StreamReader;
-use std::fs::File;
 use std::env;
+use std::fs::File;
+use flac::StreamReader;
 
 use crate::channel::Channel;
+use crate::cli_args::CliArgs;
 use crate::flac_file::FlacFile;
+use crate::output_format::OutputFormat;
 
 fn print_file_details(file: &FlacFile) {
     let output = [
@@ -37,35 +41,17 @@ fn print_channel_details(channel: &Channel, name: &str) {
     println!("{}", output);
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
-enum OutputFormat {
-    PlainText,
-    Json,
-}
-
 #[tokio::main]
 async fn main() {
-    let args: Vec<String> = env::args().collect();
+    let cli_input: Vec<String> = env::args().collect();
+    let args: CliArgs = CliArgs::new(&cli_input);
 
-    if args.len() < 2 {
-        panic!("No input file specified")
-    }
-
-    let input_file = &args[1];
-    let output_format: OutputFormat = {
-        if args.len() >= 3 && args.iter().any(|option| option.eq_ignore_ascii_case("--json")) {
-            OutputFormat::Json
-        } else {
-            OutputFormat::PlainText
-        }
-    };
-
-    let flac_details = match StreamReader::<File>::from_file(input_file) {
+    let flac_details = match StreamReader::<File>::from_file(args.file_path()) {
         Ok(stream) => FlacFile::new(stream).await,
         Err(error)     => panic!("error: {:?}", error),
     };
 
-    if output_format == OutputFormat::Json {
+    if *args.output_format() == OutputFormat::Json {
         println!("{}", flac_details.to_json_string())
     } else {
         print_file_details(&flac_details);

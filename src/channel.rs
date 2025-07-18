@@ -48,13 +48,13 @@ impl Channel {
         pub fn to_json_string(&self, father_tab: usize) -> String {
                 let inner_tab: String = "\t".repeat(father_tab + 1);
                 let output = [
-                        format!("{}\"rms\": {}\n", inner_tab, self.rms()),
-                        format!("{}\"peak\": {}\n", inner_tab, self.peak()),
-                        format!("{}\"true_peak\": {}\n", inner_tab, self.true_peak()),
-                        format!("{}\"clip_samples_quota\": {}\n", inner_tab, self.clip_samples_quota() / 100.0),
-                        format!("{}\"true_clip_samples_quota\": {}\n", inner_tab, self.true_clip_samples_quota() / 100.0),
-                        format!("{}\"dc_offset\": {}\n", inner_tab, self.dc_offset()),
-                        format!("{}\"crest_factor\": {}\n", inner_tab, self.crest_factor())       
+                        format!("{}\"rms\": {},\n", inner_tab, self.rms()),
+                        format!("{}\"peak\": {},\n", inner_tab, self.peak()),
+                        format!("{}\"true_peak\": {},\n", inner_tab, self.true_peak()),
+                        format!("{}\"clip_samples_quota\": {},\n", inner_tab, self.clip_samples_quota() / 100.0),
+                        format!("{}\"true_clip_samples_quota\": {},\n", inner_tab, self.true_clip_samples_quota() / 100.0),
+                        format!("{}\"dc_offset\": {},\n", inner_tab, self.dc_offset()),
+                        format!("{}\"crest_factor\": {}", inner_tab, self.crest_factor())       
                 ].concat();
 
                 format!(

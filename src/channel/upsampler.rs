@@ -21,7 +21,7 @@ impl Upsampler {
                 }
         }
 
-        pub fn add(&mut self, sample: f64) {
+        fn add_new_sample(&mut self, sample: f64, upsampled: bool) {
                 if sample > self.peak {
                         self.peak = sample;
                 }
@@ -30,38 +30,47 @@ impl Upsampler {
                         self.clipping_samples += 1
                 }
 
-                self.samples_seen += 1;
+                self.signal.push(sample);
 
-                self.window.push(sample);
-                if self.samples_seen == 1 {
-                        self.window.push(sample);
+                if !upsampled {
+                        self.samples_seen += 1;
                 }
+        }
 
-                if self.samples_seen > 3 {
-                        self.signal.push(self.window[1]);
-                        
-                        for k in 1..self.factor{
-                                let t = k as f64 / self.factor as f64;
-                                let upsample = cubic_interpolation(
-                                        self.window[0], 
-                                        self.window[1], 
-                                        self.window[2], 
-                                        self.window[3], 
-                                        t);
-                                self.signal.push(upsample);
-
-                                if upsample > self.peak {
-                                        self.peak = upsample;
-                                }
-
-                                if is_clipping(upsample) {
-                                        self.clipping_samples += 1
-                                }
-                        }
-                        
+        fn update_upsampling_window(&mut self, sample: f64) {
+                if self.window.len() == 4 {
                         self.window.remove(0);
                 }
 
+                self.window.push(sample);
+
+                if self.window.len() == 1 {
+                        self.window.push(sample);
+                }
+        }
+
+        pub fn add(&mut self, sample: f64) {
+                self.update_upsampling_window(sample);
+                
+                if self.window.len() < 4 {
+                        return;
+                }
+                
+                self.add_new_sample(self.window[1], false);
+                
+                let upsamples = (1..self.factor)
+                        .map(|k| k as f64 / self.factor as f64)
+                        .map(|t| cubic_interpolation(
+                                self.window[0], 
+                                self.window[1], 
+                                self.window[2], 
+                                self.window[3], 
+                                t)
+                        ).collect::<Vec<f64>>();
+                
+                for upsample in upsamples {
+                        self.add_new_sample(upsample, true)
+                }
         }
 
         pub fn finalize(& mut self) {

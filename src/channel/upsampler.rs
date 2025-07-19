@@ -1,11 +1,11 @@
-use crate::{audio_utils::{cubic_interpolation, is_clipping, low_pass_filter}, channel::low_pass_filter::LowPassFilter};
+use crate::{audio_utils::{cubic_interpolation, is_clipping}, channel::low_pass_filter::LowPassFilter, circular_buffer::CircularBuffer};
 
 pub struct Upsampler {
         pub signal: Vec<f32>,
         pub peak: f32,
         pub clipping_samples: i32,
         samples_seen: i32,
-        window: Vec<f32>,
+        window: CircularBuffer<f32>,
         factor: u8,
         lp_filter: LowPassFilter
 }
@@ -21,18 +21,22 @@ impl Upsampler {
                         peak: f32::MIN,
                         clipping_samples: 0,
                         samples_seen: 0,
-                        window: Vec::new(),
+                        window: CircularBuffer::new(4, 0.0),
                         factor,
                         lp_filter
                 }
         }
 
         fn add_new_sample(&mut self, sample: f32, upsampled: bool) {
-                self.signal.push(sample);
+                let filtered_sample = self.lp_filter.filter(sample);
+
+                self.signal.push(filtered_sample);
 
                 if !upsampled {
                         self.samples_seen += 1;
                 }
+
+                self.update_stats(filtered_sample);
         }
 
         fn update_stats(&mut self, sample: f32) {
@@ -46,10 +50,6 @@ impl Upsampler {
         }
 
         fn update_upsampling_window(&mut self, sample: f32) {
-                if self.window.len() == 4 {
-                        self.window.remove(0);
-                }
-
                 self.window.push(sample);
 
                 if self.window.len() == 1 {
@@ -64,15 +64,15 @@ impl Upsampler {
                         return;
                 }
                 
-                self.add_new_sample(self.window[1], false);
+                self.add_new_sample(*self.window.at(1), false);
                 
                 let upsamples = (1..self.factor)
                         .map(|k| k as f32 / self.factor as f32)
                         .map(|t| cubic_interpolation(
-                                self.window[0], 
-                                self.window[1], 
-                                self.window[2], 
-                                self.window[3], 
+                                *self.window.at(0), 
+                                *self.window.at(1), 
+                                *self.window.at(2), 
+                                *self.window.at(3), 
                                 t)
                         ).collect::<Vec<f32>>();
                 
@@ -83,13 +83,7 @@ impl Upsampler {
 
         pub fn finalize(& mut self) {
                 for _ in 1..3 {
-                        self.add(self.window[3]);
-                }
-
-                self.signal = self.lp_filter.filter(&self.signal);
-
-                for sample in self.signal.iter() {
-                        self.update_stats(*sample)
+                        self.add(*self.window.at(3));
                 }
         }
 }

@@ -16,14 +16,14 @@ pub struct ChannelBuilder {
 }
 
 impl ChannelBuilder {
-        pub fn new() -> ChannelBuilder {
+        pub fn new(sample_rate: u32) -> ChannelBuilder {
                 ChannelBuilder { 
                         rms_builder: RMSBuilder::new(), 
                         peak: f32::MIN, 
                         clip_samples_counter: 0, 
                         dc_offset_builder: DCOffsetBuilder::new(), 
                         sample_counter: 0,
-                        upsampler: Upsampler::new(4)
+                        upsampler: Upsampler::new(4, sample_rate)
                 }
         }
 

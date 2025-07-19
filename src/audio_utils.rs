@@ -19,22 +19,21 @@ pub fn cubic_interpolation(y_minus1: f32, y0: f32, y1: f32, y2: f32, t: f32) -> 
         term1 + term2 + term3 + term4
 }
 
-pub fn low_pass_filter(cutoff_hz: f32, original_frequency: f32, numtaps: u16) -> Vec<f32> {
-    // TODO: da verificare, l'ho implementato di fretta, potrebbero essere dei file ???
+pub fn low_pass_filter(cutoff_hz: f32, original_frequency: f32, numtaps: i16) -> Vec<f32> {
     let fc: f32 = cutoff_hz / original_frequency;
-    let middle_point: u16 = numtaps - 1;
+    let center: i16 = (numtaps - 1) / 2;
     let mut h: Vec<f32> = Vec::new();
 
-    for n in 1..numtaps{
-        let distance_from_center = (n - middle_point) as f32;
+    for n in 0..numtaps{
+        let distance_from_center = (n - center) as f32;
 
-        if n == middle_point / 2 {
+        if n == center {
             h.push(2.0 * fc)
         } else {
-            h.push((2.0 * f32::consts::PI * fc * (distance_from_center/ 2.0)) / (f32::consts::PI * (distance_from_center / 2.0)).sin())
+            h.push((2.0 * f32::consts::PI * fc * distance_from_center) / (f32::consts::PI * distance_from_center).sin())
         }
 
-        h[n as usize] *= (0.54 - 0.46 * ((2.0 * f32::consts::PI * n as f32) / middle_point as f32)).cos()
+        h[n as usize] *= (0.54 - 0.46 * ((2.0 * f32::consts::PI * n as f32) / (numtaps - 1) as f32)).cos()
     }
 
     

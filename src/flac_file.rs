@@ -25,8 +25,8 @@ impl FlacFile {
                 let channels = data_stream.info().channels;
                 let sample_rate = data_stream.info().sample_rate;
                 
-                let mut left_channel_builder = ChannelBuilder::new();
-                let mut right_channel_builder = ChannelBuilder::new();
+                let mut left_channel_builder = ChannelBuilder::new(sample_rate);
+                let mut right_channel_builder = ChannelBuilder::new(sample_rate);
                 let mapped_stream: Box<dyn Iterator<Item = f32>> = match bit_depth {
                         8 => Box::new(data_stream.iter::<i8>().map(|sample| sample as f32 / MAX_8_BIT)),
                         16 => Box::new(data_stream.iter::<i16>().map(|sample| sample as f32 / MAX_16_BIT)),

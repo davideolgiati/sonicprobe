@@ -2,6 +2,7 @@ pub mod channel_builder;
 mod rms_builder;
 mod dc_offset_builder;
 mod upsampler;
+mod low_pass_filter;
 
 use crate::audio_utils::to_dbfs;
 

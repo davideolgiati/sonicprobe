@@ -1,4 +1,4 @@
-use crate::audio_utils::{cubic_interpolation, is_clipping, low_pass_filter};
+use crate::{audio_utils::{cubic_interpolation, is_clipping, low_pass_filter}, channel::low_pass_filter::LowPassFilter};
 
 pub struct Upsampler {
         pub signal: Vec<f32>,
@@ -7,16 +7,13 @@ pub struct Upsampler {
         samples_seen: i32,
         window: Vec<f32>,
         factor: u8,
-        lp_filter: Vec<f32>
+        lp_filter: LowPassFilter
 }
 
 impl Upsampler {
         pub fn new(factor: u8, original_frequency: u32) -> Upsampler {
-                let cutoff_hz: u32 = original_frequency / 2;
-                let lp_filter: Vec<f32> = low_pass_filter(
-                        cutoff_hz as f32, 
-                        (original_frequency * factor as u32) as f32, 
-                        501
+                let lp_filter = LowPassFilter::new(
+                        original_frequency, factor as u32
                 );
 
                 Upsampler {
@@ -89,24 +86,10 @@ impl Upsampler {
                         self.add(self.window[3]);
                 }
 
-                let n = self.signal.len() as i32;
-                let m = self.lp_filter.len() as i32;
-                let half = m / 2;
-                
-                let mut output: Vec<f32> = Vec::new();
-            
-                for i in 0..n {
-                        let mut acc: f32 = 0.0;
-                        for j in 0..m {
-                                let idx = i + j - half;
-                                if idx >= 0 && idx < n {
-                                        acc += self.signal[idx as usize] * self.lp_filter[j as usize];
-                                }
-                        }
-                        output.push(acc);
-                        self.update_stats(acc);
+                self.signal = self.lp_filter.filter(&self.signal);
+
+                for sample in self.signal.iter() {
+                        self.update_stats(*sample)
                 }
-                
-                self.signal = output;
         }
 }

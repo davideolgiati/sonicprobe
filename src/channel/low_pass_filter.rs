@@ -28,14 +28,19 @@ impl LowPassFilter {
 
         pub fn filter(&mut self, sample: f32) -> f32 {
                 self.window.push(sample);
-
-                let mut acc = 0.0;
                 let filter_len = self.coeffs.len();
                 let last_element_index = self.window.len();
                 
-                for i in 0..filter_len {
-                    let buffer_idx = (last_element_index + filter_len - i) % filter_len;
-                    acc += self.window.at(buffer_idx) * self.coeffs[i];
+                let mut samples_buf = vec![0.0f32; filter_len];
+                
+                for (i, sample_slot) in samples_buf.iter_mut().enumerate().take(filter_len) {
+                        let buffer_idx = (last_element_index + filter_len - i) % filter_len;
+                        *sample_slot = *self.window.at(buffer_idx);
+                }
+                
+                let mut acc = 0.0f32;
+                for (i, sample) in samples_buf.iter_mut().enumerate().take(filter_len) {
+                        acc += *sample * self.coeffs[i];
                 }
                 
                 acc

@@ -66,19 +66,20 @@ impl Upsampler {
                 
                 self.add_new_sample(*self.window.at(1), false);
                 
-                let upsamples = (1..self.factor)
-                        .map(|k| k as f32 / self.factor as f32)
-                        .map(|t| cubic_interpolation(
-                                *self.window.at(0), 
-                                *self.window.at(1), 
-                                *self.window.at(2), 
-                                *self.window.at(3), 
-                                t)
-                        ).collect::<Vec<f32>>();
-                
-                for upsample in upsamples {
-                        self.add_new_sample(upsample, true)
-                }
+                let factor = self.factor as f32;
+
+                (1..self.factor)
+                        .map(|k| k as f32 / factor)
+                        .for_each(|t| {
+                                let upsample = cubic_interpolation(
+                                        *self.window.at(0), 
+                                        *self.window.at(1), 
+                                        *self.window.at(2), 
+                                        *self.window.at(3), 
+                                        t
+                                );
+                                self.add_new_sample(upsample, true)
+                        });
         }
 
         pub fn finalize(& mut self) {

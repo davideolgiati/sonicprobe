@@ -7,9 +7,9 @@ pub struct LowPassFilter {
 
 impl LowPassFilter {
         pub fn new(original_frequency: u32, upsampling_factor: u32) -> LowPassFilter {
-                let cutoff_hz: f32 = (original_frequency / 2) as f32;
+                let cutoff_hz: f32 = original_frequency as f32;
                 let upsampled_freq: f32 = (original_frequency * upsampling_factor) as f32;
-                let numtaps: i16 = 256;
+                let numtaps: i16 = 128;
 
                 let coeffs: Vec<f32> = low_pass_filter(
                         cutoff_hz, 

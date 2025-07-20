@@ -1,4 +1,4 @@
-use crate::{audio_utils::{cubic_interpolation, is_clipping}, channel::low_pass_filter::LowPassFilter, circular_buffer::CircularBuffer};
+use crate::{audio_utils::{catmull_rom_interpolation, is_clipping}, channel::low_pass_filter::LowPassFilter, circular_buffer::CircularBuffer};
 
 pub struct Upsampler {
         pub signal: Vec<f32>,
@@ -71,7 +71,7 @@ impl Upsampler {
                 (1..self.factor)
                         .map(|k| k as f32 / factor)
                         .for_each(|t| {
-                                let upsample = cubic_interpolation(
+                                let upsample = catmull_rom_interpolation(
                                         *self.window.at(0), 
                                         *self.window.at(1), 
                                         *self.window.at(2), 

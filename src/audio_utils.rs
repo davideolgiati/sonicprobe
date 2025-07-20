@@ -10,13 +10,16 @@ pub fn to_dbfs(rms: f32) -> f32 {
     20.0 * rms.log10()
 }
 
-pub fn cubic_interpolation(y_minus1: f32, y0: f32, y1: f32, y2: f32, t: f32) -> f32 {
-    let term1 = y_minus1 * ((-t)*(1.0 - t)*(2.0 - t)) / 6.0;
-    let term2 = y0 * ((t + 1.0)*(1.0 - t)*(2.0 - t)) / 2.0;
-    let term3 = y1 * ((t + 1.0)*t*(2.0 - t)) / 2.0;
-    let term4 = y2 * ((t + 1.0)*t*(1.0 - t)) / 6.0;
-    
-    term1 + term2 + term3 + term4
+pub fn catmull_rom_interpolation(y0: f32, y1: f32, y2: f32, y3: f32, t: f32) -> f32 {
+    let t2 = t * t;
+    let t3 = t2 * t;
+
+    0.5 * (
+        2.0 * y1 +
+        (-y0 + y2) * t +
+        (2.0 * y0 - 5.0 * y1 + 4.0 * y2 - y3) * t2 +
+        (-y0 + 3.0 * y1 - 3.0 * y2 + y3) * t3
+    )
 }
 
 fn hz_to_radian(frequency: f32, sample_rate: f32) -> f32 {

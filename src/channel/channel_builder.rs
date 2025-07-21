@@ -27,7 +27,7 @@ impl ChannelBuilder {
                 }
         }
 
-        pub async fn add(&mut self, sample: f32) {
+        pub fn add(&mut self, sample: f32) {
                 self.rms_builder.add(sample);
                 self.dc_offset_builder.add(sample);
                 self.upsampler.add(sample);
@@ -43,7 +43,7 @@ impl ChannelBuilder {
                 self.sample_counter += 1;
         }
 
-        pub async fn build(&mut self) -> Channel {
+        pub fn build(&mut self) -> Channel {
                 self.upsampler.finalize();
 
                 let rms = self.rms_builder.build();
@@ -51,11 +51,11 @@ impl ChannelBuilder {
                 let true_peak = self.upsampler.peak;
                 
                 Channel {
-                        rms : rms.await,
+                        rms,
                         clip_sample_count: self.clip_samples_counter,
                         true_clip_sample_count: self.upsampler.clipping_samples,
                         peak: self.peak,
-                        dc_offset: dc_offset.await,
+                        dc_offset,
                         samples_count: self.sample_counter,
                         upsampled_samples_count: self.upsampler.signal.len() as i32,
                         true_peak

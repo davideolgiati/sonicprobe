@@ -1,4 +1,3 @@
-
 mod channel;
 mod cli_args;
 mod flac_file;
@@ -43,13 +42,12 @@ fn print_channel_details(channel: &Channel, name: &str) {
     println!("{}", output);
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     let cli_input: Vec<String> = env::args().collect();
     let args: CliArgs = CliArgs::new(&cli_input);
 
     let flac_details = match StreamReader::<File>::from_file(args.file_path()) {
-        Ok(stream) => FlacFile::new(stream).await,
+        Ok(stream) => FlacFile::new(stream),
         Err(error)     => panic!("error: {:?}", error),
     };
 

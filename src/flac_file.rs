@@ -20,31 +20,30 @@ pub struct FlacFile {
 }
 
 impl FlacFile {
-        pub async fn new(mut data_stream: Stream<ReadStream<File>>) -> FlacFile {
+        pub fn new(mut data_stream: Stream<ReadStream<File>>) -> FlacFile {
                 let bit_depth = data_stream.info().bits_per_sample;
                 let channels = data_stream.info().channels;
                 let sample_rate = data_stream.info().sample_rate;
                 
                 let mut left_channel_builder = ChannelBuilder::new(sample_rate);
                 let mut right_channel_builder = ChannelBuilder::new(sample_rate);
-                let mapped_stream: Box<dyn Iterator<Item = f32>> = match bit_depth {
-                        8 => Box::new(data_stream.iter::<i8>().map(|sample| sample as f32 / MAX_8_BIT)),
-                        16 => Box::new(data_stream.iter::<i16>().map(|sample| sample as f32 / MAX_16_BIT)),
-                        24 => Box::new(data_stream.iter::<i32>().map(|sample| sample as f32 /  MAX_24_BIT)),
-                        32 => Box::new(data_stream.iter::<i32>().map(|sample| sample as f32 / MAX_32_BIT)),
-                        _ => panic!("Unkown bit depth: {}", bit_depth)
-                    };
 
-                for (counter, sample) in mapped_stream.enumerate() {
-                        match counter % 2 {
-                                0 => left_channel_builder.add(sample).await,
-                                _ => right_channel_builder.add(sample).await,
-                        }
+                let mapped_stream = match bit_depth {
+                        8 => data_stream.iter::<i8>().map(|s| s as f32 / MAX_8_BIT).collect::<Vec<f32>>(),
+                        16 => data_stream.iter::<i16>().map(|s| s as f32 / MAX_16_BIT).collect::<Vec<f32>>(),
+                        24 => data_stream.iter::<i32>().map(|s| s as f32 / MAX_24_BIT).collect::<Vec<f32>>(),
+                        32 => data_stream.iter::<i32>().map(|s| s as f32 / MAX_32_BIT).collect::<Vec<f32>>(),
+                        _ => panic!("Unknown bit depth"),
+                };
+
+                for pair in  mapped_stream.chunks_exact(2) {
+                        left_channel_builder.add(pair[0]);
+                        right_channel_builder.add(pair[1]);
                 }
 
                 FlacFile {
-                        left: left_channel_builder.build().await,
-                        right: right_channel_builder.build().await,
+                        left: left_channel_builder.build(),
+                        right: right_channel_builder.build(),
                         bit_depth,
                         channels,
                         sample_rate

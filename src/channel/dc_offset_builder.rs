@@ -18,7 +18,7 @@ impl DCOffsetBuilder {
                 self.accumulator.push(processed_value);
         }
 
-        pub async fn build(&self) -> f32 {
+        pub fn build(&self) -> f32 {
                 let size = self.accumulator.len() as f32;
                 let sum: f32 = self.accumulator.iter().map(|value: &MinNonNan| value.0.into_inner()).sum();
                 let avg: f32 = sum / size;

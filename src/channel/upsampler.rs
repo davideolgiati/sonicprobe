@@ -27,18 +27,13 @@ impl Upsampler {
 
         fn add_new_sample(&mut self, sample: f32) {
                 let filtered_sample = self.lp_filter.filter(sample);
-                
                 self.samples_count += 1;
 
-                self.update_stats(filtered_sample);
-        }
-
-        fn update_stats(&mut self, sample: f32) {
-                if sample > self.peak {
-                        self.peak = sample;
+                if filtered_sample > self.peak {
+                        self.peak = filtered_sample;
                 }
 
-                if is_clipping(sample) {
+                if is_clipping(filtered_sample) {
                         self.clipping_samples += 1
                 }
         }
@@ -46,36 +41,36 @@ impl Upsampler {
         fn update_upsampling_window(&mut self, sample: f32) {
                 self.window.push(sample);
 
-                if self.window.len() == 1 {
-                        self.window.push(sample);
+                if self.window.len() != 1 {
+                        return;
                 }
+                
+                self.window.push(sample);
         }
 
         pub fn add(&mut self, sample: f32) {
                 self.update_upsampling_window(sample);
                 
-                if self.window.len() < 4 {
-                        return;
+                if self.window.len() == 4 {
+                        let window = self.window.collect().clone();
+                        
+                        self.add_new_sample(window[1]);
+                        
+                        let factor = self.factor as f32;
+
+                        (1..self.factor)
+                                .map(|k| k as f32 / factor)
+                                .for_each(|t| {
+                                        let upsample = catmull_rom_interpolation(
+                                                window[0], 
+                                                window[1], 
+                                                window[2], 
+                                                window[3], 
+                                                t
+                                        );
+                                        self.add_new_sample(upsample)
+                                });
                 }
-
-                let window = self.window.collect().clone();
-                
-                self.add_new_sample(window[1]);
-                
-                let factor = self.factor as f32;
-
-                (1..self.factor)
-                        .map(|k| k as f32 / factor)
-                        .for_each(|t| {
-                                let upsample = catmull_rom_interpolation(
-                                        window[0], 
-                                        window[1], 
-                                        window[2], 
-                                        window[3], 
-                                        t
-                                );
-                                self.add_new_sample(upsample)
-                        });
         }
 
         pub fn finalize(& mut self) {

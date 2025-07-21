@@ -14,9 +14,7 @@ impl<T: Clone + Default> CircularBuffer<T> {
         }
 
         pub fn push(&mut self, value: T) {
-                if self.slots_used < self.size {
-                        self.slots_used += 1
-                }
+                self.slots_used += 1;
 
                 self.buffer.rotate_left(1);
                 self.buffer[self.size - 1] = value;
@@ -27,6 +25,10 @@ impl<T: Clone + Default> CircularBuffer<T> {
         }
 
         pub fn len(&self) -> usize {
+                if self.slots_used > self.size{
+                        return self. size
+                }
+
                 self.slots_used
         }
 }

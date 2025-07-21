@@ -31,19 +31,17 @@ pub fn low_pass_filter(cutoff: f32, sample_rate: f32, numtaps: i16) -> Vec<f32> 
     let window_center: i16 = (numtaps - 1) / 2;
     let window = (0..numtaps).map(
         |n| 0.54 - 0.46 * ((2.0 * f32::consts::PI * n as f32) / (numtaps - 1) as f32).cos()
-    );
+    ).collect::<Vec<f32>>();
 
     (0..numtaps)
         .map(|n| {
             let offset = n - window_center;
             
-            if offset == 0 {
-                center_frequency / f32::consts::PI
+            if offset != 0 {
+                (center_frequency * offset as f32).sin() / (f32::consts::PI * offset as f32) * window[n as usize]
             } else {
-                (center_frequency * offset as f32).sin() / (f32::consts::PI * offset as f32)
+                center_frequency / f32::consts::PI * window[n as usize]
             }
         })
-        .zip(window)
-        .map(|(frequency, window)| frequency * window)
         .collect()
 }

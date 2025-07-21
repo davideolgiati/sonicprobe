@@ -27,7 +27,7 @@ impl ChannelBuilder {
                 }
         }
 
-        pub fn add(&mut self, sample: f32) {
+        pub fn add(&mut self, sample: &f32) {
                 self.rms_builder.add(sample);
                 self.dc_offset_builder.add(sample);
                 self.upsampler.add(sample);
@@ -36,8 +36,8 @@ impl ChannelBuilder {
                         self.clip_samples_counter += 1
                 }
 
-                if self.peak < sample {
-                        self.peak = sample;
+                if self.peak < *sample {
+                        self.peak = *sample;
                 }
 
                 self.sample_counter += 1;

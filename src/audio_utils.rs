@@ -2,14 +2,16 @@ use std::f32;
 
 const CLIP_THRESH: f32 = 0.999_999;
 
-pub fn is_clipping(sample: f32) -> bool {
-    sample >= CLIP_THRESH || sample <= -CLIP_THRESH
+#[inline]
+pub fn is_clipping(sample: &f32) -> bool {
+    *sample >= CLIP_THRESH || *sample <= -CLIP_THRESH
 }
 
 pub fn to_dbfs(rms: f32) -> f32 {
     20.0 * rms.log10()
 }
 
+#[inline]
 pub fn catmull_rom_interpolation(y0: f32, y1: f32, y2: f32, y3: f32, t: f32) -> f32 {
     let t2 = t * t;
     let t3 = t2 * t;

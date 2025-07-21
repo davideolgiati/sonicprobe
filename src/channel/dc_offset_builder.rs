@@ -1,26 +1,21 @@
-use std::{cmp::Reverse, collections::BinaryHeap};
-use ordered_float::NotNan;
-
-type MinNonNan = Reverse<NotNan<f32>>;
-
 pub struct DCOffsetBuilder {
-        accumulator: BinaryHeap<MinNonNan>
+        accumulator: Vec<f32>
 }
 
 impl DCOffsetBuilder {
         pub fn new() -> DCOffsetBuilder {
                 DCOffsetBuilder {
-                        accumulator: BinaryHeap::new()
+                        accumulator: Vec::new()
                 }
         }
-        pub fn add(&mut self, value: f32) {
-                let processed_value = Reverse(NotNan::new(value).expect("NaN not allowed"));
-                self.accumulator.push(processed_value);
+        pub fn add(&mut self, value: &f32) {
+                self.accumulator.push(*value);
         }
 
-        pub fn build(&self) -> f32 {
+        pub fn build(&mut self) -> f32 {
+                self.accumulator.sort_by(|a, b| a.partial_cmp(b).unwrap());
                 let size = self.accumulator.len() as f32;
-                let sum: f32 = self.accumulator.iter().map(|value: &MinNonNan| value.0.into_inner()).sum();
+                let sum: f32 = self.accumulator.iter().sum();
                 let avg: f32 = sum / size;
 
                 avg

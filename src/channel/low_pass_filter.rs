@@ -28,13 +28,15 @@ impl LowPassFilter {
 
         pub fn filter(&mut self, sample: f32) -> f32 {
                 self.window.push(sample);
+
+                let window = self.window.collect();
                 let filter_len = self.coeffs.len();
                 let last_element_index = self.window.len();
                 
                 (0..filter_len).map(
                         |index| {
                                 let buffer_idx = (last_element_index + filter_len - index) % filter_len;
-                                self.window.at(buffer_idx) * self.coeffs[index]
+                                window[buffer_idx] * self.coeffs[index]
                         }
                 ).sum()
         }

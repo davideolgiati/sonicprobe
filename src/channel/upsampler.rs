@@ -1,10 +1,9 @@
 use crate::{audio_utils::{catmull_rom_interpolation, is_clipping}, channel::low_pass_filter::LowPassFilter, circular_buffer::CircularBuffer};
 
 pub struct Upsampler {
-        pub signal: Vec<f32>,
         pub peak: f32,
         pub clipping_samples: i32,
-        samples_seen: i32,
+        pub samples_count: i32,
         window: CircularBuffer<f32>,
         factor: u8,
         lp_filter: LowPassFilter
@@ -17,24 +16,19 @@ impl Upsampler {
                 );
 
                 Upsampler {
-                        signal: Vec::new(),
                         peak: f32::MIN,
                         clipping_samples: 0,
-                        samples_seen: 0,
+                        samples_count: 0,
                         window: CircularBuffer::new(4, 0.0),
                         factor,
                         lp_filter
                 }
         }
 
-        fn add_new_sample(&mut self, sample: f32, upsampled: bool) {
+        fn add_new_sample(&mut self, sample: f32) {
                 let filtered_sample = self.lp_filter.filter(sample);
-
-                self.signal.push(filtered_sample);
-
-                if !upsampled {
-                        self.samples_seen += 1;
-                }
+                
+                self.samples_count += 1;
 
                 self.update_stats(filtered_sample);
         }
@@ -63,8 +57,10 @@ impl Upsampler {
                 if self.window.len() < 4 {
                         return;
                 }
+
+                let window = self.window.collect().clone();
                 
-                self.add_new_sample(*self.window.at(1), false);
+                self.add_new_sample(window[1]);
                 
                 let factor = self.factor as f32;
 
@@ -72,19 +68,21 @@ impl Upsampler {
                         .map(|k| k as f32 / factor)
                         .for_each(|t| {
                                 let upsample = catmull_rom_interpolation(
-                                        *self.window.at(0), 
-                                        *self.window.at(1), 
-                                        *self.window.at(2), 
-                                        *self.window.at(3), 
+                                        window[0], 
+                                        window[1], 
+                                        window[2], 
+                                        window[3], 
                                         t
                                 );
-                                self.add_new_sample(upsample, true)
+                                self.add_new_sample(upsample)
                         });
         }
 
         pub fn finalize(& mut self) {
+                let window = self.window.collect().clone();
+
                 for _ in 1..3 {
-                        self.add(*self.window.at(3));
+                        self.add(window[3]);
                 }
         }
 }

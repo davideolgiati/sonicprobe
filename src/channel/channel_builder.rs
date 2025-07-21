@@ -57,7 +57,7 @@ impl ChannelBuilder {
                         peak: self.peak,
                         dc_offset,
                         samples_count: self.sample_counter,
-                        upsampled_samples_count: self.upsampler.signal.len() as i32,
+                        upsampled_samples_count: self.upsampler.samples_count,
                         true_peak
                 }
         }

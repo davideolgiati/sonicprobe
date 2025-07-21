@@ -1,5 +1,7 @@
 use crate::{audio_utils::low_pass_filter, circular_buffer::CircularBuffer};
 
+const NUMTAPS: i16 = 128;
+
 pub struct LowPassFilter {
         coeffs: Vec<f32>,
         window: CircularBuffer<f32>
@@ -7,20 +9,21 @@ pub struct LowPassFilter {
 
 impl LowPassFilter {
         pub fn new(original_frequency: u32, upsampling_factor: u32) -> LowPassFilter {
-                let cutoff_hz: f32 = original_frequency as f32;
+                let cutoff_hz: f32 = original_frequency as f32 / 2.0;
                 let upsampled_freq: f32 = (original_frequency * upsampling_factor) as f32;
-                let numtaps: i16 = 128;
 
-                let coeffs: Vec<f32> = low_pass_filter(
+                let mut coeffs: Vec<f32> = low_pass_filter(
                         cutoff_hz, 
                         upsampled_freq, 
-                        numtaps
+                        NUMTAPS
                 );
+
+                coeffs.reverse();
 
                 LowPassFilter { 
                         coeffs,
                         window: CircularBuffer::new(
-                                numtaps as usize,
+                                NUMTAPS as usize,
                                 0.0
                         )
                 }

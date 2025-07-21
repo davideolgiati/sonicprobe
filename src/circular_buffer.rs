@@ -1,5 +1,3 @@
-use std::iter;
-
 pub struct CircularBuffer<T: Clone + Default> {
         buffer: Vec<T>,
         start: usize,
@@ -11,7 +9,7 @@ pub struct CircularBuffer<T: Clone + Default> {
 impl<T: Clone + Default> CircularBuffer<T> {
         pub fn new(size: usize, default_value: T) -> CircularBuffer<T> {
                 CircularBuffer { 
-                        buffer: iter::repeat(default_value).take(size).collect(), 
+                        buffer: vec![default_value; size], 
                         start: 0,
                         end: 0,
                         size,

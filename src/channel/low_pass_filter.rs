@@ -31,42 +31,11 @@ impl LowPassFilter {
                 let filter_len = self.coeffs.len();
                 let last_element_index = self.window.len();
                 
-                let mut samples_buf = vec![0.0f32; filter_len];
-                
-                for (i, sample_slot) in samples_buf.iter_mut().enumerate().take(filter_len) {
-                        let buffer_idx = (last_element_index + filter_len - i) % filter_len;
-                        *sample_slot = *self.window.at(buffer_idx);
-                }
-                
-                let mut acc = 0.0f32;
-                for (i, sample) in samples_buf.iter_mut().enumerate().take(filter_len) {
-                        acc += *sample * self.coeffs[i];
-                }
-                
-                acc
-        }
-
-        /*
-        pub fn filter(&self, signal: &Vec<f32>) -> Vec<f32> {
-                let n = signal.len() as i32;
-                let m = self.coeffs.len() as i32;
-                let half = m / 2;
-                
-                let mut output: Vec<f32> = Vec::new();
-            
-                for i in 0..n {
-                        let mut acc: f32 = 0.0;
-                        for j in 0..m {
-                                let idx = i + j - half;
-                                if idx >= 0 && idx < n {
-                                        acc += signal[idx as usize] * self.coeffs[j as usize];
-                                }
+                (0..filter_len).map(
+                        |index| {
+                                let buffer_idx = (last_element_index + filter_len - index) % filter_len;
+                                self.window.at(buffer_idx) * self.coeffs[index]
                         }
-                        output.push(acc);
-                        
-                }
-                
-                output
+                ).sum()
         }
-        */
 }

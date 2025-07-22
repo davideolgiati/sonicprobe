@@ -37,8 +37,8 @@ impl FlacFile {
                 };
 
                 for pair in  mapped_stream.chunks_exact(2) {
-                        left_channel_builder.add(&pair[0]);
-                        right_channel_builder.add(&pair[1]);
+                        left_channel_builder.add(pair[0]);
+                        right_channel_builder.add(pair[1]);
                 }
 
                 FlacFile {

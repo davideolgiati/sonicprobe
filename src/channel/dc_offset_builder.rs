@@ -1,23 +1,27 @@
 pub struct DCOffsetBuilder {
-        accumulator: Vec<f32>
+        sum: f64,
+        count: usize
 }
 
 impl DCOffsetBuilder {
         pub fn new() -> DCOffsetBuilder {
                 DCOffsetBuilder {
-                        accumulator: Vec::new()
+                        sum: 0.0,
+                        count: 0
                 }
         }
-        pub fn add(&mut self, value: &f32) {
-                self.accumulator.push(*value);
+
+        #[inline]
+        pub fn add(&mut self, value: f32) {
+                self.sum += value as f64;
+                self.count += 1;
         }
 
-        pub fn build(&mut self) -> f32 {
-                self.accumulator.sort_by(|a, b| a.partial_cmp(b).unwrap());
-                let size = self.accumulator.len() as f32;
-                let sum: f32 = self.accumulator.iter().sum();
-                let avg: f32 = sum / size;
-
-                avg
+        pub fn build(self) -> f32 {
+                if self.count == 0 {
+                        return 0.0f32
+                }
+                
+                (self.sum / self.count as f64) as f32
         }
 }

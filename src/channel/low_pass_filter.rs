@@ -29,12 +29,35 @@ impl LowPassFilter {
                 }
         }
 
-        pub fn filter(&mut self, sample: &f32) -> f32 {
-                self.window.push(*sample);
+        pub fn filter(&mut self, sample: f32) -> f32 {
+                self.window.push(sample);
                 let window = self.window.collect();
                 
-                window.iter()
-                    .zip(self.coeffs.iter())
-                    .fold(0.0f32, |acc, (&w, &c)| acc + (w * c)) //TODO: da rivedere
+                simd_dot_product(&self.coeffs, window)
         }
+}
+
+#[inline]
+fn simd_dot_product(coeffs: &[f32], samples: &[f32]) -> f32 {
+        debug_assert_eq!(coeffs.len(), samples.len());
+    
+        let mut sum = 0.0f32;
+        
+        let chunks = coeffs.len() / 4;
+        let remainder = coeffs.len() % 4;
+        
+        for i in 0..chunks {
+            let base_idx = i * 4;
+            
+            sum += coeffs[base_idx] * samples[base_idx]
+                 + coeffs[base_idx + 1] * samples[base_idx + 1]
+                 + coeffs[base_idx + 2] * samples[base_idx + 2]
+                 + coeffs[base_idx + 3] * samples[base_idx + 3];
+        }
+        
+        for i in (chunks * 4)..(chunks * 4 + remainder) {
+            sum += coeffs[i] * samples[i];
+        }
+        
+        sum
 }

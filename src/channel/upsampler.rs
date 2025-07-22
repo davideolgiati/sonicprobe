@@ -25,7 +25,7 @@ impl Upsampler {
                 }
         }
 
-        fn add_new_sample(&mut self, sample: &f32) {
+        fn add_new_sample(&mut self, sample: f32) {
                 let filtered_sample = self.lp_filter.filter(sample);
                 self.samples_count += 1;
 
@@ -33,7 +33,7 @@ impl Upsampler {
                         self.peak = filtered_sample;
                 }
 
-                if is_clipping(&filtered_sample) {
+                if is_clipping(filtered_sample) {
                         self.clipping_samples += 1
                 }
         }
@@ -48,13 +48,13 @@ impl Upsampler {
                 self.window.push(sample);
         }
 
-        pub fn add(&mut self, sample: &f32) {
-                self.update_upsampling_window(*sample);
+        pub fn add(&mut self, sample: f32) {
+                self.update_upsampling_window(sample);
                 
                 if self.window.len() == 4 {
                         let window = self.window.collect().clone();
                         
-                        self.add_new_sample(&window[1]);
+                        self.add_new_sample(window[1]);
                         
                         let factor = self.factor as f32;
 
@@ -67,7 +67,7 @@ impl Upsampler {
                                         k as f32 / factor
                                 ))
                                 .for_each(|sample| {
-                                        self.add_new_sample(&sample)
+                                        self.add_new_sample(sample)
                                 });
                 }
         }
@@ -76,7 +76,7 @@ impl Upsampler {
                 let window = self.window.collect().clone();
 
                 for _ in 1..3 {
-                        self.add(&window[3]);
+                        self.add(window[3]);
                 }
         }
 }

@@ -17,6 +17,8 @@ pub struct FlacFile {
         channels: u8,
         sample_rate: u32,
         bit_depth: u8,
+        duration: f32,
+        samples_count: u64
 }
 
 impl FlacFile {
@@ -24,10 +26,7 @@ impl FlacFile {
                 let bit_depth = data_stream.info().bits_per_sample;
                 let channels = data_stream.info().channels;
                 let sample_rate = data_stream.info().sample_rate;
-                let samples_per_channel = data_stream.info().total_samples;
-                
-                let mut left_channel_builder = ChannelBuilder::new(sample_rate, samples_per_channel);
-                let mut right_channel_builder = ChannelBuilder::new(sample_rate, samples_per_channel);
+                let samples_count = data_stream.info().total_samples;
 
                 let mapped_stream = match bit_depth {
                         8 => data_stream.iter::<i8>().map(|s| s as f32 / MAX_8_BIT).collect::<Vec<f32>>(),
@@ -37,17 +36,36 @@ impl FlacFile {
                         _ => panic!("Unknown bit depth"),
                 };
 
-                for pair in  mapped_stream.chunks_exact(2) {
-                        left_channel_builder.add(pair[0]);
-                        right_channel_builder.add(pair[1]);
-                }
+                let (left_samples, right_samples): (Vec<f32>, Vec<f32>) = mapped_stream
+                        .chunks_exact(2)
+                        .map(|pair| (pair[0], pair[1]))
+                        .unzip();
+    
+                let (left_channel, right_channel) = rayon::join(
+                        || {
+                                let mut left_builder = ChannelBuilder::new(sample_rate, samples_count);
+                                for sample in left_samples {
+                                        left_builder.add(sample);
+                                }
+                                left_builder.build()
+                        },
+                        || {
+                                let mut right_builder = ChannelBuilder::new(sample_rate, samples_count);
+                                for sample in right_samples {
+                                        right_builder.add(sample);
+                                }
+                                right_builder.build()
+                        }
+                );
 
                 FlacFile {
-                        left: left_channel_builder.build(),
-                        right: right_channel_builder.build(),
+                        left: left_channel,
+                        right: right_channel,
                         bit_depth,
                         channels,
-                        sample_rate
+                        sample_rate,
+                        duration: samples_count as f32 / sample_rate as f32,
+                        samples_count
                 }
         }
 
@@ -75,15 +93,25 @@ impl FlacFile {
                 self.left.rms() - self.right.rms()
         }
 
+        pub fn duration(&self) -> f32 {
+                self.duration
+        }
+
+        pub fn samples_count(&self) -> u64 {
+                self.samples_count
+        }
+
         pub fn to_json_string(&self) -> String {
                 let inner_tab: String = "\t".to_string();
                 let output = [
                         format!("{}\"channel_count\": {},\n", inner_tab, self.channel_count()),
                         format!("{}\"sample_rate\": {},\n", inner_tab, self.sample_rate()),
                         format!("{}\"bit_depth\": {},\n", inner_tab, self.bit_depth()),
+                        format!("{}\"duration\": {},\n",  inner_tab, self.duration()),
+                        format!("{}\"samples_count\": {},\n",  inner_tab, self.samples_count()),   
                         format!("{}\"channel_balance\": {},\n", inner_tab, self.channel_balance()),
                         format!("{}\"left\": {},\n", inner_tab, self.left.to_json_string(1)),
-                        format!("{}\"right\": {}\n", inner_tab, self.right.to_json_string(1)),     
+                        format!("{}\"right\": {}\n", inner_tab, self.right.to_json_string(1)),
                 ].concat();
 
                 format!(

@@ -17,10 +17,14 @@ use crate::flac_file::FlacFile;
 use crate::output_format::OutputFormat;
 
 fn print_file_details(file: &FlacFile) {
+    let seconds = file.duration() % 60_f32;
+    let minutes = (file.duration() - seconds) / 60_f32;
     let output = [
+        format!("Duration: {:02.0}:{:02.0}\n", minutes, seconds),
         format!("Channels: {}\n", file.channel_count()),
         format!("Sample Rate: {} Hz\n", file.sample_rate()),
         format!("Depth: {} bit\n", file.bit_depth()),
+        format!("Samples Count: {}\n", file.samples_count()),
         format!("Channels balance: {:.2} db", file.channel_balance())
     ].concat();
 

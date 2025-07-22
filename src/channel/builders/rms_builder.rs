@@ -1,7 +1,4 @@
-pub struct RMSBuilder {
-        sum: f64,
-        count: usize
-}
+use crate::channel::builders::RMSBuilder;
 
 impl RMSBuilder {
         pub fn new() -> RMSBuilder {

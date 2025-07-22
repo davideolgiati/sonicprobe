@@ -1,16 +1,18 @@
-use crate::{audio_utils::{catmull_rom_interpolation, is_clipping}, channel::low_pass_filter::LowPassFilter, circular_buffer::CircularBuffer};
+use crate::{audio_utils::catmull_rom_interpolation, channel::{builders::{ClippingSamplesBuilder, PeakBuilder}, low_pass_filter::LowPassFilter}, circular_buffer::CircularBuffer};
 
 pub struct Upsampler {
         pub peak: f32,
         pub clipping_samples: i32,
-        pub samples_count: i32,
+        pub samples_count: u64,
+        peak_builder: PeakBuilder,
+        clipping_samples_builder: ClippingSamplesBuilder,
         window: CircularBuffer<f32>,
         factor: u8,
         lp_filter: LowPassFilter
 }
 
 impl Upsampler {
-        pub fn new(factor: u8, original_frequency: u32) -> Upsampler {
+        pub fn new(factor: u8, original_frequency: u32, original_size: u64) -> Upsampler {
                 let lp_filter = LowPassFilter::new(
                         original_frequency, factor as u32
                 );
@@ -18,7 +20,9 @@ impl Upsampler {
                 Upsampler {
                         peak: f32::MIN,
                         clipping_samples: 0,
-                        samples_count: 0,
+                        samples_count: original_size * factor as u64,
+                        peak_builder: PeakBuilder::new(),
+                        clipping_samples_builder: ClippingSamplesBuilder::new(),
                         window: CircularBuffer::new(4, 0.0),
                         factor,
                         lp_filter
@@ -26,49 +30,37 @@ impl Upsampler {
         }
 
         fn add_new_sample(&mut self, sample: f32) {
-                let filtered_sample = self.lp_filter.filter(sample);
-                self.samples_count += 1;
-
-                if filtered_sample > self.peak {
-                        self.peak = filtered_sample;
-                }
-
-                if is_clipping(filtered_sample) {
-                        self.clipping_samples += 1
-                }
-        }
-
-        fn update_upsampling_window(&mut self, sample: f32) {
-                self.window.push(sample);
-
-                if self.window.len() != 1 {
-                        return;
-                }
-                
-                self.window.push(sample);
+                let filtered = self.lp_filter.filter(sample);
+                self.clipping_samples_builder.add(filtered);
+                self.peak_builder.add(filtered);
         }
 
         pub fn add(&mut self, sample: f32) {
-                self.update_upsampling_window(sample);
-                
-                if self.window.len() == 4 {
-                        let window = self.window.collect().clone();
-                        
-                        self.add_new_sample(window[1]);
-                        
-                        let factor = self.factor as f32;
+                if self.window.len() == 0 {
+                        self.window.push(sample);
+                }
 
-                        (1..self.factor)
-                                .map(|k| catmull_rom_interpolation(
-                                        window[0], 
-                                        window[1], 
-                                        window[2], 
-                                        window[3], 
-                                        k as f32 / factor
-                                ))
-                                .for_each(|sample| {
-                                        self.add_new_sample(sample)
-                                });
+                self.window.push(sample);
+                
+                if self.window.len() < 4 {
+                        return;
+                }
+
+                let window = self.window.collect().clone();
+                
+                self.add_new_sample(window[1]);
+                
+                let factor = self.factor as f32;
+
+                for k in 1..self.factor {
+                        let interpolated = catmull_rom_interpolation(
+                                window[0], 
+                                window[1], 
+                                window[2], 
+                                window[3], 
+                                k as f32 / factor
+                        );
+                        self.add_new_sample(interpolated)
                 }
         }
 
@@ -78,5 +70,8 @@ impl Upsampler {
                 for _ in 1..3 {
                         self.add(window[3]);
                 }
+
+                self.peak = self.peak_builder.build();
+                self.clipping_samples = self.clipping_samples_builder.build();
         }
 }

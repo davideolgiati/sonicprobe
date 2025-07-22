@@ -1,12 +1,5 @@
 use std::f32;
 
-const CLIP_THRESH: f32 = 0.999_999;
-
-#[inline]
-pub fn is_clipping(sample: f32) -> bool {
-    sample >= CLIP_THRESH || sample <= -CLIP_THRESH
-}
-
 pub fn to_dbfs(rms: f32) -> f32 {
     20.0 * rms.log10()
 }

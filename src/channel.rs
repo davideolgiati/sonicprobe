@@ -1,19 +1,18 @@
 pub mod channel_builder;
-mod rms_builder;
-mod dc_offset_builder;
 mod upsampler;
 mod low_pass_filter;
+mod builders;
 
 use crate::audio_utils::to_dbfs;
 
 pub struct Channel {
         rms: f32,
         peak: f32,
-        clip_sample_count: i32,
-        true_clip_sample_count: i32,
+        clipping_samples_count: i32,
+        true_clipping_samples_count: i32,
         dc_offset: f32,
-        samples_count: i32,
-        upsampled_samples_count: i32,
+        samples_count: u64,
+        upsampled_samples_count: u64,
         true_peak: f32,
 }
 
@@ -30,12 +29,12 @@ impl Channel {
                 to_dbfs(self.true_peak)
         }
 
-        pub fn clip_samples_quota(&self) -> f32 {
-                (self.clip_sample_count as f32 / self.samples_count as f32) * 100.0
+        pub fn clipping_samples_quota(&self) -> f32 {
+                (self.clipping_samples_count as f32 / self.samples_count as f32) * 100.0
         }
 
-        pub fn true_clip_samples_quota(&self) -> f32 {
-                (self.true_clip_sample_count as f32 / self.upsampled_samples_count as f32) * 100.0
+        pub fn true_clipping_samples_quota(&self) -> f32 {
+                (self.true_clipping_samples_count as f32 / self.upsampled_samples_count as f32) * 100.0
         }
 
         pub fn dc_offset(&self) -> f32 {
@@ -52,8 +51,8 @@ impl Channel {
                         format!("{}\"rms\": {},\n", inner_tab, self.rms()),
                         format!("{}\"peak\": {},\n", inner_tab, self.peak()),
                         format!("{}\"true_peak\": {},\n", inner_tab, self.true_peak()),
-                        format!("{}\"clip_samples_quota\": {},\n", inner_tab, self.clip_samples_quota() / 100.0),
-                        format!("{}\"true_clip_samples_quota\": {},\n", inner_tab, self.true_clip_samples_quota() / 100.0),
+                        format!("{}\"clipping_samples_quota\": {},\n", inner_tab, self.clipping_samples_quota() / 100.0),
+                        format!("{}\"true_clipping_samples_quota\": {},\n", inner_tab, self.true_clipping_samples_quota() / 100.0),
                         format!("{}\"dc_offset\": {},\n", inner_tab, self.dc_offset()),
                         format!("{}\"crest_factor\": {}", inner_tab, self.crest_factor())       
                 ].concat();

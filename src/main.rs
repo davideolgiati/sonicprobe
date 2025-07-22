@@ -32,10 +32,10 @@ fn print_channel_details(channel: &Channel, name: &str) {
         format!("{} channel:\n", name),
         format!("\tRMS: {:.2} db\n", channel.rms()),
         format!("\tPeak: {:.2} db\n", channel.peak()),
-        format!("\tClipping: {:.3} %\n", channel.clip_samples_quota()),
+        format!("\tClipping: {:.3} %\n", channel.clipping_samples_quota()),
         format!("\tDC Offset: {:.5}\n", channel.dc_offset()),
         format!("\tTrue Peak: {:.2} db\n", channel.true_peak()),
-        format!("\tTrue Clipping: {:.3} %\n", channel.true_clip_samples_quota()),
+        format!("\tTrue Clipping: {:.3} %\n", channel.true_clipping_samples_quota()),
         format!("\tCrest Factor: {:.2} db\n", channel.crest_factor()),
     ].concat();
 

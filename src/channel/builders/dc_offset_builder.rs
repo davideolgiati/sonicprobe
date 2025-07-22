@@ -1,7 +1,4 @@
-pub struct DCOffsetBuilder {
-        sum: f64,
-        count: usize
-}
+use crate::channel::builders::DCOffsetBuilder;
 
 impl DCOffsetBuilder {
         pub fn new() -> DCOffsetBuilder {

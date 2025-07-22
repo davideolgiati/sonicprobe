@@ -17,7 +17,7 @@ it is stable but it may be not very accurate.
 - [x] True Peak Analisys
 - [x] Samples clipping Analisys
 - [x] Reconstructed Samples clipping Analisys
-- [x] DC Offset Analisys
+- [x] Average Sample Value Analisys
 - [x] Crest Factor Analisys
 - [ ] Noise Floor Analisys
 - [ ] Signal to Noise Ratio Analisys

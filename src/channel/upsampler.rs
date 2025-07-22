@@ -6,7 +6,7 @@ pub struct Upsampler {
         pub samples_count: u64,
         peak_builder: PeakBuilder,
         clipping_samples_builder: ClippingSamplesBuilder,
-        window: CircularBuffer<f32>,
+        window: CircularBuffer<f64>,
         factor: u8,
         lp_filter: LowPassFilter
 }
@@ -37,10 +37,10 @@ impl Upsampler {
 
         pub fn add(&mut self, sample: f32) {
                 if self.window.len() == 0 {
-                        self.window.push(sample);
+                        self.window.push(sample as f64);
                 }
 
-                self.window.push(sample);
+                self.window.push(sample as f64);
                 
                 if self.window.len() < 4 {
                         return;
@@ -48,7 +48,7 @@ impl Upsampler {
 
                 let window = self.window.collect().clone();
                 
-                self.add_new_sample(window[1]);
+                self.add_new_sample(window[1] as f32);
                 
                 let factor = self.factor as f32;
 
@@ -58,7 +58,7 @@ impl Upsampler {
                                 window[1], 
                                 window[2], 
                                 window[3], 
-                                k as f32 / factor
+                                k as f64 / factor as f64
                         );
                         self.add_new_sample(interpolated)
                 }
@@ -68,7 +68,7 @@ impl Upsampler {
                 let window = self.window.collect().clone();
 
                 for _ in 1..3 {
-                        self.add(window[3]);
+                        self.add(window[3] as f32);
                 }
 
                 self.peak = self.peak_builder.build();

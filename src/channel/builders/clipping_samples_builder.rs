@@ -19,9 +19,7 @@ impl ClippingSamplesBuilder {
         }
 }
 
-const CLIP_THRESH: f32 = 0.999_999;
-
 #[inline]
 pub fn is_clipping(sample: f32) -> bool {
-    sample >= CLIP_THRESH || sample <= -CLIP_THRESH
+        (sample - 1.0).abs() < f32::EPSILON || (sample - (-1.0)).abs() < f32::EPSILON
 }

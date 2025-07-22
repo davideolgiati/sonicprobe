@@ -10,10 +10,11 @@ pub struct Channel {
         peak: f32,
         clipping_samples_count: i32,
         true_clipping_samples_count: i32,
-        dc_offset: f32,
+        average_sample_value: f32,
         samples_count: u64,
         upsampled_samples_count: u64,
         true_peak: f32,
+        zero_crossing_rate: f32
 }
 
 impl Channel {
@@ -37,12 +38,16 @@ impl Channel {
                 (self.true_clipping_samples_count as f32 / self.upsampled_samples_count as f32) * 100.0
         }
 
-        pub fn dc_offset(&self) -> f32 {
-                self.dc_offset
+        pub fn average_sample_value(&self) -> f32 {
+                self.average_sample_value
         }
 
         pub fn crest_factor(&self) -> f32 {
                 to_dbfs(self.peak / self.rms)
+        }
+
+        pub fn zero_crossing_rate(&self) -> f32 {
+                self.zero_crossing_rate
         }
 
         pub fn to_json_string(&self, father_tab: usize) -> String {
@@ -53,8 +58,9 @@ impl Channel {
                         format!("{}\"true_peak\": {},\n", inner_tab, self.true_peak()),
                         format!("{}\"clipping_samples_quota\": {},\n", inner_tab, self.clipping_samples_quota() / 100.0),
                         format!("{}\"true_clipping_samples_quota\": {},\n", inner_tab, self.true_clipping_samples_quota() / 100.0),
-                        format!("{}\"dc_offset\": {},\n", inner_tab, self.dc_offset()),
-                        format!("{}\"crest_factor\": {}", inner_tab, self.crest_factor())       
+                        format!("{}\"average_sample_value\": {},\n", inner_tab, self.average_sample_value()),
+                        format!("{}\"crest_factor\": {}\n", inner_tab, self.crest_factor()),
+                        format!("{}\"zero_crossing_rate\": {}", inner_tab, self.zero_crossing_rate()),       
                 ].concat();
 
                 format!(

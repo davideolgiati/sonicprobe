@@ -33,12 +33,12 @@ impl LowPassFilter {
                 self.window.push(sample);
                 let window = self.window.collect();
                 
-                simd_dot_product(&self.coeffs, window)
+                dot_product(&self.coeffs, window)
         }
 }
 
 #[inline]
-fn simd_dot_product(coeffs: &[f32], samples: &[f32]) -> f32 {
+fn dot_product(coeffs: &[f32], samples: &[f32]) -> f32 {
         debug_assert_eq!(coeffs.len(), samples.len());
     
         let mut sum = 0.0f32;

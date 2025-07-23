@@ -4,62 +4,99 @@ use crate::channel::builders::{
 use crate::channel::upsampler::Upsampler;
 use crate::channel::Channel;
 
-
-pub struct ChannelBuilder {
-        rms_builder: RMSBuilder,
-        peak_builder: PeakBuilder,
-        clipping_samples_builder: ClippingSamplesBuilder,
-        average_sample_value_builder: AverageSampleValueBuilder,
-        sample_counter: u64,
-        upsampler: Upsampler,
-        zero_crossing_rate_builder: ZeroCrossingRateBuilder
+struct UpsamplerOutput {
+        true_peak: f32,
+        true_clipping_samples: i32,
+        samples_count: u64
 }
 
+pub struct ChannelBuilder {}
+
 impl ChannelBuilder {
-        pub fn new(sample_rate: u32, samples_per_channel: u64) -> ChannelBuilder {
-                ChannelBuilder { 
-                        rms_builder: RMSBuilder::new(), 
-                        peak_builder: PeakBuilder::new(), 
-                        clipping_samples_builder: ClippingSamplesBuilder::new(), 
-                        average_sample_value_builder: AverageSampleValueBuilder::new(), 
-                        sample_counter: samples_per_channel,
-                        upsampler: Upsampler::new(4, sample_rate, samples_per_channel),
-                        zero_crossing_rate_builder: ZeroCrossingRateBuilder::new(samples_per_channel)
-                }
-        }
-
         #[inline]
-        pub fn add(&mut self, sample: f32) {
-                self.rms_builder.add(sample);
-                self.average_sample_value_builder.add(sample);
-                self.upsampler.add(sample);
-                self.peak_builder.add(sample);
-                self.clipping_samples_builder.add(sample);
-                self.zero_crossing_rate_builder.add(sample);
-        }
+        pub fn from_samples(samples: &[f32], sample_rate: u32, samples_count: u64) -> Channel {
+                let mut rms = 0.0f32;
+                let mut peak = 0.0f32;
+                let mut clipping_samples_count = 0;
+                let mut average_sample_value = 0.0f32;
+                let mut zero_crossing_rate = 0.0f32;
+                let mut upsampler_output = UpsamplerOutput{ true_peak: 0.0, true_clipping_samples: 0, samples_count: 0 };
 
-        pub fn build(mut self) -> Channel {
-                self.upsampler.finalize();
+                rayon::scope(|s| {
+                        s.spawn(|_| coumpute_rms(samples,  &mut rms));
+                        s.spawn(|_| coumpute_peak(samples, &mut peak));
+                        s.spawn(|_| count_clipping_samples(samples, &mut clipping_samples_count));
+                        s.spawn(|_| coumpute_average_sample_value(samples, &mut average_sample_value));
+                        s.spawn(|_| coumpute_zero_crossing_rate(samples, samples_count,&mut zero_crossing_rate));
+                        s.spawn(|_| compute_upsampled_statistics(samples, sample_rate, samples_count, &mut upsampler_output));
+                });
 
-                let rms = self.rms_builder.build();
-                let peak = self.peak_builder.build();
-                let clipping_samples_count = self.clipping_samples_builder.build();
-                let average_sample_value = self.average_sample_value_builder.build();
-                let true_peak = self.upsampler.peak;
-                let zero_crossing_rate = self.zero_crossing_rate_builder.build();
-                
+                let true_clipping_samples_count = upsampler_output.true_clipping_samples;
+                let upsampled_samples_count = upsampler_output.samples_count;
+                let true_peak = upsampler_output.true_peak;
+
                 Channel {
                         rms,
-                        clipping_samples_count,
-                        true_clipping_samples_count: self.upsampler.clipping_samples,
                         peak,
-                        average_sample_value,
-                        samples_count: self.sample_counter,
-                        upsampled_samples_count: self.upsampler.samples_count,
                         true_peak,
-                        zero_crossing_rate
+                        samples_count,
+                        zero_crossing_rate,
+                        average_sample_value,
+                        clipping_samples_count,
+                        upsampled_samples_count,
+                        true_clipping_samples_count
                 }
         }
     
 }
 
+fn coumpute_rms(samples: &[f32], output: &mut f32) {
+        let mut builder = RMSBuilder::new();
+        for sample in samples {
+                builder.add(*sample);
+        }
+        *output = builder.build()
+}
+
+fn coumpute_peak(samples: &[f32], output: &mut f32) {
+        let mut builder = PeakBuilder::new();
+        for sample in samples {
+                builder.add(*sample);
+        }
+        *output = builder.build()
+}
+
+fn count_clipping_samples(samples: &[f32], output: &mut i32) {
+        let mut rms_builder = ClippingSamplesBuilder::new();
+        for sample in samples {
+                rms_builder.add(*sample);
+        }
+        *output = rms_builder.build()
+}
+
+fn coumpute_average_sample_value(samples: &[f32], output: &mut f32) {
+        let mut builder = AverageSampleValueBuilder::new();
+        for sample in samples {
+                builder.add(*sample);
+        }
+        *output = builder.build()
+}
+
+fn coumpute_zero_crossing_rate(samples: &[f32], samples_count: u64, output: &mut f32) {
+        let mut builder = ZeroCrossingRateBuilder::new(samples_count);
+        for sample in samples {
+                builder.add(*sample);
+        }
+        *output = builder.build()
+}
+
+fn compute_upsampled_statistics(samples: &[f32], sample_rate: u32, samples_count: u64, output: &mut UpsamplerOutput) {
+        let mut builder = Upsampler::new(4, sample_rate, samples_count);
+        for sample in samples {
+                builder.add(*sample);
+        }
+        builder.finalize();
+        output.samples_count = builder.samples_count;
+        output.true_clipping_samples = builder.clipping_samples;
+        output.true_peak = builder.peak;
+}

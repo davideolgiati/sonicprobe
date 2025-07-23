@@ -42,20 +42,8 @@ impl FlacFile {
                         .unzip();
     
                 let (left_channel, right_channel) = rayon::join(
-                        || {
-                                let mut left_builder = ChannelBuilder::new(sample_rate, samples_count);
-                                for sample in left_samples {
-                                        left_builder.add(sample);
-                                }
-                                left_builder.build()
-                        },
-                        || {
-                                let mut right_builder = ChannelBuilder::new(sample_rate, samples_count);
-                                for sample in right_samples {
-                                        right_builder.add(sample);
-                                }
-                                right_builder.build()
-                        }
+                        || ChannelBuilder::from_samples(&left_samples, sample_rate, samples_count),
+                        || ChannelBuilder::from_samples(&right_samples, sample_rate, samples_count)
                 );
 
                 FlacFile {

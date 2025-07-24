@@ -10,13 +10,26 @@ pub struct Channel {
         peak: f32,
         clipping_samples_count: u32,
         true_clipping_samples_count: u32,
-        average_sample_value: f32,
+        dc_offset: f32,
         samples_count: u64,
         true_peak: f32,
         zero_crossing_rate: f32
 }
 
 impl Channel {
+        pub fn empty() -> Channel {
+                Channel {
+                        rms: 0.0,
+                        peak: 0.0,
+                        clipping_samples_count: 0,
+                        true_clipping_samples_count: 0,
+                        dc_offset: 0.0,
+                        samples_count: 0,
+                        true_peak: 0.0,
+                        zero_crossing_rate: 0.0
+                }
+        }
+
         pub fn rms(&self) -> f32 {
                 to_dbfs(self.rms)
         }
@@ -37,8 +50,8 @@ impl Channel {
                 (self.true_clipping_samples_count as f64 / self.samples_count as f64) as f32
         }
 
-        pub fn average_sample_value(&self) -> f32 {
-                self.average_sample_value
+        pub fn dc_offset(&self) -> f32 {
+                self.dc_offset
         }
 
         pub fn crest_factor(&self) -> f32 {
@@ -57,7 +70,7 @@ impl Channel {
                         format!("{}\"true_peak\": {},\n", inner_tab, self.true_peak()),
                         format!("{}\"clipping_samples_quota\": {},\n", inner_tab, self.clipping_samples_quota()),
                         format!("{}\"true_clipping_samples_quota\": {},\n", inner_tab, self.true_clipping_samples_quota()),
-                        format!("{}\"average_sample_value\": {},\n", inner_tab, self.average_sample_value()),
+                        format!("{}\"dc_offset\": {},\n", inner_tab, self.dc_offset()),
                         format!("{}\"crest_factor\": {}\n", inner_tab, self.crest_factor()),
                         format!("{}\"zero_crossing_rate\": {}", inner_tab, self.zero_crossing_rate()),       
                 ].concat();

@@ -4,6 +4,7 @@ use flac::{ReadStream, Stream};
 
 use crate::channel::Channel;
 use crate::channel::channel_builder::ChannelBuilder;
+use crate::stereo_correlation_builder::StereoCorrelationBuilder;
 
 const MAX_8_BIT: f32 = i8::MAX as f32;
 const MAX_16_BIT: f32 = i16::MAX as f32;
@@ -18,7 +19,8 @@ pub struct FlacFile {
         sample_rate: u32,
         bit_depth: u8,
         duration: f32,
-        samples_count: u64
+        samples_count: u64,
+        stereo_correlation: f32
 }
 
 impl FlacFile {
@@ -41,10 +43,19 @@ impl FlacFile {
                         .map(|pair| (pair[0], pair[1]))
                         .unzip();
     
-                let (left_channel, right_channel) = rayon::join(
-                        || ChannelBuilder::from_samples(&left_samples, sample_rate, samples_count),
-                        || ChannelBuilder::from_samples(&right_samples, sample_rate, samples_count)
-                );
+                let mut left_channel: Channel = Channel::empty();
+                let mut right_channel: Channel = Channel::empty();
+                let mut stereo_correlation: f32 = 0.0;
+
+                rayon::scope(|s| {
+                        s.spawn(|_| left_channel = ChannelBuilder::from_samples(&left_samples, sample_rate, samples_count));
+                        s.spawn(|_| right_channel = ChannelBuilder::from_samples(&right_samples, sample_rate, samples_count));
+                        s.spawn(|_| {
+                                let mut stereo_correlation_builder = StereoCorrelationBuilder::new();
+                                stereo_correlation_builder.add(&left_samples, &right_samples);
+                                stereo_correlation = stereo_correlation_builder.build();
+                        });
+                });
 
                 FlacFile {
                         left: left_channel,
@@ -53,7 +64,8 @@ impl FlacFile {
                         channels,
                         sample_rate,
                         duration: samples_count as f32 / sample_rate as f32,
-                        samples_count
+                        samples_count,
+                        stereo_correlation
                 }
         }
 
@@ -77,7 +89,7 @@ impl FlacFile {
                 self.bit_depth
         }
 
-        pub fn channel_balance(&self) -> f32 {
+        pub fn rms_balance(&self) -> f32 {
                 self.left.rms() - self.right.rms()
         }
 
@@ -89,6 +101,10 @@ impl FlacFile {
                 self.samples_count
         }
 
+        pub fn stereo_correlation(&self) -> f32 {
+                self.stereo_correlation
+        }
+
         pub fn to_json_string(&self) -> String {
                 let inner_tab: String = "\t".to_string();
                 let output = [
@@ -97,7 +113,8 @@ impl FlacFile {
                         format!("{}\"bit_depth\": {},\n", inner_tab, self.bit_depth()),
                         format!("{}\"duration\": {},\n",  inner_tab, self.duration()),
                         format!("{}\"samples_count\": {},\n",  inner_tab, self.samples_count()),   
-                        format!("{}\"channel_balance\": {},\n", inner_tab, self.channel_balance()),
+                        format!("{}\"rms_balance\": {},\n", inner_tab, self.rms_balance()),
+                        format!("{}\"stereo_correlation\": {},\n", inner_tab, self.stereo_correlation()),
                         format!("{}\"left\": {},\n", inner_tab, self.left.to_json_string(1)),
                         format!("{}\"right\": {}\n", inner_tab, self.right.to_json_string(1)),
                 ].concat();

@@ -1,5 +1,5 @@
 mod rms_builder;
-mod avarage_sample_value_builder;
+mod dc_offset_builder;
 mod peak_builder;
 mod clipping_samples_builder;
 mod zero_crossing_rate_builder;
@@ -10,7 +10,7 @@ pub struct ClippingSamplesBuilder {
 }
 
 #[derive(Clone, Copy)]
-pub struct AverageSampleValueBuilder {
+pub struct DCOffsetBuilder {
         sum: f64,
         count: usize
 }

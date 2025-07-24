@@ -1,5 +1,5 @@
 use crate::channel::builders::{
-        ClippingSamplesBuilder, AverageSampleValueBuilder, PeakBuilder, RMSBuilder, ZeroCrossingRateBuilder
+        ClippingSamplesBuilder, DCOffsetBuilder, PeakBuilder, RMSBuilder, ZeroCrossingRateBuilder
 };
 use crate::channel::upsampler::Upsampler;
 use crate::channel::Channel;
@@ -17,7 +17,7 @@ impl ChannelBuilder {
                 let mut rms = 0.0f32;
                 let mut peak = 0.0f32;
                 let mut clipping_samples_count = 0;
-                let mut average_sample_value = 0.0f32;
+                let mut dc_offset = 0.0f32;
                 let mut zero_crossing_rate = 0.0f32;
                 let mut upsampler_output = UpsamplerOutput{ true_peak: 0.0, true_clipping_samples: 0 };
 
@@ -25,7 +25,7 @@ impl ChannelBuilder {
                         s.spawn(|_| coumpute_rms(samples,  &mut rms));
                         s.spawn(|_| coumpute_peak(samples, &mut peak));
                         s.spawn(|_| count_clipping_samples(samples, &mut clipping_samples_count));
-                        s.spawn(|_| coumpute_average_sample_value(samples, &mut average_sample_value));
+                        s.spawn(|_| coumpute_dc_offset(samples, &mut dc_offset));
                         s.spawn(|_| coumpute_zero_crossing_rate(samples, samples_count, sample_rate,&mut zero_crossing_rate));
                         s.spawn(|_| compute_upsampled_statistics(samples, sample_rate, &mut upsampler_output));
                 });
@@ -39,7 +39,7 @@ impl ChannelBuilder {
                         true_peak,
                         samples_count,
                         zero_crossing_rate,
-                        average_sample_value,
+                        dc_offset,
                         clipping_samples_count,
                         true_clipping_samples_count
                 }
@@ -71,8 +71,8 @@ fn count_clipping_samples(samples: &[f32], output: &mut u32) {
         *output = rms_builder.build()
 }
 
-fn coumpute_average_sample_value(samples: &[f32], output: &mut f32) {
-        let mut builder = AverageSampleValueBuilder::new();
+fn coumpute_dc_offset(samples: &[f32], output: &mut f32) {
+        let mut builder = DCOffsetBuilder::new();
         for sample in samples {
                 builder.add(*sample);
         }

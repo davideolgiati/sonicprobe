@@ -1,8 +1,8 @@
-use crate::channel::builders::AverageSampleValueBuilder;
+use crate::channel::builders::DCOffsetBuilder;
 
-impl AverageSampleValueBuilder {
-        pub fn new() -> AverageSampleValueBuilder {
-                AverageSampleValueBuilder {
+impl DCOffsetBuilder {
+        pub fn new() -> DCOffsetBuilder {
+                DCOffsetBuilder {
                         sum: 0.0,
                         count: 0
                 }

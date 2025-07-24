@@ -34,10 +34,6 @@ impl Upsampler {
         }
 
         pub fn add(&mut self, sample: f32) {
-                if self.window.len() == 0 {
-                        self.window.push(sample as f64);
-                }
-
                 self.window.push(sample as f64);
                 
                 if self.window.len() < 4 {

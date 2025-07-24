@@ -28,7 +28,8 @@ pub fn low_pass_filter(cutoff: f32, sample_rate: f32, numtaps: i16) -> Vec<f32> 
         |n| 0.54 - 0.46 * ((2.0 * f32::consts::PI * n as f32) / (numtaps - 1) as f32).cos()
     ).collect::<Vec<f32>>();
 
-    (0..numtaps)
+    // generazione
+    let mut coeffs: Vec<f32> = (0..numtaps)
         .map(|n| {
             let offset = n - window_center;
             
@@ -38,5 +39,15 @@ pub fn low_pass_filter(cutoff: f32, sample_rate: f32, numtaps: i16) -> Vec<f32> 
                 center_frequency / f32::consts::PI * window[n as usize]
             }
         })
-        .collect()
+        .collect();
+
+    // normalizzazione
+    let sum: f32 = coeffs.iter().sum();
+    if sum != 0.0 {
+        for coeff in &mut coeffs {
+            *coeff /= sum;
+        }
+    }
+
+    coeffs
 }

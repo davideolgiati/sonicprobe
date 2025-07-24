@@ -30,11 +30,11 @@ impl Channel {
         }
 
         pub fn clipping_samples_quota(&self) -> f32 {
-                ((self.clipping_samples_count as f64 / self.samples_count as f64) * 100.0) as f32
+                (self.clipping_samples_count as f64 / self.samples_count as f64) as f32
         }
 
         pub fn true_clipping_samples_quota(&self) -> f32 {
-                ((self.true_clipping_samples_count as f64 / self.samples_count as f64) * 100.0) as f32
+                (self.true_clipping_samples_count as f64 / self.samples_count as f64) as f32
         }
 
         pub fn average_sample_value(&self) -> f32 {
@@ -55,8 +55,8 @@ impl Channel {
                         format!("{}\"rms\": {},\n", inner_tab, self.rms()),
                         format!("{}\"peak\": {},\n", inner_tab, self.peak()),
                         format!("{}\"true_peak\": {},\n", inner_tab, self.true_peak()),
-                        format!("{}\"clipping_samples_quota\": {},\n", inner_tab, self.clipping_samples_quota() / 100.0),
-                        format!("{}\"true_clipping_samples_quota\": {},\n", inner_tab, self.true_clipping_samples_quota() / 100.0),
+                        format!("{}\"clipping_samples_quota\": {},\n", inner_tab, self.clipping_samples_quota()),
+                        format!("{}\"true_clipping_samples_quota\": {},\n", inner_tab, self.true_clipping_samples_quota()),
                         format!("{}\"average_sample_value\": {},\n", inner_tab, self.average_sample_value()),
                         format!("{}\"crest_factor\": {}\n", inner_tab, self.crest_factor()),
                         format!("{}\"zero_crossing_rate\": {}", inner_tab, self.zero_crossing_rate()),       

@@ -1,10 +1,11 @@
 use crate::{audio_utils::low_pass_filter, circular_buffer::CircularBuffer};
 
-const NUMTAPS: i16 = 128;
+const NUMTAPS: i16 = 255;
 
 pub struct LowPassFilter {
-        coeffs: Vec<f32>,
-        window: CircularBuffer<f32>
+        coeffs: [f32; 255],
+        window: CircularBuffer<f32>,
+        window_buffer: [f32; 255]
 }
 
 impl LowPassFilter {
@@ -20,25 +21,29 @@ impl LowPassFilter {
 
                 coeffs.reverse();
 
+                let mut coeffs_slice= [0.0f32; 255]; 
+                coeffs_slice.copy_from_slice(&coeffs);
+
                 LowPassFilter { 
-                        coeffs,
+                        coeffs: coeffs_slice,
                         window: CircularBuffer::new(
                                 NUMTAPS as usize,
                                 0.0
-                        )
+                        ),
+                        window_buffer: [0.0f32; 255]
                 }
         }
 
         pub fn filter(&mut self, sample: f32) -> f32 {
                 self.window.push(sample);
-                let window = self.window.collect();
+                self.window_buffer.copy_from_slice(self.window.collect());
                 
-                dot_product(&self.coeffs, window)
+                dot_product(&self.coeffs, &self.window_buffer)
         }
 }
 
 #[inline]
-fn dot_product(coeffs: &[f32], samples: &[f32]) -> f32 {
+fn dot_product(coeffs: &[f32; 255], samples: &[f32; 255]) -> f32 {
         debug_assert_eq!(coeffs.len(), samples.len());
     
         let mut sum = 0.0f32;

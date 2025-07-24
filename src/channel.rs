@@ -8,11 +8,10 @@ use crate::audio_utils::to_dbfs;
 pub struct Channel {
         rms: f32,
         peak: f32,
-        clipping_samples_count: i32,
-        true_clipping_samples_count: i32,
+        clipping_samples_count: u32,
+        true_clipping_samples_count: u32,
         average_sample_value: f32,
         samples_count: u64,
-        upsampled_samples_count: u64,
         true_peak: f32,
         zero_crossing_rate: f32
 }
@@ -31,11 +30,11 @@ impl Channel {
         }
 
         pub fn clipping_samples_quota(&self) -> f32 {
-                (self.clipping_samples_count as f32 / self.samples_count as f32) * 100.0
+                ((self.clipping_samples_count as f64 / self.samples_count as f64) * 100.0) as f32
         }
 
         pub fn true_clipping_samples_quota(&self) -> f32 {
-                (self.true_clipping_samples_count as f32 / self.upsampled_samples_count as f32) * 100.0
+                ((self.true_clipping_samples_count as f64 / self.samples_count as f64) * 100.0) as f32
         }
 
         pub fn average_sample_value(&self) -> f32 {

@@ -2,8 +2,7 @@ use crate::{audio_utils::catmull_rom_interpolation, channel::{builders::{Clippin
 
 pub struct Upsampler {
         pub peak: f32,
-        pub clipping_samples: i32,
-        pub samples_count: u64,
+        pub clipping_samples: u32,
         peak_builder: PeakBuilder,
         clipping_samples_builder: ClippingSamplesBuilder,
         window: CircularBuffer<f64>,
@@ -12,7 +11,7 @@ pub struct Upsampler {
 }
 
 impl Upsampler {
-        pub fn new(factor: u8, original_frequency: u32, original_size: u64) -> Upsampler {
+        pub fn new(factor: u8, original_frequency: u32) -> Upsampler {
                 let lp_filter = LowPassFilter::new(
                         original_frequency, factor as u32
                 );
@@ -20,7 +19,6 @@ impl Upsampler {
                 Upsampler {
                         peak: f32::MIN,
                         clipping_samples: 0,
-                        samples_count: original_size * factor as u64,
                         peak_builder: PeakBuilder::new(),
                         clipping_samples_builder: ClippingSamplesBuilder::new(),
                         window: CircularBuffer::new(4, 0.0),

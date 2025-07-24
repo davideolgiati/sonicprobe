@@ -14,12 +14,13 @@ impl ClippingSamplesBuilder {
                 }
         }
 
-        pub fn build(self) -> i32 {
+        pub fn build(self) -> u32 {
                 self.count
         }
 }
 
 #[inline]
 pub fn is_clipping(sample: f32) -> bool {
-        (sample - 1.0).abs() < f32::EPSILON || (sample - (-1.0)).abs() < f32::EPSILON
+        (sample - 1.0).abs() < f32::EPSILON 
+        || (sample - -1.0).abs() < f32::EPSILON
 }

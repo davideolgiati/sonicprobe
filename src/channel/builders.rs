@@ -6,7 +6,7 @@ mod zero_crossing_rate_builder;
 
 #[derive(Clone, Copy)]
 pub struct ClippingSamplesBuilder {
-        count: i32
+        count: u32
 }
 
 #[derive(Clone, Copy)]
@@ -28,6 +28,6 @@ pub struct RMSBuilder {
 
 pub struct ZeroCrossingRateBuilder {
         count: u64,
-        total_samples: u64,
+        duration: f32,
         current_sign: i8
 }

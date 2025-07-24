@@ -41,7 +41,7 @@ fn print_channel_details(channel: &Channel, name: &str) {
         format!("\tTrue Peak: {:.2} db\n", channel.true_peak()),
         format!("\tTrue Clipping: {:.3} %\n", channel.true_clipping_samples_quota()),
         format!("\tCrest Factor: {:.2} db\n", channel.crest_factor()),
-        format!("\tZero Crossing Rate: {:.3} %\n", channel.zero_crossing_rate()),
+        format!("\tZero Crossing Rate: {:.0} Hz\n", channel.zero_crossing_rate()),
     ].concat();
 
     println!("{}", output);
@@ -59,6 +59,7 @@ fn main() {
     if *args.output_format() == OutputFormat::Json {
         println!("{}", flac_details.to_json_string())
     } else {
+        println!("Filename: {}", args.file_path());
         print_file_details(&flac_details);
         print_channel_details(flac_details.left(), "Left");
         print_channel_details(flac_details.right(), "Right");

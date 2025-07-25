@@ -94,20 +94,19 @@ fn print_file_details(filename: &str, file: &FlacFile) {
     println!("   {:<18} : {}", "RMS Balance (L/R)", format_db(file.rms_balance()));
     println!("   {:<18} :  {:.2}", "Stereo Correlation", file.stereo_correlation());
     
-    println!("\n\n{}┬{}┬{}", "─".repeat(29), "─".repeat(18), "─".repeat(21));
-    println!("   {:<23}   │   {:>12}   │   {:>12}", "CHANNEL ANALYSIS", "LEFT", "RIGHT");
-    println!("{}┼{}┼{}", "─".repeat(29), "─".repeat(18), "─".repeat(21));
-    println!("   {:<23}   │   {:>12}   │   {:>12}", "RMS Level", format_db(left.rms()), format_db(right.rms()));
-    println!("   {:<23}   │   {:>12}   │   {:>12}", "Peak Level", format_db(left.peak()), format_db(right.peak()));
-    println!("   {:<23}   │   {:>12}   │   {:>12}", "True Peak", format_db(left.true_peak()), format_db(right.true_peak()));
-    println!("   {:<23}   │   {:>12}   │   {:>12}", "Crest Factor", format_db(left.crest_factor()), format_db(right.crest_factor()));
-    println!("   {:<23}   │   {:>12}   │   {:>12}", "DC Offset", format_volt(left.dc_offset()), format_volt(right.dc_offset()));
-    println!("   {:<23}   │   {:>12}   │   {:>12}", "Zero Crossing Rate", format_hz(left.zero_crossing_rate().round() as u32), format_hz(right.zero_crossing_rate().round() as u32));
-    println!("{}┼{}┼{}", "─".repeat(29), "─".repeat(18), "─".repeat(21));
-    println!("   {:<23}   │   {:>9.5}  %   │   {:>9.5}  %", "Clipping", left.clipping_samples_quota() * 100.0, right.clipping_samples_quota() * 100.0);
-    println!("   {:<23}   │   {:>9.5}  %   │   {:>9.5}  %", "True Clipping", left.true_clipping_samples_quota() * 100.0, right.true_clipping_samples_quota() * 100.0);
-    println!("{}┴{}┴{}", "─".repeat(29), "─".repeat(18), "─".repeat(21));
-    println!("{}", "=".repeat(70));
+    println!("\n\n┌{}┬{}┬{}┐", "─".repeat(28), "─".repeat(19), "─".repeat(20));
+    println!("│  {:<23}   │    {:>12}   │     {:>12}   │", "CHANNEL ANALYSIS", "LEFT", "RIGHT");
+    println!("├{}┼{}┼{}┤", "─".repeat(28), "─".repeat(19), "─".repeat(20));
+    println!("│  {:<23}   │    {:>12}   │     {:>12}   │", "RMS Level", format_db(left.rms()), format_db(right.rms()));
+    println!("│  {:<23}   │    {:>12}   │     {:>12}   │", "Peak Level", format_db(left.peak()), format_db(right.peak()));
+    println!("│  {:<23}   │    {:>12}   │     {:>12}   │", "True Peak", format_db(left.true_peak()), format_db(right.true_peak()));
+    println!("│  {:<23}   │    {:>12}   │     {:>12}   │", "Crest Factor", format_db(left.crest_factor()), format_db(right.crest_factor()));
+    println!("│  {:<23}   │    {:>12}   │     {:>12}   │", "DC Offset", format_volt(left.dc_offset()), format_volt(right.dc_offset()));
+    println!("│  {:<23}   │    {:>12}   │     {:>12}   │", "Zero Crossing Rate", format_hz(left.zero_crossing_rate().round() as u32), format_hz(right.zero_crossing_rate().round() as u32));
+    println!("├{}┼{}┼{}┤", "─".repeat(28), "─".repeat(19), "─".repeat(20));
+    println!("│  {:<23}   │    {:>9.5}  %   │     {:>9.5}  %   │", "Clipping", left.clipping_samples_quota() * 100.0, right.clipping_samples_quota() * 100.0);
+    println!("│  {:<23}   │    {:>9.5}  %   │     {:>9.5}  %   │", "True Clipping", left.true_clipping_samples_quota() * 100.0, right.true_clipping_samples_quota() * 100.0);
+    println!("└{}┴{}┴{}┘\n\n", "─".repeat(28), "─".repeat(19), "─".repeat(20));
 
 }
 

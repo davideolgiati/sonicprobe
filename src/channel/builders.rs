@@ -9,10 +9,10 @@ pub struct ClippingSamplesBuilder {
         count: u32
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct DCOffsetBuilder {
-        sum: f64,
-        count: usize
+        partials: Vec<f64>,
+        count: u64
 }
 
 #[derive(Clone, Copy)]
@@ -20,10 +20,10 @@ pub struct PeakBuilder {
         current_max: f32
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct RMSBuilder {
-        sum: f64,
-        count: usize
+        partials: Vec<f64>,
+        count: u64
 }
 
 pub struct ZeroCrossingRateBuilder {

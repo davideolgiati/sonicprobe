@@ -22,10 +22,10 @@ impl ChannelBuilder {
                 let mut upsampler_output = UpsamplerOutput{ true_peak: 0.0, true_clipping_samples: 0 };
 
                 rayon::scope(|s| {
-                        s.spawn(|_| coumpute_rms(samples,  &mut rms));
+                        s.spawn(|_| coumpute_rms(samples, samples_count, &mut rms));
                         s.spawn(|_| coumpute_peak(samples, &mut peak));
                         s.spawn(|_| count_clipping_samples(samples, &mut clipping_samples_count));
-                        s.spawn(|_| coumpute_dc_offset(samples, &mut dc_offset));
+                        s.spawn(|_| coumpute_dc_offset(samples, samples_count, &mut dc_offset));
                         s.spawn(|_| coumpute_zero_crossing_rate(samples, samples_count, sample_rate,&mut zero_crossing_rate));
                         s.spawn(|_| compute_upsampled_statistics(samples, sample_rate, &mut upsampler_output));
                 });
@@ -47,8 +47,8 @@ impl ChannelBuilder {
     
 }
 
-fn coumpute_rms(samples: &[f32], output: &mut f32) {
-        let mut builder = RMSBuilder::new();
+fn coumpute_rms(samples: &[f32], samples_count: u64, output: &mut f32) {
+        let mut builder = RMSBuilder::new(samples_count);
         for sample in samples {
                 builder.add(*sample);
         }
@@ -71,8 +71,8 @@ fn count_clipping_samples(samples: &[f32], output: &mut u32) {
         *output = rms_builder.build()
 }
 
-fn coumpute_dc_offset(samples: &[f32], output: &mut f32) {
-        let mut builder = DCOffsetBuilder::new();
+fn coumpute_dc_offset(samples: &[f32], samples_count: u64, output: &mut f32) {
+        let mut builder = DCOffsetBuilder::new(samples_count);
         for sample in samples {
                 builder.add(*sample);
         }

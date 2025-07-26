@@ -5,6 +5,7 @@ mod audio_utils;
 mod output_format;
 mod circular_buffer;
 mod stereo_correlation_builder;
+mod true_bit_depth_builder;
 
 extern crate flac;
 
@@ -88,6 +89,7 @@ fn print_file_details(filename: &str, file: &FlacFile) {
     println!("   {:<18} : {}", "Sample Count", file.samples_count());
     println!("   {:<18} : {:02.0}:{:02.0}", "Duration", minutes, seconds);
     println!("   {:<18} : {} bit / {}", "Format", file.bit_depth(), format_hz(file.sample_rate()));
+    println!("   {:<18} : {} bit (Range {}-{})", "Bit depth usage", file.true_bit_depth(), file.min_bit_depth(),file.max_bit_depth());
     
     println!("\n\n── STEREO FIELD ANALYSIS {}\n", "─".repeat(45));
     println!("   {:<18} :  {}", "Channels", file.channel_count());

@@ -87,8 +87,8 @@ fn coumpute_zero_crossing_rate(samples: &[f32], samples_count: u64, sample_rate:
         *output = builder.build()
 }
 
-fn compute_upsampled_statistics(samples: &[f32], sample_rate: u32, output: &mut UpsamplerOutput) {
-        let mut builder = Upsampler::new(4, sample_rate);
+fn compute_upsampled_statistics(samples: &[f32], original_frequency: u32, output: &mut UpsamplerOutput) {
+        let mut builder = Upsampler::new(original_frequency);
         for sample in samples {
                 builder.add(*sample);
         }

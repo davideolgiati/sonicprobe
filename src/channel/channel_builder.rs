@@ -1,5 +1,5 @@
 use crate::channel::builders::{
-        ClippingSamplesBuilder, DCOffsetBuilder, PeakBuilder, RMSBuilder, ZeroCrossingRateBuilder
+        ClippingSamplesBuilder, DCOffsetBuilder, DRBuilder, PeakBuilder, RMSBuilder, ZeroCrossingRateBuilder
 };
 use crate::channel::upsampler::Upsampler;
 use crate::channel::Channel;
@@ -20,6 +20,7 @@ impl ChannelBuilder {
                 let mut dc_offset = 0.0f32;
                 let mut zero_crossing_rate = 0.0f32;
                 let mut upsampler_output = UpsamplerOutput{ true_peak: 0.0, true_clipping_samples: 0 };
+                let mut dr_builder = DRBuilder::new(sample_rate); 
 
                 rayon::scope(|s| {
                         s.spawn(|_| coumpute_rms(samples, samples_count, &mut rms));
@@ -28,10 +29,12 @@ impl ChannelBuilder {
                         s.spawn(|_| coumpute_dc_offset(samples, samples_count, &mut dc_offset));
                         s.spawn(|_| coumpute_zero_crossing_rate(samples, samples_count, sample_rate,&mut zero_crossing_rate));
                         s.spawn(|_| compute_upsampled_statistics(samples, sample_rate, &mut upsampler_output));
+                        s.spawn(|_| dr_builder.add(samples));
                 });
 
                 let true_clipping_samples_count = upsampler_output.true_clipping_samples;
                 let true_peak = upsampler_output.true_peak;
+                let dr = dr_builder.build(true_peak);
 
                 Channel {
                         rms,
@@ -41,7 +44,8 @@ impl ChannelBuilder {
                         zero_crossing_rate,
                         dc_offset,
                         clipping_samples_count,
-                        true_clipping_samples_count
+                        true_clipping_samples_count,
+                        dr
                 }
         }
     

@@ -1,4 +1,4 @@
-use crate::ui::{audio::{format_db, format_hz, format_volt}, format_percent};
+use crate::ui::{audio::{format_db, format_dr, format_hz, format_volt}, format_percent};
 
 pub struct Entry {
         value: String
@@ -37,6 +37,13 @@ impl Entry {
         pub fn from_percent(value: f32) -> Entry {
                 Entry {
                         value: format_percent(value)
+                }
+        }
+
+        pub fn from_dr(value: f32) -> Entry {
+                let new_value = value.round() as u32;
+                Entry {
+                        value: format_dr(new_value)
                 }
         }
 }

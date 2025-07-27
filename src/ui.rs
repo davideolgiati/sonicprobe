@@ -120,6 +120,11 @@ pub fn print_file_details(filename: &str, file: &FlacFile) {
             Entry::from_hz(left.zero_crossing_rate()),
             Entry::from_hz(right.zero_crossing_rate()),
         )
+        .add(
+            Entry::new("Dynamic Range"),
+            Entry::from_dr(left.dr()),
+            Entry::from_dr(right.dr()),
+        )
         .add_section()
         .add(
             Entry::new("Clipping"),

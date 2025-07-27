@@ -21,3 +21,7 @@ pub fn format_volt(value: f32) -> String {
 pub fn format_hz(value: u32) -> String {
     format!("{} Hz", value)
 }
+
+pub fn format_dr(value: u32) -> String {
+    format!("{} DR", value)
+}

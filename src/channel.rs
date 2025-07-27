@@ -13,7 +13,8 @@ pub struct Channel {
         dc_offset: f32,
         samples_count: u64,
         true_peak: f32,
-        zero_crossing_rate: f32
+        zero_crossing_rate: f32,
+        dr: f32
 }
 
 impl Channel {
@@ -26,7 +27,8 @@ impl Channel {
                         dc_offset: 0.0,
                         samples_count: 0,
                         true_peak: 0.0,
-                        zero_crossing_rate: 0.0
+                        zero_crossing_rate: 0.0,
+                        dr: 0.0
                 }
         }
 
@@ -62,9 +64,14 @@ impl Channel {
                 self.zero_crossing_rate
         }
 
+        pub fn dr(&self) -> f32 {
+                self.dr
+        }
+
         pub fn to_json_string(&self, father_tab: usize) -> String {
                 let inner_tab: String = "\t".repeat(father_tab + 1);
                 let output = [
+                        format!("{}\"dynamic_range\": {},\n", inner_tab, self.dr()),
                         format!("{}\"rms\": {},\n", inner_tab, self.rms()),
                         format!("{}\"peak\": {},\n", inner_tab, self.peak()),
                         format!("{}\"true_peak\": {},\n", inner_tab, self.true_peak()),

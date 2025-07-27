@@ -1,7 +1,9 @@
 mod filesystem;
 mod audio;
+mod table;
+mod entry;
 
-use crate::{flac_file::FlacFile, ui::{audio::{format_db, format_hz, format_volt}, filesystem::{filename_from_path, get_formatted_file_size}}};
+use crate::{flac_file::FlacFile, ui::{audio::{format_db, format_hz, format_volt}, entry::Entry, filesystem::{filename_from_path, get_formatted_file_size}, table::Table}};
 
 fn section_header(title: &str) -> String {
     let separator_len = 70 - title.len() - 4;
@@ -19,8 +21,14 @@ fn seconds_to_minute_mark(duration: f32) -> String {
     format!("{:02.0}:{:02.0}", minutes, seconds)
 }
 
-fn table_row(title: &str, left: &str, right: &str) -> String {
-        format!("│  {:<23}   │    {:>12}   │     {:>12}   │", title, left, right)
+pub fn format_percent(value: f32) -> String {
+    if value > 0.0 {
+        format!("+{:.5}  %", value * 100.0)
+    } else if value == 0.0 {
+        "0.00000  %".to_string()
+    } else {
+        format!("-{:.5}  %", value * 100.0)
+    }
 }
 
 pub fn print_file_details(filename: &str, file: &FlacFile) {
@@ -67,37 +75,19 @@ pub fn print_file_details(filename: &str, file: &FlacFile) {
         file.stereo_correlation()
     );
 
-    println!(
-        "\n\n┌{}┬{}┬{}┐",
-        "─".repeat(28),
-        "─".repeat(19),
-        "─".repeat(20)
-    );
-    println!("{}", table_row("CHANNEL ANALYSIS", "LEFT", "RIGHT"));
-    println!("├{}┼{}┼{}┤", "─".repeat(28), "─".repeat(19), "─".repeat(20));
-    println!("{}", table_row("RMS Level", &format_db(left.rms()), &format_db(right.rms())));
-    println!("{}", table_row("Peak Level", &format_db(left.peak()), &format_db(right.peak())));
-    println!("{}", table_row("True Peak", &format_db(left.true_peak()), &format_db(right.true_peak())));
-    println!("{}", table_row("Crest Factor", &format_db(left.crest_factor()), &format_db(right.crest_factor())));
-    println!("{}", table_row("DC Offset", &format_volt(left.dc_offset()), &format_volt(right.dc_offset())));
-    println!("{}", table_row("Zero Crossing Rate", &format_hz(left.zero_crossing_rate().round() as u32), &format_hz(right.zero_crossing_rate().round() as u32)));
-    println!("├{}┼{}┼{}┤", "─".repeat(28), "─".repeat(19), "─".repeat(20));
-    println!(
-        "│  {:<23}   │    {:>9.5}  %   │     {:>9.5}  %   │",
-        "Clipping",
-        left.clipping_samples_quota() * 100.0,
-        right.clipping_samples_quota() * 100.0
-    );
-    println!(
-        "│  {:<23}   │    {:>9.5}  %   │     {:>9.5}  %   │",
-        "True Clipping",
-        left.true_clipping_samples_quota() * 100.0,
-        right.true_clipping_samples_quota() * 100.0
-    );
-    println!(
-        "└{}┴{}┴{}┘\n\n",
-        "─".repeat(28),
-        "─".repeat(19),
-        "─".repeat(20)
-    );
+    let channels_details_table = Table::new()
+        .add(Entry::new("CHANNEL ANALYSIS"), Entry::new("LEFT"), Entry::new("RIGHT"))
+        .add_section()
+        .add("RMS Level", &format_db(left.rms()), &format_db(right.rms()))
+        .add("Peak Level", &format_db(left.peak()), &format_db(right.peak()))
+        .add("True Peak", &format_db(left.true_peak()), &format_db(right.true_peak()))
+        .add("Crest Factor", &format_db(left.crest_factor()), &format_db(right.crest_factor()))
+        .add("DC Offset", &format_volt(left.dc_offset()), &format_volt(right.dc_offset()))
+        .add("Zero Crossing Rate", &format_hz(left.zero_crossing_rate().round() as u32), &format_hz(right.zero_crossing_rate().round() as u32))
+        .add_section()
+        .add("Clipping", &format_percent(left.clipping_samples_quota()), &format_percent(right.clipping_samples_quota()))
+        .add("True Clipping", &format_percent(left.true_clipping_samples_quota()), &format_percent(right.true_clipping_samples_quota()))
+        .build();
+
+    println!("\n\n{}", channels_details_table)
 }

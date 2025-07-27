@@ -19,8 +19,6 @@ use crate::flac_file::FlacFile;
 use crate::output_format::OutputFormat;
 use crate::ui::print_file_details;
 
-
-
 fn main() {
     let cli_input: Vec<String> = env::args().collect();
     let args: CliArgs = CliArgs::new(&cli_input);

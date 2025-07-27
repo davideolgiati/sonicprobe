@@ -12,17 +12,17 @@ impl Table {
                 }
         }
 
-        pub fn add(&mut self, title: Entry, left: Entry, right: Entry) -> Table {
+        pub fn add(mut self, title: Entry, left: Entry, right: Entry) -> Table {
                 let new_row = table_row(&title.value(), &left.value(), &right.value());
                 self.elements.push(new_row);
 
-                self.clone()
+                self
         }
 
-        pub fn add_section(&mut self) -> Table {
+        pub fn add_section(mut self) -> Table {
                 self.elements.push(table_section());
 
-                self.clone()
+                self
         }
 
         pub fn build(&mut self) -> String {

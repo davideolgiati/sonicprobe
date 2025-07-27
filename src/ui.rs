@@ -1,9 +1,17 @@
-mod filesystem;
 mod audio;
-mod table;
 mod entry;
+mod filesystem;
+mod table;
 
-use crate::{flac_file::FlacFile, ui::{audio::{format_db, format_hz, format_volt}, entry::Entry, filesystem::{filename_from_path, get_formatted_file_size}, table::Table}};
+use crate::{
+    flac_file::FlacFile,
+    ui::{
+        audio::{format_db, format_hz},
+        entry::Entry,
+        filesystem::{filename_from_path, get_formatted_file_size},
+        table::Table,
+    },
+};
 
 fn section_header(title: &str) -> String {
     let separator_len = 70 - title.len() - 4;
@@ -76,17 +84,53 @@ pub fn print_file_details(filename: &str, file: &FlacFile) {
     );
 
     let channels_details_table = Table::new()
-        .add(Entry::new("CHANNEL ANALYSIS"), Entry::new("LEFT"), Entry::new("RIGHT"))
+        .add(
+            Entry::new("CHANNEL ANALYSIS"),
+            Entry::new("LEFT"),
+            Entry::new("RIGHT"),
+        )
         .add_section()
-        .add("RMS Level", &format_db(left.rms()), &format_db(right.rms()))
-        .add("Peak Level", &format_db(left.peak()), &format_db(right.peak()))
-        .add("True Peak", &format_db(left.true_peak()), &format_db(right.true_peak()))
-        .add("Crest Factor", &format_db(left.crest_factor()), &format_db(right.crest_factor()))
-        .add("DC Offset", &format_volt(left.dc_offset()), &format_volt(right.dc_offset()))
-        .add("Zero Crossing Rate", &format_hz(left.zero_crossing_rate().round() as u32), &format_hz(right.zero_crossing_rate().round() as u32))
+        .add(
+            Entry::new("RMS Level"),
+            Entry::from_db(left.rms()),
+            Entry::from_db(right.rms()),
+        )
+        .add(
+            Entry::new("Peak Level"),
+            Entry::from_db(left.peak()),
+            Entry::from_db(right.peak()),
+        )
+        .add(
+            Entry::new("True Peak"),
+            Entry::from_db(left.true_peak()),
+            Entry::from_db(right.true_peak()),
+        )
+        .add(
+            Entry::new("Crest Factor"),
+            Entry::from_db(left.crest_factor()),
+            Entry::from_db(right.crest_factor()),
+        )
+        .add(
+            Entry::new("DC Offset"),
+            Entry::from_volt(left.dc_offset()),
+            Entry::from_volt(right.dc_offset()),
+        )
+        .add(
+            Entry::new("Zero Crossing Rate"),
+            Entry::from_hz(left.zero_crossing_rate()),
+            Entry::from_hz(right.zero_crossing_rate()),
+        )
         .add_section()
-        .add("Clipping", &format_percent(left.clipping_samples_quota()), &format_percent(right.clipping_samples_quota()))
-        .add("True Clipping", &format_percent(left.true_clipping_samples_quota()), &format_percent(right.true_clipping_samples_quota()))
+        .add(
+            Entry::new("Clipping"),
+            Entry::from_percent(left.clipping_samples_quota()),
+            Entry::from_percent(right.clipping_samples_quota()),
+        )
+        .add(
+            Entry::new("True Clipping"),
+            Entry::from_percent(left.true_clipping_samples_quota()),
+            Entry::from_percent(right.true_clipping_samples_quota()),
+        )
         .build();
 
     println!("\n\n{}", channels_details_table)

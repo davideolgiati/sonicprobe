@@ -19,7 +19,7 @@ impl DRBuilder {
                         if !last_chunk.is_empty() {
                                 let mut current_chunk = last_chunk.clone();
                                 current_chunk.append(&mut chunk.to_vec());
-                                let mut rms_builder = RMSBuilder::new(chunk_size as u64);
+                                let mut rms_builder = RMSBuilder::new();
                                 for sample in current_chunk {
                                         rms_builder.add(sample);
                                 }

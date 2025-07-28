@@ -23,7 +23,7 @@ impl ChannelBuilder {
                 let mut dr_builder = DRBuilder::new(sample_rate); 
 
                 rayon::scope(|s| {
-                        s.spawn(|_| coumpute_rms(samples, samples_count, &mut rms));
+                        s.spawn(|_| coumpute_rms(samples, &mut rms));
                         s.spawn(|_| coumpute_peak(samples, &mut peak));
                         s.spawn(|_| count_clipping_samples(samples, &mut clipping_samples_count));
                         s.spawn(|_| coumpute_dc_offset(samples, samples_count, &mut dc_offset));
@@ -51,8 +51,8 @@ impl ChannelBuilder {
     
 }
 
-fn coumpute_rms(samples: &[f32], samples_count: u64, output: &mut f32) {
-        let mut builder = RMSBuilder::new(samples_count);
+fn coumpute_rms(samples: &[f32], output: &mut f32) {
+        let mut builder = RMSBuilder::new();
         for sample in samples {
                 builder.add(*sample);
         }

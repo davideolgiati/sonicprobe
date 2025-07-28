@@ -1,16 +1,16 @@
 use crate::{audio_utils::low_pass_filter, circular_buffer::CircularBuffer};
 
-const NUMTAPS: i16 = 64; // TODO: renedrelo parametrico
+const NUMTAPS: i16 = 128; // TODO: renedrelo parametrico
 
 pub struct LowPassFilter {
-        coeffs: [f32; 64],
+        coeffs: [f32; 128],
         window: CircularBuffer<f32>,
-        window_buffer: [f32; 64]
+        window_buffer: [f32; 128]
 }
 
 impl LowPassFilter {
         pub fn new(original_frequency: u32, upsampling_factor: u32) -> LowPassFilter {
-                let cutoff_hz: f32 = (original_frequency as f32 * 0.8) / 2.0; // TODO: renederlo parametrico
+                let cutoff_hz: f32 = (original_frequency as f32) / 2.0;
                 let upsampled_freq: f32 = (original_frequency * upsampling_factor) as f32;
 
                 let mut coeffs: Vec<f32> = low_pass_filter(
@@ -21,7 +21,7 @@ impl LowPassFilter {
 
                 coeffs.reverse();
 
-                let mut coeffs_slice= [0.0f32; 64]; 
+                let mut coeffs_slice= [0.0f32; 128]; 
                 coeffs_slice.copy_from_slice(&coeffs);
 
                 LowPassFilter { 
@@ -30,7 +30,7 @@ impl LowPassFilter {
                                 NUMTAPS as usize,
                                 0.0
                         ),
-                        window_buffer: [0.0f32; 64]
+                        window_buffer: [0.0f32; 128]
                 }
         }
 
@@ -43,7 +43,7 @@ impl LowPassFilter {
 }
 
 #[inline]
-fn dot_product(coeffs: &[f32; 64], samples: &[f32; 64]) -> f32 {
+fn dot_product(coeffs: &[f32; 128], samples: &[f32; 128]) -> f32 {
         debug_assert_eq!(coeffs.len(), samples.len());
     
         let mut sum = 0.0f32;

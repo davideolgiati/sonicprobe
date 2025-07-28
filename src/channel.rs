@@ -5,6 +5,7 @@ mod builders;
 
 use crate::audio_utils::to_dbfs;
 
+#[derive(Clone, Copy)]
 pub struct Channel {
         rms: f32,
         peak: f32,
@@ -68,7 +69,7 @@ impl Channel {
                 self.dr
         }
 
-        pub fn to_json_string(&self, father_tab: usize) -> String {
+        pub fn as_json_string(&self, father_tab: usize) -> String {
                 let inner_tab: String = "\t".repeat(father_tab + 1);
                 let output = [
                         format!("{}\"dynamic_range\": {},\n", inner_tab, self.dr()),

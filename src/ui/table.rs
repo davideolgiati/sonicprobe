@@ -1,19 +1,32 @@
-use crate::ui::entry::Entry;
+use crate::{channel::Channel, ui::entry::Entry};
 
 #[derive(Clone)]
 pub struct Table{
+        left: Channel,
+        right: Channel,
         elements: Vec<String>
 }
 
 impl Table {
-        pub fn new() -> Table {
+        pub fn new(left: Channel, right: Channel) -> Table {
                 Table { 
+                        left,
+                        right,
                         elements: vec![table_head()]
                 }
         }
 
-        pub fn add(mut self, title: Entry, left: Entry, right: Entry) -> Table {
-                let new_row = table_row(&title.value(), &left.value(), &right.value());
+        pub fn add(mut self, title: &str, mapping_fn: fn(Channel) -> Entry) -> Table {
+                let left = mapping_fn(self.left);
+                let right = mapping_fn(self.right);
+                let new_row = table_row(title, &left.value(), &right.value());
+                self.elements.push(new_row);
+
+                self
+        }
+
+        pub fn set_headers(mut self, title: &str, left: &str, right: &str) -> Table {
+                let new_row = table_row(title, left, right);
                 self.elements.push(new_row);
 
                 self

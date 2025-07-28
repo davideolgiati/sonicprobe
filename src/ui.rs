@@ -83,59 +83,19 @@ pub fn print_file_details(filename: &str, file: &FlacFile) {
         file.stereo_correlation()
     );
 
-    let channels_details_table = Table::new()
-        .add(
-            Entry::new("CHANNEL ANALYSIS"),
-            Entry::new("LEFT"),
-            Entry::new("RIGHT"),
-        )
+    let channels_details_table = Table::new(*left, *right)
+        .set_headers("CHANNEL ANALYSIS","LEFT","RIGHT")
         .add_section()
-        .add(
-            Entry::new("RMS Level"),
-            Entry::from_db(left.rms()),
-            Entry::from_db(right.rms()),
-        )
-        .add(
-            Entry::new("Peak Level"),
-            Entry::from_db(left.peak()),
-            Entry::from_db(right.peak()),
-        )
-        .add(
-            Entry::new("True Peak"),
-            Entry::from_db(left.true_peak()),
-            Entry::from_db(right.true_peak()),
-        )
-        .add(
-            Entry::new("Crest Factor"),
-            Entry::from_db(left.crest_factor()),
-            Entry::from_db(right.crest_factor()),
-        )
-        .add(
-            Entry::new("DC Offset"),
-            Entry::from_volt(left.dc_offset()),
-            Entry::from_volt(right.dc_offset()),
-        )
-        .add(
-            Entry::new("Zero Crossing Rate"),
-            Entry::from_hz(left.zero_crossing_rate()),
-            Entry::from_hz(right.zero_crossing_rate()),
-        )
-        .add(
-            Entry::new("Dynamic Range"),
-            Entry::from_dr(left.dr()),
-            Entry::from_dr(right.dr()),
-        )
+        .add("RMS Level",|c| Entry::from_db(c.rms()))
+        .add("Peak Level", |c| Entry::from_db(c.peak()))
+        .add("True Peak", |c| Entry::from_db(c.true_peak()))
+        .add("Crest Factor", |c| Entry::from_db(c.crest_factor()))
+        .add("DC Offset", |c| Entry::from_volt(c.dc_offset()))
+        .add("Zero Crossing Rate" , |c| Entry::from_hz(c.zero_crossing_rate()))
+        .add("Dynamic Range", |c| Entry::from_dr(c.dr()))
         .add_section()
-        .add(
-            Entry::new("Clipping"),
-            Entry::from_percent(left.clipping_samples_quota()),
-            Entry::from_percent(right.clipping_samples_quota()),
-        )
-        .add(
-            Entry::new("True Clipping"),
-            Entry::from_percent(left.true_clipping_samples_quota()),
-            Entry::from_percent(right.true_clipping_samples_quota()),
-        )
+        .add("Clipping", |c| Entry::from_percent(c.clipping_samples_quota()))
+        .add("True Clipping", |c| Entry::from_percent(c.true_clipping_samples_quota()))
         .build();
 
     println!("\n\n{}", channels_details_table)

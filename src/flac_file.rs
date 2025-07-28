@@ -152,8 +152,8 @@ impl FlacFile {
                         format!("{}\"samples_count\": {},\n",  inner_tab, self.samples_count()),   
                         format!("{}\"rms_balance\": {},\n", inner_tab, self.rms_balance()),
                         format!("{}\"stereo_correlation\": {},\n", inner_tab, self.stereo_correlation()),
-                        format!("{}\"left\": {},\n", inner_tab, self.left.to_json_string(1)),
-                        format!("{}\"right\": {}\n", inner_tab, self.right.to_json_string(1)),
+                        format!("{}\"left\": {},\n", inner_tab, self.left.as_json_string(1)),
+                        format!("{}\"right\": {}\n", inner_tab, self.right.as_json_string(1)),
                 ].concat();
 
                 format!(

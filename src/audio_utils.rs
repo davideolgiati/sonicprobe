@@ -1,7 +1,7 @@
 use std::f32;
 
-pub fn to_dbfs(rms: f32) -> f32 {
-    20.0 * rms.log10()
+pub fn to_dbfs(dc: f32) -> f32 {
+    20.0 * dc.log10()
 }
 
 #[inline]

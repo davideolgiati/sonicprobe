@@ -6,7 +6,6 @@ mod table;
 use crate::{
     flac_file::FlacFile,
     ui::{
-        audio::{format_db, format_hz},
         entry::Entry,
         filesystem::{filename_from_path, get_formatted_file_size},
         table::Table,
@@ -29,16 +28,6 @@ fn seconds_to_minute_mark(duration: f32) -> String {
     format!("{:02.0}:{:02.0}", minutes, seconds)
 }
 
-pub fn format_percent(value: f32) -> String {
-    if value > 0.0 {
-        format!("+{:.5}  %", value * 100.0)
-    } else if value == 0.0 {
-        "0.00000  %".to_string()
-    } else {
-        format!("-{:.5}  %", value * 100.0)
-    }
-}
-
 pub fn print_file_details(filename: &str, file: &FlacFile) {
     let left = file.left();
     let right = file.right();
@@ -57,10 +46,10 @@ pub fn print_file_details(filename: &str, file: &FlacFile) {
         seconds_to_minute_mark(file.duration())
     );
     println!(
-        "   {:<18} : {} bit / {}",
+        "   {:<18} : {} / {}",
         "Format",
-        file.bit_depth(),
-        format_hz(file.sample_rate())
+        Entry::from_bit(file.bit_depth()).formatted(),
+        Entry::from_hz(file.sample_rate() as f32).formatted()
     );
     println!(
         "   {:<18} : {} bit (Range {}-{})",
@@ -75,7 +64,7 @@ pub fn print_file_details(filename: &str, file: &FlacFile) {
     println!(
         "   {:<18} : {}",
         "RMS Balance (L/R)",
-        format_db(file.rms_balance())
+        Entry::from_db(file.rms_balance()).formatted()
     );
     println!(
         "   {:<18} :  {:.2}",

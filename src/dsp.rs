@@ -9,6 +9,9 @@ use crate::{
 mod low_pass_filter;
 mod upsampler;
 
+const TARGET_FREQUENCY: u32 = 192000;
+const NUMTAPS: usize = 128;
+
 pub struct LowPassFilter {
         coeffs: [f32; 128],
         window: CircularBuffer<f32>,

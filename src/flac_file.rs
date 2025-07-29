@@ -13,7 +13,6 @@ const MAX_24_BIT: f32 = ((1 << 23) - 1) as f32;
 const MAX_32_BIT: f32 = i32::MAX as f32;
 
 pub struct FlacFile {
-        // TODO: the channel numbers needs to be set looking at the file
         left: Channel,
         right: Channel,
         channels: u8,

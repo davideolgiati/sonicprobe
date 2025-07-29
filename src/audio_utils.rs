@@ -20,7 +20,7 @@ fn hz_to_radian(frequency: f32, sample_rate: f32) -> f32 {
     (frequency / sample_rate) * 2.0 * f32::consts::PI
 }
 
-pub fn low_pass_filter(cutoff: f32, sample_rate: f32, numtaps: i16) -> Vec<f32> {
+pub fn low_pass_filter(cutoff: f32, sample_rate: f32, numtaps: usize) -> Vec<f32> {
     let center_frequency: f32 = hz_to_radian(cutoff, sample_rate);
     let window_center = (numtaps - 1) as f32 / 2.0;
     let window = (0..numtaps)
@@ -33,9 +33,9 @@ pub fn low_pass_filter(cutoff: f32, sample_rate: f32, numtaps: i16) -> Vec<f32> 
             let offset = n as f32 - window_center;
 
             if offset.abs() > f32::EPSILON {
-                (center_frequency * offset).sin() / (f32::consts::PI * offset) * window[n as usize]
+                (center_frequency * offset).sin() / (f32::consts::PI * offset) * window[n]
             } else {
-                center_frequency / f32::consts::PI * window[n as usize]
+                center_frequency / f32::consts::PI * window[n]
             }
         })
         .collect();

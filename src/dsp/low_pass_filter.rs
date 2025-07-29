@@ -4,24 +4,22 @@ use crate::{
     dsp::LowPassFilter
 };
 
-const NUMTAPS: i16 = 128;
-
 impl LowPassFilter {
     pub fn new(original_frequency: u32, upsampling_factor: u32) -> LowPassFilter {
         let cutoff_hz: f32 = (original_frequency as f32) / 2.0;
         let upsampled_freq: f32 = (original_frequency * upsampling_factor) as f32;
 
-        let mut coeffs: Vec<f32> = low_pass_filter(cutoff_hz, upsampled_freq, NUMTAPS);
+        let mut coeffs: Vec<f32> = low_pass_filter(cutoff_hz, upsampled_freq, super::NUMTAPS);
 
         coeffs.reverse();
 
-        let mut coeffs_slice = [0.0f32; 128];
+        let mut coeffs_slice = [0.0f32; super::NUMTAPS];
         coeffs_slice.copy_from_slice(&coeffs);
 
         LowPassFilter {
             coeffs: coeffs_slice,
-            window: CircularBuffer::new(NUMTAPS as usize, 0.0),
-            window_buffer: [0.0f32; 128],
+            window: CircularBuffer::new(super::NUMTAPS, 0.0),
+            window_buffer: [0.0f32; super::NUMTAPS],
         }
     }
 
@@ -34,7 +32,7 @@ impl LowPassFilter {
 }
 
 #[inline]
-fn dot_product(coeffs: &[f32; 128], samples: &[f32; 128]) -> f32 {
+fn dot_product(coeffs: &[f32; super::NUMTAPS], samples: &[f32; super::NUMTAPS]) -> f32 {
     coeffs
         .chunks(32)
         .zip(samples.chunks(32))

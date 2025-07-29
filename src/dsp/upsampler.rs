@@ -11,12 +11,10 @@ use crate::{
         }
 };
 
-const TARGET_FREQUENCY: u32 = 192000;
-
 impl Upsampler {
         pub fn new(original_frequency: u32) -> Upsampler {
                 let factor: u8 = {
-                        let ratio = (TARGET_FREQUENCY / original_frequency) as u8;
+                        let ratio = (super::TARGET_FREQUENCY / original_frequency) as u8;
                         if ratio < 1 {
                                 1
                         } else {

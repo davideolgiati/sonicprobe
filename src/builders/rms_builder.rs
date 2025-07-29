@@ -13,6 +13,7 @@ impl RMSBuilder {
         let mut current = (value as f64).powi(2);
         let mut index: usize = 0;
 
+        //TODO: da portare fuori
         for mut partial in self.partials.clone() {
             if current.abs() < partial.abs() {
                 (current, partial) = (partial, current)

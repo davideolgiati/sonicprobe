@@ -28,7 +28,7 @@ it is stable but it may be not very accurate.
  1) clone this repo
  2) install rust compiler on your machine
  3) enter the repo directory
- 4) run `cargo install --path . --root ~/.localc`
+ 4) run `cargo install --path .`
  5) done !
 
 #### Usage:

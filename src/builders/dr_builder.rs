@@ -1,4 +1,4 @@
-use crate::{audio_utils::to_dbfs, channel::builders::{DRBuilder, RMSBuilder}};
+use crate::{audio_utils::to_dbfs, builders::{DRBuilder, RMSBuilder}};
 
 impl DRBuilder {
         pub fn new(sample_frequency: u32) -> DRBuilder {

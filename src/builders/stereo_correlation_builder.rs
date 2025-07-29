@@ -1,11 +1,7 @@
 // norm_corr_ab = sum(a*b) / sqrt(sum(a^2)*sum(b^2))
 use rayon::prelude::*;
 
-pub struct StereoCorrelationBuilder {
-        correlation: f32,
-        left_square_sum: f32,
-        right_square_sum: f32
-}
+use crate::builders::StereoCorrelationBuilder;
 
 impl StereoCorrelationBuilder {
         pub fn new() -> StereoCorrelationBuilder {

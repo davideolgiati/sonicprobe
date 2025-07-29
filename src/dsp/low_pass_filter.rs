@@ -1,12 +1,10 @@
-use crate::{audio_utils::low_pass_filter, circular_buffer::CircularBuffer};
+use crate::{
+    audio_utils::low_pass_filter, 
+    circular_buffer::CircularBuffer, 
+    dsp::LowPassFilter
+};
 
 const NUMTAPS: i16 = 128;
-
-pub struct LowPassFilter {
-    coeffs: [f32; 128],
-    window: CircularBuffer<f32>,
-    window_buffer: [f32; 128],
-}
 
 impl LowPassFilter {
     pub fn new(original_frequency: u32, upsampling_factor: u32) -> LowPassFilter {

@@ -1,4 +1,4 @@
-use crate::channel::builders::ClippingSamplesBuilder;
+use crate::builders::ClippingSamplesBuilder;
 
 impl ClippingSamplesBuilder {
         pub fn new() -> ClippingSamplesBuilder {

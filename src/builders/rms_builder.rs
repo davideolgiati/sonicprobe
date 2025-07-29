@@ -1,4 +1,4 @@
-use crate::channel::builders::RMSBuilder;
+use crate::builders::RMSBuilder;
 
 impl RMSBuilder {
     pub fn new() -> RMSBuilder {

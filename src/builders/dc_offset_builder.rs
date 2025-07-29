@@ -1,4 +1,4 @@
-use crate::channel::builders::DCOffsetBuilder;
+use crate::builders::DCOffsetBuilder;
 
 impl DCOffsetBuilder {
         pub fn new(count: u64) -> DCOffsetBuilder {

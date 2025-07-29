@@ -1,7 +1,7 @@
-use crate::channel::builders::{
+use crate::builders::{
         ClippingSamplesBuilder, DCOffsetBuilder, DRBuilder, PeakBuilder, RMSBuilder, ZeroCrossingRateBuilder
 };
-use crate::channel::upsampler::Upsampler;
+use crate::dsp::Upsampler;
 use crate::channel::Channel;
 
 struct UpsamplerOutput {
@@ -9,6 +9,7 @@ struct UpsamplerOutput {
         true_clipping_samples: u32,
 }
 
+// TODO: questo va reso un metodo statico di channel
 pub struct ChannelBuilder {}
 
 impl ChannelBuilder {

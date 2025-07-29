@@ -5,8 +5,8 @@ mod flac_file;
 mod audio_utils;
 mod output_format;
 mod circular_buffer;
-mod stereo_correlation_builder;
-mod true_bit_depth_builder;
+mod builders;
+mod dsp;
 
 extern crate flac;
 

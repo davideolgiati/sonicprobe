@@ -1,4 +1,4 @@
-use crate::channel::builders::ZeroCrossingRateBuilder;
+use crate::builders::ZeroCrossingRateBuilder;
 
 impl ZeroCrossingRateBuilder {
         pub fn new(duration: f32) -> ZeroCrossingRateBuilder {

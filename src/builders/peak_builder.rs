@@ -1,4 +1,4 @@
-use crate::channel::builders::PeakBuilder;
+use crate::builders::PeakBuilder;
 
 impl PeakBuilder {
     pub fn new() -> PeakBuilder {

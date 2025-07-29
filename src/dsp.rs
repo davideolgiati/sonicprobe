@@ -1,0 +1,26 @@
+use crate::{
+        builders::{
+                ClippingSamplesBuilder, 
+                PeakBuilder
+        }, 
+        circular_buffer::CircularBuffer
+};
+
+mod low_pass_filter;
+mod upsampler;
+
+pub struct LowPassFilter {
+        coeffs: [f32; 128],
+        window: CircularBuffer<f32>,
+        window_buffer: [f32; 128],
+}
+
+pub struct Upsampler {
+        pub peak: f32,
+        pub clipping_samples: u32,
+        peak_builder: PeakBuilder,
+        clipping_samples_builder: ClippingSamplesBuilder,
+        window: CircularBuffer<f64>,
+        factor: u8,
+        lp_filter: LowPassFilter
+}

@@ -4,8 +4,8 @@ use flac::{ReadStream, Stream};
 
 use crate::channel::Channel;
 use crate::channel::channel_builder::ChannelBuilder;
-use crate::stereo_correlation_builder::StereoCorrelationBuilder;
-use crate::true_bit_depth_builder::TrueBitDepthBuilder;
+use crate::builders::StereoCorrelationBuilder;
+use crate::builders::TrueBitDepthBuilder;
 
 const MAX_8_BIT: f32 = i8::MAX as f32;
 const MAX_16_BIT: f32 = i16::MAX as f32;

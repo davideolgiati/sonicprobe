@@ -1,16 +1,17 @@
-use crate::{audio_utils::catmull_rom_interpolation, channel::{builders::{ClippingSamplesBuilder, PeakBuilder}, low_pass_filter::LowPassFilter}, circular_buffer::CircularBuffer};
+use crate::{
+        audio_utils::catmull_rom_interpolation, 
+        builders::{
+                ClippingSamplesBuilder, 
+                PeakBuilder
+        }, 
+        circular_buffer::CircularBuffer, 
+        dsp::{
+                LowPassFilter, 
+                Upsampler
+        }
+};
 
 const TARGET_FREQUENCY: u32 = 192000;
-
-pub struct Upsampler {
-        pub peak: f32,
-        pub clipping_samples: u32,
-        peak_builder: PeakBuilder,
-        clipping_samples_builder: ClippingSamplesBuilder,
-        window: CircularBuffer<f64>,
-        factor: u8,
-        lp_filter: LowPassFilter
-}
 
 impl Upsampler {
         pub fn new(original_frequency: u32) -> Upsampler {

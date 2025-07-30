@@ -11,20 +11,21 @@ impl Upsampler {
                         }
                 };
 
-                let new_size = original_size * multipier as u64;
-
                 Upsampler {
-                        multipier,
-                        current_index: 0,
-                        signal: Vec::with_capacity(new_size as usize)
+                        multipier
                 }
         }
 }
 
 impl DSPStage for Upsampler {
-        fn submit(&mut self, window: &[f32]){
-                self.signal[self.current_index] = window[1];
-                self.current_index += 1;          
+        fn submit(&self, window: &[f32]) -> Vec<f32> {
+                if self.multipier == 1 {
+                        return vec![window[1]]
+                }
+
+                let mut signal = Vec::with_capacity(self.multipier as usize);
+
+                signal[0] = window[1];          
 
                 for k in 1..self.multipier {
                         let interpolated = catmull_rom_interpolation(
@@ -34,12 +35,9 @@ impl DSPStage for Upsampler {
                                 window[3] as f64, 
                                 k as f64 / self.multipier as f64
                         );
-                        self.signal[self.current_index] = interpolated;
-                        self.current_index += 1  
+                        signal[k as usize] = interpolated;
                 }
-        }
 
-        fn finalize(&self) -> Vec<f32>{
-                self.signal.clone()
+                signal
         }
 }

@@ -15,8 +15,7 @@ const TARGET_FREQUENCY: u32 = 192000;
 const NUMTAPS: usize = 128;
 
 pub trait DSPStage {
-        fn submit(&mut self, window: &[f32]);
-        fn finalize(&self) -> Vec<f32>;
+        fn submit(&self, window: &[f32]) -> Vec<f32>;
 }
 
 pub struct LowPassFilter {
@@ -36,7 +35,5 @@ pub struct OldUpsampler {
 }
 
 pub struct Upsampler {
-        multipier: u8,
-        current_index: usize,
-        signal: Vec<f32>
+        multipier: u8
 }

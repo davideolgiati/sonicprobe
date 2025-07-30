@@ -1,13 +1,7 @@
 use crate::builders::{
         ClippingSamplesBuilder, DCOffsetBuilder, DRBuilder, PeakBuilder, RMSBuilder, ZeroCrossingRateBuilder
 };
-use crate::dsp::OldUpsampler;
 use crate::channel::Channel;
-
-struct UpsamplerOutput {
-        true_peak: f32,
-        true_clipping_samples: u32,
-}
 
 // TODO: questo va reso un metodo statico di channel
 pub struct ChannelBuilder {}
@@ -20,7 +14,6 @@ impl ChannelBuilder {
                 let mut clipping_samples_count = 0;
                 let mut dc_offset = 0.0f32;
                 let mut zero_crossing_rate = 0.0f32;
-                let mut upsampler_output = UpsamplerOutput{ true_peak: 0.0, true_clipping_samples: 0 };
                 let mut dr_builder = DRBuilder::new(sample_rate); 
 
                 rayon::scope(|s| {
@@ -29,23 +22,20 @@ impl ChannelBuilder {
                         s.spawn(|_| count_clipping_samples(samples, &mut clipping_samples_count));
                         s.spawn(|_| coumpute_dc_offset(samples, samples_count, &mut dc_offset));
                         s.spawn(|_| coumpute_zero_crossing_rate(samples, samples_count, sample_rate,&mut zero_crossing_rate));
-                        s.spawn(|_| compute_upsampled_statistics(samples, sample_rate, &mut upsampler_output));
                         s.spawn(|_| dr_builder.add(samples));
                 });
 
-                let true_clipping_samples_count = upsampler_output.true_clipping_samples;
-                let true_peak = upsampler_output.true_peak;
-                let dr = dr_builder.build(true_peak);
+                let dr = dr_builder.build(peak);
 
                 Channel {
                         rms,
                         peak,
-                        true_peak,
+                        true_peak: 0.0,
                         samples_count,
                         zero_crossing_rate,
                         dc_offset,
                         clipping_samples_count,
-                        true_clipping_samples_count,
+                        true_clipping_samples_count: 0,
                         dr
                 }
         }
@@ -90,14 +80,4 @@ fn coumpute_zero_crossing_rate(samples: &[f32], samples_count: u64, sample_rate:
                 builder.add(*sample);
         }
         *output = builder.build()
-}
-
-fn compute_upsampled_statistics(samples: &[f32], original_frequency: u32, output: &mut UpsamplerOutput) {
-        let mut builder = OldUpsampler::new(original_frequency);
-        for sample in samples {
-                builder.add(*sample);
-        }
-        builder.finalize();
-        output.true_clipping_samples = builder.clipping_samples;
-        output.true_peak = builder.peak;
 }

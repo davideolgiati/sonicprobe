@@ -1,13 +1,9 @@
-use crate::{
-    audio_utils::low_pass_filter, 
-    circular_buffer::CircularBuffer, 
-    dsp::LowPassFilter
-};
+use crate::{audio_utils::low_pass_filter, dsp::LowPassFilter};
 
 impl LowPassFilter {
-    pub fn new(original_frequency: u32, upsampling_factor: u32) -> LowPassFilter {
+    pub fn new(original_frequency: u32) -> Self {
         let cutoff_hz: f32 = (original_frequency as f32) / 2.0;
-        let upsampled_freq: f32 = (original_frequency * upsampling_factor) as f32;
+        let upsampled_freq: f32 = super::TARGET_FREQUENCY as f32;
 
         let mut coeffs: Vec<f32> = low_pass_filter(cutoff_hz, upsampled_freq, super::NUMTAPS);
 
@@ -16,18 +12,14 @@ impl LowPassFilter {
         let mut coeffs_slice = [0.0f32; super::NUMTAPS];
         coeffs_slice.copy_from_slice(&coeffs);
 
-        LowPassFilter {
+        Self {
             coeffs: coeffs_slice,
-            window: CircularBuffer::new(super::NUMTAPS, 0.0),
-            window_buffer: [0.0f32; super::NUMTAPS],
         }
     }
 
-    pub fn filter(&mut self, sample: f32) -> f32 {
-        self.window.push(sample);
-        self.window_buffer.copy_from_slice(self.window.collect());
-
-        dot_product(&self.coeffs, &self.window_buffer)
+    pub fn submit(&self, window: &[f32]) -> Vec<f32> {
+        let window_array: &[f32; 128] = window.try_into().expect("Window must be exactly 128 elements");
+        vec![dot_product(&self.coeffs, window_array)]
     }
 }
 

@@ -1,39 +1,18 @@
-use crate::{
-        builders::{
-                ClippingSamplesBuilder, 
-                PeakBuilder
-        }, 
-        circular_buffer::CircularBuffer
-};
-
-mod low_pass_filter;
-mod old_upsampler;
-
+mod dsp_chain;
 mod upsampler;
+mod low_pass_filter;
 
 const TARGET_FREQUENCY: u32 = 192000;
 const NUMTAPS: usize = 128;
 
-pub trait DSPStage {
-        fn submit(&self, window: &[f32]) -> Vec<f32>;
-}
-
 pub struct LowPassFilter {
-        coeffs: [f32; 128],
-        window: CircularBuffer<f32>,
-        window_buffer: [f32; 128],
-}
-
-pub struct OldUpsampler {
-        pub peak: f32,
-        pub clipping_samples: u32,
-        peak_builder: PeakBuilder,
-        clipping_samples_builder: ClippingSamplesBuilder,
-        window: CircularBuffer<f64>,
-        factor: u8,
-        lp_filter: LowPassFilter
+        coeffs: [f32; NUMTAPS]
 }
 
 pub struct Upsampler {
         multipier: u8
+}
+
+pub struct DSPChain<T> {
+    data: Vec<T>,
 }

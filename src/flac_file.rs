@@ -6,6 +6,9 @@ use crate::channel::Channel;
 use crate::channel::channel_builder::ChannelBuilder;
 use crate::builders::StereoCorrelationBuilder;
 use crate::builders::TrueBitDepthBuilder;
+use crate::dsp::DSPChain;
+use crate::dsp::LowPassFilter;
+use crate::dsp::Upsampler;
 
 const MAX_8_BIT: f32 = i8::MAX as f32;
 const MAX_16_BIT: f32 = i16::MAX as f32;
@@ -24,6 +27,17 @@ pub struct FlacFile {
         duration: f32,
         samples_count: u64,
         stereo_correlation: f32
+}
+
+fn build_dsp_chain(original_frequency: u32) -> impl Fn(Vec<f32>) -> Vec<f32> {
+        let upsampler = Upsampler::new(original_frequency);
+        let low_pass = LowPassFilter::new(original_frequency);
+        move |data| {
+                DSPChain::new(&data)
+                        .window(4, |window: &[f32]| upsampler.submit(window))
+                        .window(128, |window: &[f32]| low_pass.submit(window))
+                        .collect()
+        }
 }
 
 impl FlacFile {
@@ -46,6 +60,15 @@ impl FlacFile {
                         .map(|pair| (pair[0], pair[1]))
                         .unzip();
     
+                let mut left_upsampled: Vec<f32> = Vec::new();
+                let mut right_upsampled: Vec<f32> = Vec::new();
+                let dsp_chain = build_dsp_chain(sample_rate);
+
+                rayon::scope(|s| {
+                        s.spawn(|_| left_upsampled = dsp_chain(left_samples.clone()));
+                        s.spawn(|_| right_upsampled = dsp_chain(right_samples.clone()));
+                });
+
                 let mut left_channel: Channel = Channel::empty();
                 let mut right_channel: Channel = Channel::empty();
                 let mut stereo_correlation: f32 = 0.0;

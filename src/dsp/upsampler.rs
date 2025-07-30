@@ -1,7 +1,7 @@
-use crate::{audio_utils::catmull_rom_interpolation, dsp::{DSPStage, Upsampler}};
+use crate::{audio_utils::catmull_rom_interpolation, dsp::Upsampler};
 
 impl Upsampler {
-        pub fn new(original_frequency: u32, original_size: u64) -> Upsampler {
+        pub fn new(original_frequency: u32) -> Self {
                 let multipier: u8 = {
                         let ratio = (super::TARGET_FREQUENCY / original_frequency) as u8;
                         if ratio < 1 {
@@ -11,14 +11,12 @@ impl Upsampler {
                         }
                 };
 
-                Upsampler {
+                Self {
                         multipier
                 }
         }
-}
 
-impl DSPStage for Upsampler {
-        fn submit(&self, window: &[f32]) -> Vec<f32> {
+        pub fn submit(&self, window: &[f32]) -> Vec<f32> {
                 (0..self.multipier).map(|k| {
                         if k == 0 {
                                 window[1]

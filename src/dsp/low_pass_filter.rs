@@ -17,6 +17,7 @@ impl LowPassFilter {
         }
     }
 
+    #[inline]
     pub fn submit(&self, window: &[f32]) -> Vec<f32> {
         let window_array: &[f32; super::NUMTAPS] = window.try_into().unwrap_or_else(|_| panic!("Window must be exactly {} elements, got {}", NUMTAPS, window.len()));
         vec![dot_product(&self.coeffs, window_array)]

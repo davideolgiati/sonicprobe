@@ -7,7 +7,7 @@ use crate::channel::Channel;
 pub struct ChannelBuilder {}
 
 impl ChannelBuilder {
-        #[inline]
+        
         pub fn from_samples(samples: &[f32], sample_rate: u32, samples_count: u64) -> Channel {
                 let mut rms = 0.0f32;
                 let mut peak = 0.0f32;

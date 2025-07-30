@@ -4,9 +4,8 @@ pub fn to_dbfs(dc: f32) -> f32 {
     20.0 * dc.log10()
 }
 
-#[inline]
 pub fn catmull_rom_interpolation(p0: f64, p1: f64, p2: f64, p3: f64, t: f64) -> f32 {
-    let b0 = -(0.5 * t.powi(3)) + t.powi(2)  - (0.5 * t);
+    let b0 = -(0.5 * t.powi(3)) + t.powi(2) - (0.5 * t);
     let b1 = (1.5 * t.powi(3)) - (2.5 * t.powi(2)) + 1.0;
     let b2 = (-1.5 * t.powi(3)) + (2.0 * t.powi(2)) + (0.5 * t);
     let b3 = (0.5 * t.powi(3)) - (0.5 * t.powi(2));

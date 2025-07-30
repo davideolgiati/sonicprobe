@@ -3,9 +3,9 @@ mod dc_offset_builder;
 mod dr_builder;
 mod peak_builder;
 mod rms_builder;
+mod stereo_correlation_builder;
 mod true_bit_depth_builder;
 mod zero_crossing_rate_builder;
-mod stereo_correlation_builder;
 
 #[derive(Clone, Copy)]
 pub struct ClippingSamplesBuilder {

@@ -16,7 +16,8 @@ impl Table {
         }
     }
 
-    pub fn add(mut self, title: &str, mapping_fn: fn(Channel) -> Entry) -> Table {
+    #[inline]
+pub fn add(mut self, title: &str, mapping_fn: fn(Channel) -> Entry) -> Table {
         let left = mapping_fn(self.left);
         let right = mapping_fn(self.right);
         let new_row = table_row(title, &left.formatted(), &right.formatted());
@@ -32,7 +33,8 @@ impl Table {
         self
     }
 
-    pub fn add_section(mut self) -> Table {
+    #[inline]
+pub fn add_section(mut self) -> Table {
         self.elements.push(table_section());
 
         self

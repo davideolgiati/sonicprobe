@@ -1,16 +1,16 @@
 mod dsp_chain;
-mod upsampler;
 mod low_pass_filter;
+mod upsampler;
 
 const TARGET_FREQUENCY: u32 = 192000;
 pub const NUMTAPS: usize = 96;
 
 pub struct LowPassFilter {
-        coeffs: [f32; NUMTAPS]
+    coeffs: [f32; NUMTAPS],
 }
 
 pub struct Upsampler {
-        multipier: u8
+    multipier: u8,
 }
 
 pub struct DSPChain<T> {

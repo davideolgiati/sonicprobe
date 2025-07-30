@@ -73,18 +73,24 @@ pub fn print_file_details(filename: &str, file: &FlacFile) {
     );
 
     let channels_details_table = Table::new(*left, *right)
-        .set_headers("CHANNEL ANALYSIS","LEFT","RIGHT")
+        .set_headers("CHANNEL ANALYSIS", "LEFT", "RIGHT")
         .add_section()
-        .add("RMS Level",|c| Entry::from_db(c.rms()))
+        .add("RMS Level", |c| Entry::from_db(c.rms()))
         .add("Peak Level", |c| Entry::from_db(c.peak()))
         .add("True Peak", |c| Entry::from_db(c.true_peak()))
         .add("Crest Factor", |c| Entry::from_db(c.crest_factor()))
         .add("DC Offset", |c| Entry::from_volt(c.dc_offset()))
-        .add("Zero Crossing Rate" , |c| Entry::from_hz(c.zero_crossing_rate()))
+        .add("Zero Crossing Rate", |c| {
+            Entry::from_hz(c.zero_crossing_rate())
+        })
         .add("Dynamic Range", |c| Entry::from_dr(c.dr()))
         .add_section()
-        .add("Clipping", |c| Entry::from_percent(c.clipping_samples_quota()))
-        .add("True Clipping", |c| Entry::from_percent(c.true_clipping_samples_quota()))
+        .add("Clipping", |c| {
+            Entry::from_percent(c.clipping_samples_quota())
+        })
+        .add("True Clipping", |c| {
+            Entry::from_percent(c.true_clipping_samples_quota())
+        })
         .build();
 
     println!("\n\n{}", channels_details_table)

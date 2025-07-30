@@ -11,6 +11,7 @@ impl DRBuilder {
         }
     }
 
+    #[inline]
     pub fn add(&mut self, samples: &[f32]) {
         let chunk_size = (self.sample_frequency as f32 * 1.5).round() as usize;
         let reminder = samples.len() % chunk_size;

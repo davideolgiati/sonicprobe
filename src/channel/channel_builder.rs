@@ -1,7 +1,7 @@
 use crate::builders::{
         ClippingSamplesBuilder, DCOffsetBuilder, DRBuilder, PeakBuilder, RMSBuilder, ZeroCrossingRateBuilder
 };
-use crate::dsp::Upsampler;
+use crate::dsp::OldUpsampler;
 use crate::channel::Channel;
 
 struct UpsamplerOutput {
@@ -93,7 +93,7 @@ fn coumpute_zero_crossing_rate(samples: &[f32], samples_count: u64, sample_rate:
 }
 
 fn compute_upsampled_statistics(samples: &[f32], original_frequency: u32, output: &mut UpsamplerOutput) {
-        let mut builder = Upsampler::new(original_frequency);
+        let mut builder = OldUpsampler::new(original_frequency);
         for sample in samples {
                 builder.add(*sample);
         }

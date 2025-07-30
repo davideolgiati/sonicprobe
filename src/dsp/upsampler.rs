@@ -1,19 +1,8 @@
-use crate::{
-        audio_utils::catmull_rom_interpolation, 
-        builders::{
-                ClippingSamplesBuilder, 
-                PeakBuilder
-        }, 
-        circular_buffer::CircularBuffer, 
-        dsp::{
-                LowPassFilter, 
-                Upsampler
-        }
-};
+use crate::{audio_utils::catmull_rom_interpolation, dsp::{DSPStage, Upsampler}};
 
 impl Upsampler {
-        pub fn new(original_frequency: u32) -> Upsampler {
-                let factor: u8 = {
+        pub fn new(original_frequency: u32, original_size: u64) -> Upsampler {
+                let multipier: u8 = {
                         let ratio = (super::TARGET_FREQUENCY / original_frequency) as u8;
                         if ratio < 1 {
                                 1
@@ -21,60 +10,36 @@ impl Upsampler {
                                 ratio
                         }
                 };
-                let lp_filter = LowPassFilter::new(
-                        original_frequency, factor as u32
-                );
+
+                let new_size = original_size * multipier as u64;
 
                 Upsampler {
-                        peak: f32::MIN,
-                        clipping_samples: 0,
-                        peak_builder: PeakBuilder::new(),
-                        clipping_samples_builder: ClippingSamplesBuilder::new(),
-                        window: CircularBuffer::new(4, 0.0),
-                        factor,
-                        lp_filter
+                        multipier,
+                        current_index: 0,
+                        signal: Vec::with_capacity(new_size as usize)
                 }
         }
+}
 
-        fn add_new_sample(&mut self, sample: f32) {
-                let filtered = self.lp_filter.filter(sample);
-                self.clipping_samples_builder.add(filtered);
-                self.peak_builder.add(filtered);
-        }
+impl DSPStage for Upsampler {
+        fn submit(&mut self, window: &[f32]){
+                self.signal[self.current_index] = window[1];
+                self.current_index += 1;          
 
-        pub fn add(&mut self, sample: f32) {
-                self.window.push(sample as f64);
-                
-                if self.window.len() < 4 {
-                        return;
-                }
-
-                let window = self.window.collect().clone();
-                
-                self.add_new_sample(window[1] as f32);
-                
-                let factor = self.factor as f32;
-
-                for k in 1..self.factor {
+                for k in 1..self.multipier {
                         let interpolated = catmull_rom_interpolation(
-                                window[0], 
-                                window[1], 
-                                window[2], 
-                                window[3], 
-                                k as f64 / factor as f64
+                                window[0] as f64, 
+                                window[1] as f64, 
+                                window[2] as f64, 
+                                window[3] as f64, 
+                                k as f64 / self.multipier as f64
                         );
-                        self.add_new_sample(interpolated)
+                        self.signal[self.current_index] = interpolated;
+                        self.current_index += 1  
                 }
         }
 
-        pub fn finalize(& mut self) {
-                let window = self.window.collect().clone();
-
-                for _ in 1..3 {
-                        self.add(window[3] as f32);
-                }
-
-                self.peak = self.peak_builder.build();
-                self.clipping_samples = self.clipping_samples_builder.build();
+        fn finalize(&self) -> Vec<f32>{
+                self.signal.clone()
         }
 }

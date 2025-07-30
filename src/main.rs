@@ -4,7 +4,6 @@ mod cli_args;
 mod flac_file;
 mod audio_utils;
 mod output_format;
-mod circular_buffer;
 mod builders;
 mod dsp;
 

@@ -7,10 +7,10 @@ pub struct Channel {
         rms: f32,
         peak: f32,
         clipping_samples_count: u32,
-        true_clipping_samples_count: u32,
+        pub true_clipping_samples_count: u32,
         dc_offset: f32,
         samples_count: u64,
-        true_peak: f32,
+        pub true_peak: f32,
         zero_crossing_rate: f32,
         dr: f32
 }

@@ -18,6 +18,10 @@ impl TrueBitDepthBuilder {
         let mut real_depths = mapped_stream
                 .par_iter()
                 .map(|sample| {
+                    if *sample == 0.0 {
+                        return 0u8
+                    }
+                    
                     let trailing_zeros = ((*sample * factor) as i32).trailing_zeros();
                     (self.reported_depth as u32 - trailing_zeros) as u8
                 })

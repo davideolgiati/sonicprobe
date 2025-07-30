@@ -37,7 +37,7 @@ fn build_dsp_chain(original_frequency: u32) -> impl Fn(Vec<f32>) -> (f32, u32) {
         move |data| {
                 let signal = DSPChain::new(&data)
                         .window(4, |window: &[f32]| upsampler.submit(window))
-                        .window(128, |window: &[f32]| low_pass.submit(window))
+                        .window(crate::dsp::NUMTAPS, |window: &[f32]| low_pass.submit(window))
                         .collect();
 
                 let mut peak = f32::MIN;

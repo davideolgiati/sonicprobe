@@ -3,7 +3,7 @@ mod upsampler;
 mod low_pass_filter;
 
 const TARGET_FREQUENCY: u32 = 192000;
-const NUMTAPS: usize = 128;
+pub const NUMTAPS: usize = 96;
 
 pub struct LowPassFilter {
         coeffs: [f32; NUMTAPS]

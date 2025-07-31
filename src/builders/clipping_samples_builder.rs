@@ -18,5 +18,5 @@ impl ClippingSamplesBuilder {
 }
 
 pub fn is_clipping(sample: f32) -> bool {
-    (sample.abs() - 1.0).abs() < f32::EPSILON || sample.abs() > 1.0
+    (sample.abs() - 0.95).abs() < f32::EPSILON || sample.abs() > 0.95
 }

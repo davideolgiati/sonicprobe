@@ -18,9 +18,7 @@ pub struct DCOffsetBuilder {
     count: u64,
 }
 
-#[derive(Clone, Copy)]
 pub struct PeakBuilder {
-    current_max: f32,
 }
 
 #[derive(Clone)]
@@ -30,9 +28,6 @@ pub struct RMSBuilder {
 }
 
 pub struct ZeroCrossingRateBuilder {
-    count: u64,
-    duration: f32,
-    current_sign: i8,
 }
 
 pub struct DRBuilder {
@@ -49,7 +44,4 @@ pub struct TrueBitDepthBuilder {
 }
 
 pub struct StereoCorrelationBuilder {
-    correlation: f32,
-    left_square_sum: f32,
-    right_square_sum: f32,
 }

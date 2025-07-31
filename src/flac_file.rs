@@ -35,7 +35,7 @@ fn build_dsp_chain(original_frequency: u32) -> impl Fn(Vec<f32>) -> (f32, u32) {
     let upsampler = Upsampler::new(original_frequency);
     let low_pass = LowPassFilter::new(original_frequency);
     move |data| {
-        let signal = DSPChain::new(&data)
+        let samples = DSPChain::new(&data)
             .window(4, |window: &[f32]| upsampler.submit(window))
             .window(crate::dsp::LOW_PASS_FILTER_SIZE, |window: &[f32]| {
                 low_pass.submit(window)
@@ -46,16 +46,10 @@ fn build_dsp_chain(original_frequency: u32) -> impl Fn(Vec<f32>) -> (f32, u32) {
         let mut clipping_samples_count = 0u32;
 
         rayon::scope(|s| {
-            s.spawn(|_| {
-                let mut builder = PeakBuilder::new();
-                for value in &signal {
-                    builder.add(*value);
-                }
-                peak = builder.build();
-            });
+            s.spawn(|_| peak = PeakBuilder::process(&samples));
             s.spawn(|_| {
                 let mut builder = ClippingSamplesBuilder::new();
-                for value in &signal {
+                for value in &samples {
                     builder.add(*value);
                 }
                 clipping_samples_count = builder.build();
@@ -123,9 +117,7 @@ impl FlacFile {
                     ChannelBuilder::from_samples(&right_samples, sample_rate, samples_count)
             });
             s.spawn(|_| {
-                let mut stereo_correlation_builder = StereoCorrelationBuilder::new();
-                stereo_correlation_builder.add(&left_samples, &right_samples);
-                stereo_correlation = stereo_correlation_builder.build();
+                stereo_correlation = StereoCorrelationBuilder::process(&left_samples, &right_samples)
             });
             s.spawn(|_| {
                 let factor = match bit_depth {

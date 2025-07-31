@@ -1,35 +1,22 @@
 use crate::builders::ZeroCrossingRateBuilder;
 
 impl ZeroCrossingRateBuilder {
-    pub fn new(duration: f32) -> ZeroCrossingRateBuilder {
-        ZeroCrossingRateBuilder {
-            count: 0,
-            duration,
-            current_sign: 0,
-        }
-    }
-
     #[inline]
-    pub fn add(&mut self, value: f32) {
-        let value_sign = sign(value);
-        let diff = {
-            if value_sign != self.current_sign {
-                1
-            } else {
-                0
-            }
-        };
-        self.current_sign = value_sign;
-
-        self.count += diff as u64;
-    }
-
-    pub fn build(&self) -> f32 {
-        (self.count as f64 / self.duration as f64) as f32
+    pub fn process(samples: &[f32], duration: f32) -> f32 {
+        samples
+            .windows(2)
+            .map(|slice| {
+                if get_value_sign(slice[0]) != get_value_sign(slice[1]) {
+                    1.0
+                } else {
+                    0.0
+                }
+            })
+            .sum::<f32>() / duration
     }
 }
 
-fn sign(value: f32) -> i8 {
+fn get_value_sign(value: f32) -> i8 {
     if value < 0.0 {
         return -1;
     }

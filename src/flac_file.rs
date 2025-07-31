@@ -31,33 +31,25 @@ pub struct FlacFile {
     stereo_correlation: f32,
 }
 
-fn build_dsp_chain(original_frequency: u32) -> impl Fn(Vec<f32>) -> (f32, u32) {
+fn upsample(data: Vec<f32>, original_frequency: u32) -> (f32, usize) {
     let upsampler = Upsampler::new(original_frequency);
     let low_pass = LowPassFilter::new(original_frequency);
-    move |data| {
-        let samples = DSPChain::new(&data)
-            .window(4, |window: &[f32]| upsampler.submit(window))
-            .window(crate::dsp::LOW_PASS_FILTER_SIZE, |window: &[f32]| {
-                low_pass.submit(window)
-            })
-            .collect();
+    let samples = DSPChain::new(&data)
+        .window(4, |window: &[f32]| upsampler.submit(window))
+        .window(crate::dsp::LOW_PASS_FILTER_SIZE, |window: &[f32]| {
+            low_pass.submit(window)
+        })
+        .collect();
 
-        let mut peak = f32::MIN;
-        let mut clipping_samples_count = 0u32;
+    let mut peak = f32::MIN;
+    let mut clip_count = 0;
 
-        rayon::scope(|s| {
-            s.spawn(|_| peak = PeakBuilder::process(&samples));
-            s.spawn(|_| {
-                let mut builder = ClippingSamplesBuilder::new();
-                for value in &samples {
-                    builder.add(*value);
-                }
-                clipping_samples_count = builder.build();
-            });
-        });
+    rayon::scope(|s| {
+        s.spawn(|_| peak = PeakBuilder::process(&samples));
+        s.spawn(|_| clip_count = ClippingSamplesBuilder::process(&samples));
+    });
 
-        (peak, clipping_samples_count)
-    }
+    (peak, clip_count)
 }
 
 impl FlacFile {
@@ -94,9 +86,8 @@ impl FlacFile {
 
         let mut left_true_peak = 0.0f32;
         let mut right_true_peak = 0.0f32;
-        let mut left_true_clip = 0u32;
-        let mut right_true_clip = 0u32;
-        let dsp_chain = build_dsp_chain(sample_rate);
+        let mut left_true_clip = 0;
+        let mut right_true_clip = 0;
 
         let mut left_channel: Channel = Channel::empty();
         let mut right_channel: Channel = Channel::empty();
@@ -106,8 +97,9 @@ impl FlacFile {
         let mut max_bit_depth: u8 = 0;
 
         rayon::scope(|s| {
-            s.spawn(|_| (left_true_peak, left_true_clip) = dsp_chain(left_samples.clone()));
-            s.spawn(|_| (right_true_peak, right_true_clip) = dsp_chain(right_samples.clone()));
+            //TODO: group by channel
+            s.spawn(|_| (left_true_peak, left_true_clip) = upsample(left_samples.clone(),sample_rate));
+            s.spawn(|_| (right_true_peak, right_true_clip) = upsample(right_samples.clone(), sample_rate));
             s.spawn(|_| {
                 left_channel =
                     ChannelBuilder::from_samples(&left_samples, sample_rate, samples_count)
@@ -117,7 +109,8 @@ impl FlacFile {
                     ChannelBuilder::from_samples(&right_samples, sample_rate, samples_count)
             });
             s.spawn(|_| {
-                stereo_correlation = StereoCorrelationBuilder::process(&left_samples, &right_samples)
+                stereo_correlation =
+                    StereoCorrelationBuilder::process(&left_samples, &right_samples)
             });
             s.spawn(|_| {
                 let factor = match bit_depth {

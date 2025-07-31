@@ -8,9 +8,7 @@ mod true_bit_depth_builder;
 mod zero_crossing_rate_builder;
 
 #[derive(Clone, Copy)]
-pub struct ClippingSamplesBuilder {
-    count: u32,
-}
+pub struct ClippingSamplesBuilder {}
 
 #[derive(Clone)]
 pub struct DCOffsetBuilder {
@@ -18,8 +16,7 @@ pub struct DCOffsetBuilder {
     count: u64,
 }
 
-pub struct PeakBuilder {
-}
+pub struct PeakBuilder {}
 
 #[derive(Clone)]
 pub struct RMSBuilder {
@@ -27,8 +24,7 @@ pub struct RMSBuilder {
     count: u64,
 }
 
-pub struct ZeroCrossingRateBuilder {
-}
+pub struct ZeroCrossingRateBuilder {}
 
 pub struct DRBuilder {
     sample_frequency: u32,
@@ -43,5 +39,4 @@ pub struct TrueBitDepthBuilder {
     sample_count: u64,
 }
 
-pub struct StereoCorrelationBuilder {
-}
+pub struct StereoCorrelationBuilder {}

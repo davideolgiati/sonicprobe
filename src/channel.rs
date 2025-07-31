@@ -6,8 +6,8 @@ use crate::audio_utils::to_dbfs;
 pub struct Channel {
     rms: f32,
     peak: f32,
-    clipping_samples_count: u32,
-    pub true_clipping_samples_count: u32,
+    clipping_samples_count: usize,
+    pub true_clipping_samples_count: usize,
     dc_offset: f32,
     samples_count: u64,
     pub true_peak: f32,

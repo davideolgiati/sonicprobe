@@ -1,19 +1,13 @@
 use crate::builders::ClippingSamplesBuilder;
 
 impl ClippingSamplesBuilder {
-    pub fn new() -> ClippingSamplesBuilder {
-        ClippingSamplesBuilder { count: 0 }
-    }
-
     #[inline]
-    pub fn add(&mut self, sample: f32) {
-        if is_clipping(sample) {
-            self.count += 1;
-        }
-    }
-
-    pub fn build(self) -> u32 {
-        self.count
+    pub fn process(samples: &[f32]) -> usize {
+        samples
+            .iter()
+            .filter(|&&x| is_clipping(x))
+            .collect::<Vec<&f32>>()
+            .len()
     }
 }
 

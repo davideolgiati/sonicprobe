@@ -3,7 +3,7 @@ mod low_pass_filter;
 mod upsampler;
 
 const TARGET_FREQUENCY: u32 = 192000;
-pub const LOW_PASS_FILTER_SIZE: usize = 256;
+pub const LOW_PASS_FILTER_SIZE: usize = 64;
 
 pub struct LowPassFilter {
     coeffs: [f32; LOW_PASS_FILTER_SIZE],

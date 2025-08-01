@@ -8,7 +8,6 @@ use crate::builders::PeakBuilder;
 use crate::builders::StereoCorrelationBuilder;
 use crate::builders::TrueBitDepthBuilder;
 use crate::channel::Channel;
-use crate::channel::channel_builder::ChannelBuilder;
 use crate::dsp::DSPChain;
 use crate::dsp::LowPassFilter;
 use crate::dsp::Upsampler;
@@ -55,9 +54,9 @@ fn upsample(data: Arc<[f32]>, original_frequency: u32) -> (f32, usize) {
 
 impl FlacFile {
     pub fn new(mut data_stream: Stream<ReadStream<File>>) -> FlacFile {
-        let bit_depth = data_stream.info().bits_per_sample;
         let channels = data_stream.info().channels;
         let sample_rate = data_stream.info().sample_rate;
+        let bit_depth = data_stream.info().bits_per_sample;
         let samples_count = data_stream.info().total_samples;
 
         let mapped_stream = match bit_depth {
@@ -89,30 +88,24 @@ impl FlacFile {
             (Arc::from(left_vec), Arc::from(right_vec))
         };
 
-        let mut left_true_peak = 0.0f32;
-        let mut right_true_peak = 0.0f32;
         let mut left_true_clip = 0;
         let mut right_true_clip = 0;
+        let mut left_true_peak = 0.0f32;
+        let mut right_true_peak = 0.0f32;
 
-        let mut left_channel: Channel = Channel::empty();
-        let mut right_channel: Channel = Channel::empty();
-        let mut stereo_correlation: f32 = 0.0;
-        let mut true_bit_depth: u8 = 0;
+        let mut left: Channel = Channel::empty();
+        let mut right: Channel = Channel::empty();
         let mut min_bit_depth: u8 = 0;
         let mut max_bit_depth: u8 = 0;
+        let mut true_bit_depth: u8 = 0;
+        let mut stereo_correlation: f32 = 0.0;
 
         rayon::scope(|s| {
             //TODO: group by channel
             s.spawn(|_| (left_true_peak, left_true_clip) = upsample(left_samples.clone(),sample_rate));
             s.spawn(|_| (right_true_peak, right_true_clip) = upsample(right_samples.clone(), sample_rate));
-            s.spawn(|_| {
-                left_channel =
-                    ChannelBuilder::from_samples(&left_samples, sample_rate, samples_count)
-            });
-            s.spawn(|_| {
-                right_channel =
-                    ChannelBuilder::from_samples(&right_samples, sample_rate, samples_count)
-            });
+            s.spawn(|_| left = Channel::from_samples(&left_samples, sample_rate, samples_count));
+            s.spawn(|_| right = Channel::from_samples(&right_samples, sample_rate, samples_count));
             s.spawn(|_| {
                 stereo_correlation =
                     StereoCorrelationBuilder::process(&left_samples, &right_samples)
@@ -131,14 +124,14 @@ impl FlacFile {
             });
         });
 
-        left_channel.true_peak = left_true_peak;
-        left_channel.true_clipping_samples_count = left_true_clip;
-        right_channel.true_peak = right_true_peak;
-        right_channel.true_clipping_samples_count = right_true_clip;
+        left.true_peak = left_true_peak;
+        left.true_clipping_samples_count = left_true_clip;
+        right.true_peak = right_true_peak;
+        right.true_clipping_samples_count = right_true_clip;
 
         FlacFile {
-            left: left_channel,
-            right: right_channel,
+            left,
+            right,
             bit_depth,
             channels,
             sample_rate,

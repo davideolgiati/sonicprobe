@@ -8,8 +8,8 @@ impl ClippingSamplesBuilder {
         samples
             .iter()
             .filter(|&&x| is_clipping(x))
-            .collect::<Vec<&f32>>()
-            .len()
+            .map(|_| 1)
+            .sum()
     }
 }
 

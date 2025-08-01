@@ -10,10 +10,8 @@ impl LowPassFilter {
         let cutoff_hz: f32 = (original_frequency as f32) * 0.8;
         let upsampled_freq: f32 = super::TARGET_FREQUENCY as f32;
 
-        let mut coeffs: Vec<f32> =
+        let coeffs: Vec<f32> =
             low_pass_filter(cutoff_hz, upsampled_freq, super::LOW_PASS_FILTER_SIZE);
-
-        coeffs.reverse();
 
         let mut coeffs_slice = [0.0f32; super::LOW_PASS_FILTER_SIZE];
         coeffs_slice.copy_from_slice(&coeffs);

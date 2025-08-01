@@ -1,10 +1,10 @@
-use std::f32;
+use std::{f32, sync::Arc};
 
 pub fn to_dbfs(dc: f32) -> f32 {
     20.0 * dc.log10()
 }
 
-pub fn catmull_rom_interpolation(window: &[f32], start: usize, t: f32) -> f32 {
+pub fn catmull_rom_interpolation(window: &Arc<[f32]>, start: usize, t: f32) -> f32 {
     let b0 = -(0.5 * t.powi(3)) + t.powi(2) - (0.5 * t);
     let b1 = (1.5 * t.powi(3)) - (2.5 * t.powi(2)) + 1.0;
     let b2 = (-1.5 * t.powi(3)) + (2.0 * t.powi(2)) + (0.5 * t);
@@ -86,14 +86,16 @@ mod tests {
 
     #[test]
     fn test_catmull_rom_interpolation_properties() {
+        let arr = [0.0f32, 1.0f32, 2.0f32, 3.0f32];
+        let data: Arc<[f32]> = Arc::new(arr);
         // Test 1: At t=0, the output should exactly match the second point (y1).
-        assert!((catmull_rom_interpolation(&[0.0, 1.0, 2.0, 3.0], 0, 0.0) - 1.0).abs() < 1e-6);
+        assert!((catmull_rom_interpolation(&data, 0, 0.0) - 1.0).abs() < 1e-6);
 
         // Test 2: At t=1, the output should exactly match the third point (y2).
-        assert!((catmull_rom_interpolation(&[0.0, 1.0, 2.0, 3.0], 0, 1.0) - 2.0).abs() < 1e-6);
+        assert!((catmull_rom_interpolation(&data, 0, 1.0) - 2.0).abs() < 1e-6);
 
         // Test 3: With linearly spaced points, the interpolation should also be linear.
-        let midpoint = catmull_rom_interpolation(&[1.0, 2.0, 3.0, 4.0], 0, 0.5);
+        let midpoint = catmull_rom_interpolation(&data, 0, 0.5);
         assert!(
             (midpoint - 2.5).abs() < 1e-6,
             "Interpolation of linear data was not linear"

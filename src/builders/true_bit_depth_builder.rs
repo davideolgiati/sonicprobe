@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use rayon::prelude::*;
 
 use crate::builders::TrueBitDepthBuilder;
@@ -14,7 +16,7 @@ impl TrueBitDepthBuilder {
     }
 
     #[inline]
-    pub fn add(&mut self, mapped_stream: Vec<f32>, factor: f32) {
+    pub fn add(&mut self, mapped_stream: Arc<[f32]>, factor: f32) {
         let mut real_depths = mapped_stream
             .par_iter()
             .map(|sample| {

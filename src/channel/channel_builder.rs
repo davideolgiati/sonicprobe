@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::builders::{
     ClippingSamplesBuilder, DCOffsetBuilder, DRBuilder, PeakBuilder, RMSBuilder,
     ZeroCrossingRateBuilder,
@@ -8,7 +10,7 @@ use crate::channel::Channel;
 pub struct ChannelBuilder {}
 
 impl ChannelBuilder {
-    pub fn from_samples(samples: &[f32], sample_rate: u32, samples_count: u64) -> Channel {
+    pub fn from_samples(samples: &Arc<[f32]>, sample_rate: u32, samples_count: u64) -> Channel {
         let mut rms = 0.0f32;
         let mut peak = 0.0f32;
         let mut clipping_samples_count = 0;
@@ -43,18 +45,14 @@ impl ChannelBuilder {
     }
 }
 
-fn coumpute_rms(samples: &[f32], output: &mut f32) {
+fn coumpute_rms(samples: &Arc<[f32]>, output: &mut f32) {
     let mut builder = RMSBuilder::new();
-    for sample in samples {
-        builder.add(*sample);
-    }
+    samples.iter().for_each(|sample| builder.add(*sample));
     *output = builder.build()
 }
 
-fn coumpute_dc_offset(samples: &[f32], samples_count: u64, output: &mut f32) {
+fn coumpute_dc_offset(samples: &Arc<[f32]>, samples_count: u64, output: &mut f32) {
     let mut builder = DCOffsetBuilder::new(samples_count);
-    for sample in samples {
-        builder.add(*sample);
-    }
+    samples.iter().for_each(|sample| builder.add(*sample));
     *output = builder.build()
 }

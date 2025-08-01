@@ -3,7 +3,7 @@ use crate::{
     dsp::{LOW_PASS_FILTER_SIZE, LowPassFilter},
 };
 
-use std::arch::is_x86_feature_detected;
+use std::{arch::is_x86_feature_detected, sync::Arc};
 
 impl LowPassFilter {
     pub fn new(original_frequency: u32) -> Self {
@@ -24,7 +24,7 @@ impl LowPassFilter {
     }
 
     #[inline]
-    pub fn submit(&self, window: &[f32], start: usize, end: usize) -> Vec<f32> {
+    pub fn submit(&self, window: &Arc<[f32]>, start: usize, end: usize) -> f32 {
         let window_slice: &[f32; super::LOW_PASS_FILTER_SIZE] = window[start..end]
             .try_into().unwrap_or_else(|_| {
                 panic!(
@@ -33,7 +33,7 @@ impl LowPassFilter {
                     window.len()
                 )
             });
-        vec![dot_product(&self.coeffs, window_slice)]
+        dot_product(&self.coeffs, window_slice)
     }
 }
 

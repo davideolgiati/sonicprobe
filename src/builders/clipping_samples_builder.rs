@@ -1,8 +1,10 @@
+use std::sync::Arc;
+
 use crate::builders::ClippingSamplesBuilder;
 
 impl ClippingSamplesBuilder {
     #[inline]
-    pub fn process(samples: &[f32]) -> usize {
+    pub fn process(samples: &Arc<[f32]>) -> usize {
         samples
             .iter()
             .filter(|&&x| is_clipping(x))

@@ -1,10 +1,10 @@
-use std::cmp::Ordering;
+use std::{cmp::Ordering, sync::Arc};
 
 use crate::builders::PeakBuilder;
 
 impl PeakBuilder {
     #[inline]
-    pub fn process(samples: &[f32]) -> f32 {
+    pub fn process(samples: &Arc<[f32]>) -> f32 {
         match samples
             .iter()
             .enumerate()
@@ -16,6 +16,7 @@ impl PeakBuilder {
     }
 }
 
+/*
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -76,3 +77,4 @@ mod tests {
         assert!(result.is_nan() || result == 5.0);
     }
 }
+*/

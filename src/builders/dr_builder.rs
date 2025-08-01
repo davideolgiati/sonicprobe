@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     audio_utils::to_dbfs,
     builders::{DRBuilder, RMSBuilder},
@@ -12,7 +14,7 @@ impl DRBuilder {
     }
 
     #[inline]
-    pub fn add(&mut self, samples: &[f32]) {
+    pub fn add(&mut self, samples: &Arc<[f32]>) {
         let chunk_size = (self.sample_frequency as f32 * 1.5).round() as usize;
         let reminder = samples.len() % chunk_size;
         let samples_end = samples.len() - reminder;

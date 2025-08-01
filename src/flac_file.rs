@@ -1,4 +1,5 @@
 use std::fs::File;
+use std::sync::Arc;
 
 use flac::{ReadStream, Stream};
 
@@ -31,12 +32,12 @@ pub struct FlacFile {
     stereo_correlation: f32,
 }
 
-fn upsample(data: Vec<f32>, original_frequency: u32) -> (f32, usize) {
+fn upsample(data: Arc<[f32]>, original_frequency: u32) -> (f32, usize) {
     let upsampler = Upsampler::new(original_frequency);
     let low_pass = LowPassFilter::new(original_frequency);
-    let samples = DSPChain::new(&data)
-        .window(4, |window: &[f32], start: usize, _end: usize| upsampler.submit(window, start, _end))
-        .window(crate::dsp::LOW_PASS_FILTER_SIZE, |window: &[f32], start: usize, end: usize| {
+    let samples = DSPChain::new(data)
+        .flat_window(4, |window: Arc<[f32]>, start: usize, _end: usize| upsampler.submit(window, start, _end))
+        .window(crate::dsp::LOW_PASS_FILTER_SIZE, |window: &Arc<[f32]>, start: usize, end: usize| {
             low_pass.submit(window, start, end)
         })
         .collect();
@@ -63,26 +64,30 @@ impl FlacFile {
             8 => data_stream
                 .iter::<i8>()
                 .map(|s| s as f32 / MAX_8_BIT)
-                .collect::<Vec<f32>>(),
+                .collect::<Arc<[f32]>>(),
             16 => data_stream
                 .iter::<i16>()
                 .map(|s| s as f32 / MAX_16_BIT)
-                .collect::<Vec<f32>>(),
+                .collect::<Arc<[f32]>>(),
             24 => data_stream
                 .iter::<i32>()
                 .map(|s| s as f32 / MAX_24_BIT)
-                .collect::<Vec<f32>>(),
+                .collect::<Arc<[f32]>>(),
             32 => data_stream
                 .iter::<i32>()
                 .map(|s| s as f32 / MAX_32_BIT)
-                .collect::<Vec<f32>>(),
+                .collect::<Arc<[f32]>>(),
             _ => panic!("Unknown bit depth"),
         };
 
-        let (left_samples, right_samples): (Vec<f32>, Vec<f32>) = mapped_stream
-            .chunks_exact(2)
-            .map(|pair| (pair[0], pair[1]))
-            .unzip();
+        let (left_samples, right_samples): (Arc<[f32]>, Arc<[f32]>) = {
+            let (left_vec, right_vec): (Vec<f32>, Vec<f32>) = mapped_stream
+                .chunks_exact(2)
+                .map(|pair| (pair[0], pair[1]))
+                .unzip();
+            
+            (Arc::from(left_vec), Arc::from(right_vec))
+        };
 
         let mut left_true_peak = 0.0f32;
         let mut right_true_peak = 0.0f32;

@@ -1,8 +1,10 @@
+use std::sync::Arc;
+
 use crate::builders::ZeroCrossingRateBuilder;
 
 impl ZeroCrossingRateBuilder {
     #[inline]
-    pub fn process(samples: &[f32], duration: f32) -> f32 {
+    pub fn process(samples: &Arc<[f32]>, duration: f32) -> f32 {
         samples
             .windows(2)
             .map(|slice| {

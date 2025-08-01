@@ -8,9 +8,7 @@ use crate::builders::PeakBuilder;
 use crate::builders::StereoCorrelationBuilder;
 use crate::builders::TrueBitDepthBuilder;
 use crate::channel::Channel;
-use crate::dsp::DSPChain;
-use crate::dsp::LowPassFilter;
-use crate::dsp::Upsampler;
+use crate::dsp::upsample;
 
 const MAX_8_BIT: f32 = i8::MAX as f32;
 const MAX_16_BIT: f32 = i16::MAX as f32;
@@ -20,27 +18,18 @@ const MAX_32_BIT: f32 = i32::MAX as f32;
 pub struct FlacFile {
     left: Channel,
     right: Channel,
-    channels: u8,
+    samples_count: u64,
     sample_rate: u32,
+    duration: f32,
+    stereo_correlation: f32,
+    channels: u8,
     bit_depth: u8,
     true_bit_depth: u8,
     min_bit_depth: u8,
     max_bit_depth: u8,
-    duration: f32,
-    samples_count: u64,
-    stereo_correlation: f32,
 }
 
-fn upsample(data: Arc<[f32]>, original_frequency: u32) -> (f32, usize) {
-    let upsampler = Upsampler::new(original_frequency);
-    let low_pass = LowPassFilter::new(original_frequency);
-    let samples = DSPChain::new(data)
-        .flat_window(4, |window: Arc<[f32]>, start: usize, _end: usize| upsampler.submit(window, start, _end))
-        .window(crate::dsp::LOW_PASS_FILTER_SIZE, |window: &Arc<[f32]>, start: usize, end: usize| {
-            low_pass.submit(window, start, end)
-        })
-        .collect();
-
+fn analyze(samples: Arc<[f32]>) -> (f32, usize) {
     let mut peak = f32::MIN;
     let mut clip_count = 0;
 
@@ -53,40 +42,16 @@ fn upsample(data: Arc<[f32]>, original_frequency: u32) -> (f32, usize) {
 }
 
 impl FlacFile {
-    pub fn new(mut data_stream: Stream<ReadStream<File>>) -> FlacFile {
-        let channels = data_stream.info().channels;
+    pub fn new(data_stream: Stream<ReadStream<File>>) -> FlacFile {
+        let channel_count = data_stream.info().channels;
         let sample_rate = data_stream.info().sample_rate;
         let bit_depth = data_stream.info().bits_per_sample;
-        let samples_count = data_stream.info().total_samples;
+        let samples_per_channel = data_stream.info().total_samples;
 
-        let mapped_stream = match bit_depth {
-            8 => data_stream
-                .iter::<i8>()
-                .map(|s| s as f32 / MAX_8_BIT)
-                .collect::<Arc<[f32]>>(),
-            16 => data_stream
-                .iter::<i16>()
-                .map(|s| s as f32 / MAX_16_BIT)
-                .collect::<Arc<[f32]>>(),
-            24 => data_stream
-                .iter::<i32>()
-                .map(|s| s as f32 / MAX_24_BIT)
-                .collect::<Arc<[f32]>>(),
-            32 => data_stream
-                .iter::<i32>()
-                .map(|s| s as f32 / MAX_32_BIT)
-                .collect::<Arc<[f32]>>(),
-            _ => panic!("Unknown bit depth"),
-        };
+        let samples = read_flac_file(data_stream, bit_depth);
 
-        let (left_samples, right_samples): (Arc<[f32]>, Arc<[f32]>) = {
-            let (left_vec, right_vec): (Vec<f32>, Vec<f32>) = mapped_stream
-                .chunks_exact(2)
-                .map(|pair| (pair[0], pair[1]))
-                .unzip();
-            
-            (Arc::from(left_vec), Arc::from(right_vec))
-        };
+        let (left_channel_samples, right_channel_samples) =
+            split_sample_array_into_channels(&samples);
 
         let mut left_true_clip = 0;
         let mut right_true_clip = 0;
@@ -101,14 +66,36 @@ impl FlacFile {
         let mut stereo_correlation: f32 = 0.0;
 
         rayon::scope(|s| {
-            //TODO: group by channel
-            s.spawn(|_| (left_true_peak, left_true_clip) = upsample(left_samples.clone(),sample_rate));
-            s.spawn(|_| (right_true_peak, right_true_clip) = upsample(right_samples.clone(), sample_rate));
-            s.spawn(|_| left = Channel::from_samples(&left_samples, sample_rate, samples_count));
-            s.spawn(|_| right = Channel::from_samples(&right_samples, sample_rate, samples_count));
+            s.spawn(|_| {
+                rayon::scope(|l| {
+                    l.spawn(|_| {
+                        left = Channel::from_samples(
+                            &left_channel_samples,
+                            sample_rate,
+                            samples_per_channel,
+                        )
+                    });
+                    l.spawn(|_| {
+                        (left_true_peak, left_true_clip) =
+                            analyze(upsample(left_channel_samples.clone(), sample_rate))
+                    });
+                })
+            });
+            s.spawn(|_| {
+                rayon::scope(|r| {
+                    r.spawn(|_| {
+                        right =
+                            Channel::from_samples(&right_channel_samples, sample_rate, samples_per_channel)
+                    });
+                    r.spawn(|_| {
+                        (right_true_peak, right_true_clip) =
+                            analyze(upsample(right_channel_samples.clone(), sample_rate))
+                    });
+                });
+            });
             s.spawn(|_| {
                 stereo_correlation =
-                    StereoCorrelationBuilder::process(&left_samples, &right_samples)
+                    StereoCorrelationBuilder::process(&left_channel_samples, &right_channel_samples);
             });
             s.spawn(|_| {
                 let factor = match bit_depth {
@@ -118,8 +105,9 @@ impl FlacFile {
                     32 => MAX_32_BIT,
                     _ => panic!("Unknown bit depth"),
                 };
-                let mut true_bit_depth_builder = TrueBitDepthBuilder::new(bit_depth, samples_count);
-                true_bit_depth_builder.add(mapped_stream, factor);
+                let mut true_bit_depth_builder =
+                    TrueBitDepthBuilder::new(bit_depth, samples_per_channel);
+                true_bit_depth_builder.add(samples, factor);
                 (min_bit_depth, max_bit_depth, true_bit_depth) = true_bit_depth_builder.build();
             });
         });
@@ -133,10 +121,10 @@ impl FlacFile {
             left,
             right,
             bit_depth,
-            channels,
+            channels: channel_count,
             sample_rate,
-            duration: samples_count as f32 / sample_rate as f32,
-            samples_count,
+            duration: samples_per_channel as f32 / sample_rate as f32,
+            samples_count: samples_per_channel,
             stereo_correlation,
             true_bit_depth,
             min_bit_depth,
@@ -235,5 +223,36 @@ impl FlacFile {
         .concat();
 
         format!("{{\n{}}}", output,)
+    }
+}
+
+fn split_sample_array_into_channels(samples: &Arc<[f32]>) -> (Arc<[f32]>, Arc<[f32]>) {
+    let (left_vec, right_vec): (Vec<f32>, Vec<f32>) = samples
+        .chunks_exact(2)
+        .map(|pair| (pair[0], pair[1]))
+        .unzip();
+
+    (Arc::from(left_vec), Arc::from(right_vec))
+}
+
+fn read_flac_file(mut data_stream: Stream<ReadStream<File>>, bit_depth: u8) -> Arc<[f32]> {
+    match bit_depth {
+        8 => data_stream
+            .iter::<i8>()
+            .map(|s| s as f32 / MAX_8_BIT)
+            .collect::<Arc<[f32]>>(),
+        16 => data_stream
+            .iter::<i16>()
+            .map(|s| s as f32 / MAX_16_BIT)
+            .collect::<Arc<[f32]>>(),
+        24 => data_stream
+            .iter::<i32>()
+            .map(|s| s as f32 / MAX_24_BIT)
+            .collect::<Arc<[f32]>>(),
+        32 => data_stream
+            .iter::<i32>()
+            .map(|s| s as f32 / MAX_32_BIT)
+            .collect::<Arc<[f32]>>(),
+        _ => panic!("Unknown bit depth"),
     }
 }

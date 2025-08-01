@@ -4,7 +4,7 @@ pub fn to_dbfs(dc: f32) -> f32 {
     20.0 * dc.log10()
 }
 
-pub fn catmull_rom_interpolation(p0: f64, p1: f64, p2: f64, p3: f64, t: f64) -> f32 {
+pub fn catmull_rom_interpolation(window: &[f32], start: usize, t: f32) -> f32 {
     let b0 = -(0.5 * t.powi(3)) + t.powi(2) - (0.5 * t);
     let b1 = (1.5 * t.powi(3)) - (2.5 * t.powi(2)) + 1.0;
     let b2 = (-1.5 * t.powi(3)) + (2.0 * t.powi(2)) + (0.5 * t);
@@ -12,7 +12,7 @@ pub fn catmull_rom_interpolation(p0: f64, p1: f64, p2: f64, p3: f64, t: f64) -> 
 
     assert_eq!(b0 + b1 + b2 + b3, 1.0);
 
-    ((p0 * b0) + (p1 * b1) + (p2 * b2) + (p3 * b3)) as f32
+    (window[start] * b0) + (window[start + 1] * b1) + (window[start + 2] * b2) + (window[start + 3] * b3)
 }
 
 fn hz_to_radian(frequency: f32, sample_rate: f32) -> f32 {
@@ -87,13 +87,13 @@ mod tests {
     #[test]
     fn test_catmull_rom_interpolation_properties() {
         // Test 1: At t=0, the output should exactly match the second point (y1).
-        assert!((catmull_rom_interpolation(0.0, 1.0, 2.0, 3.0, 0.0) - 1.0).abs() < 1e-6);
+        assert!((catmull_rom_interpolation(&[0.0, 1.0, 2.0, 3.0], 0, 0.0) - 1.0).abs() < 1e-6);
 
         // Test 2: At t=1, the output should exactly match the third point (y2).
-        assert!((catmull_rom_interpolation(0.0, 1.0, 2.0, 3.0, 1.0) - 2.0).abs() < 1e-6);
+        assert!((catmull_rom_interpolation(&[0.0, 1.0, 2.0, 3.0], 0, 1.0) - 2.0).abs() < 1e-6);
 
         // Test 3: With linearly spaced points, the interpolation should also be linear.
-        let midpoint = catmull_rom_interpolation(1.0, 2.0, 3.0, 4.0, 0.5);
+        let midpoint = catmull_rom_interpolation(&[1.0, 2.0, 3.0, 4.0], 0, 0.5);
         assert!(
             (midpoint - 2.5).abs() < 1e-6,
             "Interpolation of linear data was not linear"

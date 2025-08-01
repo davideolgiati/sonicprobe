@@ -24,16 +24,16 @@ impl LowPassFilter {
     }
 
     #[inline]
-    pub fn submit(&self, window: &[f32]) -> Vec<f32> {
-        let window_array: &[f32; super::LOW_PASS_FILTER_SIZE] =
-            window.try_into().unwrap_or_else(|_| {
+    pub fn submit(&self, window: &[f32], start: usize, end: usize) -> Vec<f32> {
+        let window_slice: &[f32; super::LOW_PASS_FILTER_SIZE] = window[start..end]
+            .try_into().unwrap_or_else(|_| {
                 panic!(
                     "Window must be exactly {} elements, got {}",
                     LOW_PASS_FILTER_SIZE,
                     window.len()
                 )
             });
-        vec![dot_product(&self.coeffs, window_array)]
+        vec![dot_product(&self.coeffs, window_slice)]
     }
 }
 

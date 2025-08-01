@@ -35,9 +35,9 @@ fn upsample(data: Vec<f32>, original_frequency: u32) -> (f32, usize) {
     let upsampler = Upsampler::new(original_frequency);
     let low_pass = LowPassFilter::new(original_frequency);
     let samples = DSPChain::new(&data)
-        .window(4, |window: &[f32]| upsampler.submit(window))
-        .window(crate::dsp::LOW_PASS_FILTER_SIZE, |window: &[f32]| {
-            low_pass.submit(window)
+        .window(4, |window: &[f32], start: usize, _end: usize| upsampler.submit(window, start, _end))
+        .window(crate::dsp::LOW_PASS_FILTER_SIZE, |window: &[f32], start: usize, end: usize| {
+            low_pass.submit(window, start, end)
         })
         .collect();
 

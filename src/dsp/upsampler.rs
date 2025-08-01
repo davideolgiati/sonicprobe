@@ -11,18 +11,15 @@ impl Upsampler {
     }
 
     #[inline]
-    pub fn submit(&self, window: &[f32]) -> Vec<f32> {
+    pub fn submit(&self, window: &[f32], start: usize, _end: usize) -> Vec<f32> {
         (0..self.multipier)
             .map(|k| {
                 if k == 0 {
-                    window[1]
+                    window[start + 1]
                 } else {
                     catmull_rom_interpolation(
-                        window[0] as f64,
-                        window[1] as f64,
-                        window[2] as f64,
-                        window[3] as f64,
-                        k as f64 / self.multipier as f64,
+                        window, start,
+                        k as f32 / self.multipier as f32,
                     )
                 }
             })

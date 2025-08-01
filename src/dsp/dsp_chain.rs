@@ -9,13 +9,12 @@ impl<T: Clone> DSPChain<T> {
 
     pub fn window<R, F>(self, size: usize, func: F) -> DSPChain<R>
     where
-        F: Fn(&[T]) -> Vec<R>,
+        F: Fn(&[T], usize, usize) -> Vec<R>,
         R: Clone,
     {
-        let new_data= self.data
-                .windows(size)
-                .flat_map(func)
-                .collect();
+        let new_data = (0..(self.data.len() - size))
+            .flat_map(|index| func(&self.data, index, index + size))
+            .collect();
         DSPChain { data: new_data }
     }
 

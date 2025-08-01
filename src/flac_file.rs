@@ -50,54 +50,32 @@ impl FlacFile {
 
         let samples = read_flac_file(data_stream, bit_depth);
 
-        let (left_channel_samples, right_channel_samples) =
-            split_sample_array_into_channels(&samples);
+        let (left_samples, right_samples) = split_sample_array_into_channels(&samples);
 
-        let mut left_true_clip = 0;
-        let mut right_true_clip = 0;
-        let mut left_true_peak = 0.0f32;
-        let mut right_true_peak = 0.0f32;
+        // TODO: questo fa schifo, usare i thread
+        // https://doc.rust-lang.org/std/thread/fn.spawn.html
 
-        let mut left: Channel = Channel::empty();
-        let mut right: Channel = Channel::empty();
-        let mut min_bit_depth: u8 = 0;
-        let mut max_bit_depth: u8 = 0;
-        let mut true_bit_depth: u8 = 0;
-        let mut stereo_correlation: f32 = 0.0;
-
-        rayon::scope(|s| {
-            s.spawn(|_| {
-                rayon::scope(|l| {
-                    l.spawn(|_| {
-                        left = Channel::from_samples(
-                            &left_channel_samples,
-                            sample_rate,
-                            samples_per_channel,
-                        )
-                    });
-                    l.spawn(|_| {
-                        (left_true_peak, left_true_clip) =
-                            analyze(upsample(left_channel_samples.clone(), sample_rate))
-                    });
-                })
-            });
-            s.spawn(|_| {
-                rayon::scope(|r| {
-                    r.spawn(|_| {
-                        right =
-                            Channel::from_samples(&right_channel_samples, sample_rate, samples_per_channel)
-                    });
-                    r.spawn(|_| {
-                        (right_true_peak, right_true_clip) =
-                            analyze(upsample(right_channel_samples.clone(), sample_rate))
-                    });
-                });
-            });
-            s.spawn(|_| {
-                stereo_correlation =
-                    StereoCorrelationBuilder::process(&left_channel_samples, &right_channel_samples);
-            });
-            s.spawn(|_| {
+        let (
+            (mut left, (left_true_peak, left_true_clip)),
+            (mut right, (right_true_peak, right_true_clip)),
+        ) = rayon::join(
+            || {
+                rayon::join(
+                    || Channel::from_samples(&left_samples, sample_rate, samples_per_channel),
+                    || analyze(upsample(left_samples.clone(), sample_rate)),
+                )
+            },
+            || {
+                rayon::join(
+                    || Channel::from_samples(&right_samples, sample_rate, samples_per_channel),
+                    || analyze(upsample(right_samples.clone(), sample_rate)),
+                )
+            },
+        );
+        
+        let (stereo_correlation, (min_bit_depth, max_bit_depth, true_bit_depth)) = rayon::join(
+            || StereoCorrelationBuilder::process(&left_samples, &right_samples),
+            || {
                 let factor = match bit_depth {
                     8 => MAX_8_BIT,
                     16 => MAX_16_BIT,
@@ -108,9 +86,8 @@ impl FlacFile {
                 let mut true_bit_depth_builder =
                     TrueBitDepthBuilder::new(bit_depth, samples_per_channel);
                 true_bit_depth_builder.add(samples, factor);
-                (min_bit_depth, max_bit_depth, true_bit_depth) = true_bit_depth_builder.build();
+                true_bit_depth_builder.build()
             });
-        });
 
         left.true_peak = left_true_peak;
         left.true_clipping_samples_count = left_true_clip;

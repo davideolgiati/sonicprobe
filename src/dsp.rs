@@ -19,11 +19,11 @@ struct DSPChain<T> {
     data: Arc<[T]>,
 }
 
-pub fn upsample(data: Arc<[f32]>, original_frequency: u32) -> Arc<[f32]> {
-    let upsampler = Upsampler::new(original_frequency);
-    let low_pass = LowPassFilter::new(original_frequency);
+pub fn upsample(samples: Arc<[f32]>, original_sample_rate: u32) -> Arc<[f32]> {
+    let upsampler = Upsampler::new(original_sample_rate);
+    let low_pass = LowPassFilter::new(original_sample_rate);
 
-    DSPChain::new(data)
+    DSPChain::new(samples)
         .flat_window(4, |window: Arc<[f32]>, start: usize, _end: usize| {
             upsampler.submit(window, start, _end)
         })

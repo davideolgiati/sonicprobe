@@ -16,21 +16,26 @@ const MAX_16_BIT: f32 = i16::MAX as f32;
 const MAX_24_BIT: f32 = ((1 << 23) - 1) as f32;
 const MAX_32_BIT: f32 = i32::MAX as f32;
 
+type Signal = Arc<[f32]>;
+type Frequency = u32;
+type BitPrecision = u8;
+type Milliseconds = f32;
+
 pub struct FlacFile {
     left: Channel,
     right: Channel,
     samples_count: u64,
-    sample_rate: u32,
-    duration: f32,
+    sample_rate: Frequency,
+    duration: Milliseconds,
     stereo_correlation: f32,
     channels: u8,
-    bit_depth: u8,
-    true_bit_depth: u8,
-    min_bit_depth: u8,
-    max_bit_depth: u8,
+    depth: BitPrecision,
+    true_depth: BitPrecision,
+    min_depth: BitPrecision,
+    max_depth: BitPrecision,
 }
 
-fn analyze(samples: Arc<[f32]>) -> (f32, usize) {
+fn analyze(samples: Signal) -> (f32, usize) {
     let mut peak = f32::MIN;
     let mut clip_count = 0;
 
@@ -43,18 +48,18 @@ fn analyze(samples: Arc<[f32]>) -> (f32, usize) {
 }
 
 fn new_channel_thread(
-    samples: Arc<[f32]>,
-    sample_rate: u32,
+    samples: Signal,
+    sample_rate: Frequency,
     samples_per_channel: u64,
 ) -> std::thread::JoinHandle<Channel> {
     thread::spawn(move || Channel::from_samples(&samples, sample_rate, samples_per_channel))
 }
 
 fn new_upsample_thread(
-    data: Arc<[f32]>,
-    original_frequency: u32,
+    data: Signal,
+    original_sample_rate: Frequency,
 ) -> std::thread::JoinHandle<(f32, usize)> {
-    thread::spawn(move || analyze(upsample(data, original_frequency)))
+    thread::spawn(move || analyze(upsample(data, original_sample_rate)))
 }
 
 impl FlacFile {
@@ -98,15 +103,15 @@ impl FlacFile {
         FlacFile {
             left,
             right,
-            bit_depth,
+            depth: bit_depth,
             channels: channel_count,
             sample_rate,
             duration: samples_per_channel as f32 / sample_rate as f32,
             samples_count: samples_per_channel,
             stereo_correlation,
-            true_bit_depth,
-            min_bit_depth,
-            max_bit_depth,
+            true_depth: true_bit_depth,
+            min_depth: min_bit_depth,
+            max_depth: max_bit_depth,
         }
     }
 
@@ -127,19 +132,19 @@ impl FlacFile {
     }
 
     pub fn bit_depth(&self) -> u8 {
-        self.bit_depth
+        self.depth
     }
 
     pub fn true_bit_depth(&self) -> u8 {
-        self.true_bit_depth
+        self.true_depth
     }
 
     pub fn min_bit_depth(&self) -> u8 {
-        self.min_bit_depth
+        self.min_depth
     }
 
     pub fn max_bit_depth(&self) -> u8 {
-        self.max_bit_depth
+        self.max_depth
     }
 
     pub fn rms_balance(&self) -> f32 {
@@ -213,24 +218,24 @@ fn split_sample_array_into_channels(samples: &Arc<[f32]>) -> (Arc<[f32]>, Arc<[f
     (Arc::from(left_vec), Arc::from(right_vec))
 }
 
-fn read_flac_file(mut data_stream: Stream<ReadStream<File>>, bit_depth: u8) -> Arc<[f32]> {
+fn read_flac_file(mut data_stream: Stream<ReadStream<File>>, bit_depth: u8) -> Signal {
     match bit_depth {
         8 => data_stream
             .iter::<i8>()
             .map(|s| s as f32 / MAX_8_BIT)
-            .collect::<Arc<[f32]>>(),
+            .collect::<Signal>(),
         16 => data_stream
             .iter::<i16>()
             .map(|s| s as f32 / MAX_16_BIT)
-            .collect::<Arc<[f32]>>(),
+            .collect::<Signal>(),
         24 => data_stream
             .iter::<i32>()
             .map(|s| s as f32 / MAX_24_BIT)
-            .collect::<Arc<[f32]>>(),
+            .collect::<Signal>(),
         32 => data_stream
             .iter::<i32>()
             .map(|s| s as f32 / MAX_32_BIT)
-            .collect::<Arc<[f32]>>(),
+            .collect::<Signal>(),
         _ => panic!("Unknown bit depth"),
     }
 }

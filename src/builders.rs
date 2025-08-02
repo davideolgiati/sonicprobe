@@ -17,6 +17,7 @@ pub struct PeakBuilder;
 pub struct ClippingSamplesBuilder;
 pub struct ZeroCrossingRateBuilder;
 pub struct StereoCorrelationBuilder;
+pub struct TrueBitDepthBuilder;
 
 #[derive(Clone)]
 pub struct RMSBuilder {
@@ -29,11 +30,4 @@ pub struct DRBuilder {
     rms_avarage: f32,
 }
 
-pub struct TrueBitDepthBuilder {
-    min: u8,
-    max: u8,
-    avarage: f32,
-    reported_depth: u8,
-    sample_count: u64,
-}
 

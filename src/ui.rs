@@ -48,15 +48,13 @@ pub fn print_file_details(filename: &str, file: &FlacFile) {
     println!(
         "   {:<18} : {} / {}",
         "Format",
-        Entry::from_bit(file.bit_depth()).formatted(),
+        Entry::from_bit(file.depth()).formatted(),
         Entry::from_hz(file.sample_rate() as f32).formatted()
     );
     println!(
-        "   {:<18} : {} bit (Range {}-{})",
+        "   {:<18} : {} bit",
         "Bit depth usage",
-        file.true_bit_depth(),
-        file.min_bit_depth(),
-        file.max_bit_depth()
+        file.true_bit_depth()
     );
 
     println!("\n\n{}", section_header("STEREO FIELD ANALYSIS"));

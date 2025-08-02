@@ -22,17 +22,17 @@ type BitPrecision = u8;
 type Milliseconds = f32;
 
 pub struct FlacFile {
-    left: Channel,
-    right: Channel,
-    samples_count: u64,
+    left: Channel, // OK
+    right: Channel, // OK
+    /* Group next 4 */
+    samples_per_channel: u64,
     sample_rate: Frequency,
     duration: Milliseconds,
     stereo_correlation: f32,
-    channels: u8,
+    channels: u8, // OK
+    /* Group next 4 */
     depth: BitPrecision,
     true_depth: BitPrecision,
-    min_depth: BitPrecision,
-    max_depth: BitPrecision,
 }
 
 fn analyze(samples: Signal) -> (f32, usize) {
@@ -66,12 +66,12 @@ impl FlacFile {
     pub fn new(data_stream: Stream<ReadStream<File>>) -> FlacFile {
         let channel_count = data_stream.info().channels;
         let sample_rate = data_stream.info().sample_rate;
-        let bit_depth = data_stream.info().bits_per_sample;
+        let depth = data_stream.info().bits_per_sample;
         let samples_per_channel = data_stream.info().total_samples;
 
-        let samples = read_flac_file(data_stream, bit_depth);
+        let signal = read_flac_file(data_stream, depth);
 
-        let (left_samples, right_samples) = split_sample_array_into_channels(&samples);
+        let (left_samples, right_samples) = split_sample_array_into_channels(&signal);
 
         let left_upsample_worker = new_upsample_thread(left_samples.clone(), sample_rate);
         let right_upsample_worker = new_upsample_thread(right_samples.clone(), sample_rate);
@@ -79,17 +79,15 @@ impl FlacFile {
         let right_worker = new_channel_thread(right_samples.clone(), sample_rate, samples_per_channel);
         let stereo_correlation_worker = thread::spawn(move || StereoCorrelationBuilder::process(&left_samples, &right_samples));
         let bit_depth_worker = thread::spawn(move || {
-                let factor = match bit_depth {
+                let factor = match depth {
                     8 => MAX_8_BIT,
                     16 => MAX_16_BIT,
                     24 => MAX_24_BIT,
                     32 => MAX_32_BIT,
                     _ => panic!("Unknown bit depth"),
                 };
-                let mut true_bit_depth_builder =
-                    TrueBitDepthBuilder::new(bit_depth, samples_per_channel);
-                true_bit_depth_builder.add(samples, factor);
-                true_bit_depth_builder.build()
+                
+                TrueBitDepthBuilder::process(signal, factor, depth)
             }
         );
 
@@ -98,20 +96,18 @@ impl FlacFile {
         let mut right = right_worker.join().unwrap();
         (right.true_peak, right.true_clipping_samples_count) = right_upsample_worker.join().unwrap();
         let stereo_correlation = stereo_correlation_worker.join().unwrap();
-        let (min_bit_depth, max_bit_depth, true_bit_depth) = bit_depth_worker.join().unwrap();
+        let true_bit_depth = bit_depth_worker.join().unwrap();
 
         FlacFile {
             left,
             right,
-            depth: bit_depth,
+            depth,
             channels: channel_count,
             sample_rate,
             duration: samples_per_channel as f32 / sample_rate as f32,
-            samples_count: samples_per_channel,
+            samples_per_channel,
             stereo_correlation,
-            true_depth: true_bit_depth,
-            min_depth: min_bit_depth,
-            max_depth: max_bit_depth,
+            true_depth: true_bit_depth
         }
     }
 
@@ -131,20 +127,12 @@ impl FlacFile {
         self.sample_rate
     }
 
-    pub fn bit_depth(&self) -> u8 {
+    pub fn depth(&self) -> BitPrecision {
         self.depth
     }
 
     pub fn true_bit_depth(&self) -> u8 {
         self.true_depth
-    }
-
-    pub fn min_bit_depth(&self) -> u8 {
-        self.min_depth
-    }
-
-    pub fn max_bit_depth(&self) -> u8 {
-        self.max_depth
     }
 
     pub fn rms_balance(&self) -> f32 {
@@ -156,7 +144,7 @@ impl FlacFile {
     }
 
     pub fn samples_count(&self) -> u64 {
-        self.samples_count
+        self.samples_per_channel
     }
 
     pub fn stereo_correlation(&self) -> f32 {
@@ -172,21 +160,11 @@ impl FlacFile {
                 self.channel_count()
             ),
             format!("{}\"sample_rate\": {},\n", inner_tab, self.sample_rate()),
-            format!("{}\"bit_depth\": {},\n", inner_tab, self.bit_depth()),
+            format!("{}\"bit_depth\": {},\n", inner_tab, self.depth()),
             format!(
                 "{}\"true_bit_depth\": {},\n",
                 inner_tab,
                 self.true_bit_depth()
-            ),
-            format!(
-                "{}\"min_bit_depth\": {},\n",
-                inner_tab,
-                self.min_bit_depth()
-            ),
-            format!(
-                "{}\"max_bit_depth\": {},\n",
-                inner_tab,
-                self.max_bit_depth()
             ),
             format!("{}\"duration\": {},\n", inner_tab, self.duration()),
             format!(
@@ -209,7 +187,7 @@ impl FlacFile {
     }
 }
 
-fn split_sample_array_into_channels(samples: &Arc<[f32]>) -> (Arc<[f32]>, Arc<[f32]>) {
+fn split_sample_array_into_channels(samples: &Signal) -> (Signal, Signal) {
     let (left_vec, right_vec): (Vec<f32>, Vec<f32>) = samples
         .chunks_exact(2)
         .map(|pair| (pair[0], pair[1]))
@@ -218,8 +196,8 @@ fn split_sample_array_into_channels(samples: &Arc<[f32]>) -> (Arc<[f32]>, Arc<[f
     (Arc::from(left_vec), Arc::from(right_vec))
 }
 
-fn read_flac_file(mut data_stream: Stream<ReadStream<File>>, bit_depth: u8) -> Signal {
-    match bit_depth {
+fn read_flac_file(mut data_stream: Stream<ReadStream<File>>, depth: BitPrecision) -> Signal {
+    match depth {
         8 => data_stream
             .iter::<i8>()
             .map(|s| s as f32 / MAX_8_BIT)

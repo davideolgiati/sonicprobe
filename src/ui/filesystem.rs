@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-const UNITS: &[&str] = &["B", "KB", "MB", "GB", "TB"];
+use crate::constants::UNITS;
 
 fn format_file_size(bytes: u64) -> String {
     let mut size = bytes as f64;

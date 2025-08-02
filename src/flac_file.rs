@@ -9,12 +9,11 @@ use crate::builders::PeakBuilder;
 use crate::builders::StereoCorrelationBuilder;
 use crate::builders::TrueBitDepthBuilder;
 use crate::channel::Channel;
+use crate::constants::MAX_16_BIT;
+use crate::constants::MAX_24_BIT;
+use crate::constants::MAX_32_BIT;
+use crate::constants::MAX_8_BIT;
 use crate::dsp::upsample;
-
-const MAX_8_BIT: f32 = i8::MAX as f32;
-const MAX_16_BIT: f32 = i16::MAX as f32;
-const MAX_24_BIT: f32 = ((1 << 23) - 1) as f32;
-const MAX_32_BIT: f32 = i32::MAX as f32;
 
 type Signal = Arc<[f32]>;
 type Frequency = u32;
@@ -78,25 +77,14 @@ impl FlacFile {
         let left_worker = new_channel_thread(left_samples.clone(), sample_rate, samples_per_channel);
         let right_worker = new_channel_thread(right_samples.clone(), sample_rate, samples_per_channel);
         let stereo_correlation_worker = thread::spawn(move || StereoCorrelationBuilder::process(&left_samples, &right_samples));
-        let bit_depth_worker = thread::spawn(move || {
-                let factor = match depth {
-                    8 => MAX_8_BIT,
-                    16 => MAX_16_BIT,
-                    24 => MAX_24_BIT,
-                    32 => MAX_32_BIT,
-                    _ => panic!("Unknown bit depth"),
-                };
-                
-                TrueBitDepthBuilder::process(signal, factor, depth)
-            }
-        );
+        let bit_depth_worker = thread::spawn(move || TrueBitDepthBuilder::process(signal, depth));
 
-        let mut left = left_worker.join().unwrap();
-        (left.true_peak, left.true_clipping_samples_count) = left_upsample_worker.join().unwrap();
-        let mut right = right_worker.join().unwrap();
-        (right.true_peak, right.true_clipping_samples_count) = right_upsample_worker.join().unwrap();
-        let stereo_correlation = stereo_correlation_worker.join().unwrap();
         let true_bit_depth = bit_depth_worker.join().unwrap();
+        let stereo_correlation = stereo_correlation_worker.join().unwrap();
+        let mut left = left_worker.join().unwrap();
+        let mut right = right_worker.join().unwrap();
+        (left.true_peak, left.true_clipping_samples_count) = left_upsample_worker.join().unwrap();
+        (right.true_peak, right.true_clipping_samples_count) = right_upsample_worker.join().unwrap();
 
         FlacFile {
             left,

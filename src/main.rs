@@ -6,6 +6,7 @@ mod dsp;
 mod flac_file;
 mod output_format;
 mod ui;
+mod constants;
 
 extern crate flac;
 

@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use crate::{audio_utils::catmull_rom_interpolation, dsp::Upsampler};
+use crate::{audio_utils::catmull_rom_interpolation, constants::UPSAMPLE_TARGET_FREQUENCY, dsp::Upsampler};
 
 impl Upsampler {
     pub fn new(original_frequency: u32) -> Self {
         let multipier: u8 = {
-            let ratio = (super::TARGET_FREQUENCY / original_frequency) as u8;
+            let ratio = (UPSAMPLE_TARGET_FREQUENCY / original_frequency) as u8;
             if ratio < 1 { 1 } else { ratio }
         };
 

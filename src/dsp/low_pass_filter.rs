@@ -1,6 +1,7 @@
 use crate::{
     audio_utils::low_pass_filter,
-    dsp::{LOW_PASS_FILTER_SIZE, LowPassFilter},
+    constants::{LOW_PASS_FILTER_SIZE, UPSAMPLE_TARGET_FREQUENCY},
+    dsp::LowPassFilter,
 };
 
 use std::{arch::is_x86_feature_detected, sync::Arc};
@@ -8,7 +9,7 @@ use std::{arch::is_x86_feature_detected, sync::Arc};
 impl LowPassFilter {
     pub fn new(original_frequency: u32) -> Self {
         let cutoff_hz: f32 = (original_frequency as f32) * 0.8;
-        let upsampled_freq: f32 = super::TARGET_FREQUENCY as f32;
+        let upsampled_freq: f32 = UPSAMPLE_TARGET_FREQUENCY as f32;
 
         let coeffs: Vec<f32> =
             low_pass_filter(cutoff_hz, upsampled_freq, super::LOW_PASS_FILTER_SIZE);
@@ -23,8 +24,8 @@ impl LowPassFilter {
 
     #[inline]
     pub fn submit(&self, window: &Arc<[f32]>, start: usize, end: usize) -> f32 {
-        let window_slice: &[f32; super::LOW_PASS_FILTER_SIZE] = window[start..end]
-            .try_into().unwrap_or_else(|_| {
+        let window_slice: &[f32; super::LOW_PASS_FILTER_SIZE] =
+            window[start..end].try_into().unwrap_or_else(|_| {
                 panic!(
                     "Window must be exactly {} elements, got {}",
                     LOW_PASS_FILTER_SIZE,
@@ -35,14 +36,11 @@ impl LowPassFilter {
     }
 }
 
-fn dot_product(
-    coeffs: &[f32; super::LOW_PASS_FILTER_SIZE],
-    samples: &[f32; super::LOW_PASS_FILTER_SIZE],
-) -> f32 {
+fn dot_product(coeffs: &[f32; LOW_PASS_FILTER_SIZE], samples: &[f32; LOW_PASS_FILTER_SIZE]) -> f32 {
     if is_x86_feature_detected!("avx2") {
         unsafe { dot_product_avx2(coeffs, samples) }
     } else {
-        dot_product_scalar::<{ super::LOW_PASS_FILTER_SIZE }>(coeffs, samples)
+        dot_product_scalar::<{ LOW_PASS_FILTER_SIZE }>(coeffs, samples)
     }
 }
 
@@ -96,8 +94,8 @@ pub fn dot_product_scalar<const N: usize>(a: &[f32; N], b: &[f32; N]) -> f32 {
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
 unsafe fn dot_product_avx2(
-    a: &[f32; super::LOW_PASS_FILTER_SIZE],
-    b: &[f32; super::LOW_PASS_FILTER_SIZE],
+    a: &[f32; LOW_PASS_FILTER_SIZE],
+    b: &[f32; LOW_PASS_FILTER_SIZE],
 ) -> f32 {
     unsafe {
         use std::arch::x86_64::*;

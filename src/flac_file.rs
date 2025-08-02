@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::sync::Arc;
+use std::thread;
 
 use flac::{ReadStream, Stream};
 
@@ -41,6 +42,21 @@ fn analyze(samples: Arc<[f32]>) -> (f32, usize) {
     (peak, clip_count)
 }
 
+fn new_channel_thread(
+    samples: Arc<[f32]>,
+    sample_rate: u32,
+    samples_per_channel: u64,
+) -> std::thread::JoinHandle<Channel> {
+    thread::spawn(move || Channel::from_samples(&samples, sample_rate, samples_per_channel))
+}
+
+fn new_upsample_thread(
+    data: Arc<[f32]>,
+    original_frequency: u32,
+) -> std::thread::JoinHandle<(f32, usize)> {
+    thread::spawn(move || analyze(upsample(data, original_frequency)))
+}
+
 impl FlacFile {
     pub fn new(data_stream: Stream<ReadStream<File>>) -> FlacFile {
         let channel_count = data_stream.info().channels;
@@ -52,30 +68,12 @@ impl FlacFile {
 
         let (left_samples, right_samples) = split_sample_array_into_channels(&samples);
 
-        // TODO: questo fa schifo, usare i thread
-        // https://doc.rust-lang.org/std/thread/fn.spawn.html
-
-        let (
-            (mut left, (left_true_peak, left_true_clip)),
-            (mut right, (right_true_peak, right_true_clip)),
-        ) = rayon::join(
-            || {
-                rayon::join(
-                    || Channel::from_samples(&left_samples, sample_rate, samples_per_channel),
-                    || analyze(upsample(left_samples.clone(), sample_rate)),
-                )
-            },
-            || {
-                rayon::join(
-                    || Channel::from_samples(&right_samples, sample_rate, samples_per_channel),
-                    || analyze(upsample(right_samples.clone(), sample_rate)),
-                )
-            },
-        );
-        
-        let (stereo_correlation, (min_bit_depth, max_bit_depth, true_bit_depth)) = rayon::join(
-            || StereoCorrelationBuilder::process(&left_samples, &right_samples),
-            || {
+        let left_upsample_worker = new_upsample_thread(left_samples.clone(), sample_rate);
+        let right_upsample_worker = new_upsample_thread(right_samples.clone(), sample_rate);
+        let left_worker = new_channel_thread(left_samples.clone(), sample_rate, samples_per_channel);
+        let right_worker = new_channel_thread(right_samples.clone(), sample_rate, samples_per_channel);
+        let stereo_correlation_worker = thread::spawn(move || StereoCorrelationBuilder::process(&left_samples, &right_samples));
+        let bit_depth_worker = thread::spawn(move || {
                 let factor = match bit_depth {
                     8 => MAX_8_BIT,
                     16 => MAX_16_BIT,
@@ -87,12 +85,15 @@ impl FlacFile {
                     TrueBitDepthBuilder::new(bit_depth, samples_per_channel);
                 true_bit_depth_builder.add(samples, factor);
                 true_bit_depth_builder.build()
-            });
+            }
+        );
 
-        left.true_peak = left_true_peak;
-        left.true_clipping_samples_count = left_true_clip;
-        right.true_peak = right_true_peak;
-        right.true_clipping_samples_count = right_true_clip;
+        let mut left = left_worker.join().unwrap();
+        (left.true_peak, left.true_clipping_samples_count) = left_upsample_worker.join().unwrap();
+        let mut right = right_worker.join().unwrap();
+        (right.true_peak, right.true_clipping_samples_count) = right_upsample_worker.join().unwrap();
+        let stereo_correlation = stereo_correlation_worker.join().unwrap();
+        let (min_bit_depth, max_bit_depth, true_bit_depth) = bit_depth_worker.join().unwrap();
 
         FlacFile {
             left,

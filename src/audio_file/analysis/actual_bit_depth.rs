@@ -13,7 +13,7 @@ impl super::ActualBitDepth {
             _ => panic!("Unknown bit depth"),
         };
 
-        signal
+        let res = signal
             .iter()
             .map(|sample| {
                 if *sample == 0.0 {
@@ -24,7 +24,12 @@ impl super::ActualBitDepth {
                 (reported_depth as u32 - trailing_zeros) as u8
             })
             .take_while(|x| *x < reported_depth)
-            .max_by(|a, b| a.cmp(b))
-            .unwrap()
+            .max_by(|a, b| a.cmp(b));
+
+        match res {
+            Some(depth) => reported_depth - depth,
+            None => reported_depth
+        }
+            
     }
 }

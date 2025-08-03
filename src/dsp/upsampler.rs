@@ -24,7 +24,7 @@ impl Upsampler {
                 } else {
                     match catmull_rom_interpolation(
                         &window, start,
-                        k as f32 / self.multipier as f32,
+                        f32::from(k) / f32::from(self.multipier),
                     ) {
                         Ok(value) => value,
                         Err(e) => panic!("{e:?}")

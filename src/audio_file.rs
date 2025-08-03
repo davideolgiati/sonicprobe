@@ -204,15 +204,17 @@ fn read_flac_file(mut data_stream: Stream<ReadStream<File>>, depth: BitPrecision
     match depth {
         8 => data_stream
             .iter::<i8>()
-            .map(|s| s as f32 / MAX_8_BIT)
+            .map(|s| s.into())
+            .map(|s: f32| s / MAX_8_BIT)
             .collect::<Signal>(),
         16 => data_stream
             .iter::<i16>()
-            .map(|s| s as f32 / MAX_16_BIT)
+            .map(|s| s.into())
+            .map(|s: f32| s / MAX_16_BIT)
             .collect::<Signal>(),
         24 => data_stream
             .iter::<i32>()
-            .map(|s| s as f32 / MAX_24_BIT)
+            .map(|s| (s >> 8) as f32 / MAX_24_BIT)
             .collect::<Signal>(),
         32 => data_stream
             .iter::<i32>()

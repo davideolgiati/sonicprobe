@@ -49,7 +49,7 @@ pub fn print_file_details(filename: &str, file: &AudioFile) {
         "   {:<18} : {} / {}",
         "Format",
         Entry::from_bit(file.depth()).formatted(),
-        Entry::from_hz(file.sample_rate() as f32).formatted()
+        Entry::from_hz(f64::from(file.sample_rate())).formatted()
     );
     println!(
         "   {:<18} : {}",
@@ -80,7 +80,7 @@ pub fn print_file_details(filename: &str, file: &AudioFile) {
         .add("Crest Factor", |c| Entry::from_db(c.crest_factor()))
         .add("DC Offset", |c| Entry::from_volt(c.dc_offset()))
         .add("Zero Crossing Rate", |c| {
-            Entry::from_hz(c.zero_crossing_rate())
+            Entry::from_hz(f64::from(c.zero_crossing_rate()))
         })
         .add("Dynamic Range", |c| Entry::from_dr(c.dr()))
         .add_section()

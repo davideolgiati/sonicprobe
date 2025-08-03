@@ -8,11 +8,16 @@ use std::{arch::is_x86_feature_detected, process, sync::Arc};
 
 impl LowPassFilter {
     pub fn new(original_frequency: u32) -> Self {
-        let cutoff_hz: f32 = (original_frequency as f32) * 0.8;
+        let cutoff_hz: f32 = original_frequency as f32 * 0.8;
         let upsampled_freq: f32 = UPSAMPLE_TARGET_FREQUENCY as f32;
 
+        let numtaps = match super::LOW_PASS_FILTER_SIZE.try_into() {
+            Ok(value) => value,
+            Err(e) => panic!("{e:?}")
+        };
+
         let coeffs: Vec<f32> =
-            low_pass_filter(cutoff_hz, upsampled_freq, super::LOW_PASS_FILTER_SIZE);
+            low_pass_filter(cutoff_hz, upsampled_freq, numtaps);
 
         let mut coeffs_slice = [0.0f32; super::LOW_PASS_FILTER_SIZE];
         coeffs_slice.copy_from_slice(&coeffs);

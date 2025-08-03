@@ -24,7 +24,7 @@ impl Entry {
                 }
         }
 
-        pub fn from_hz(value: f32) -> Entry {
+        pub fn from_hz(value: f64) -> Entry {
                 let new_value = value.round() as u32;
                 Entry { 
                         value: format_hz(new_value),

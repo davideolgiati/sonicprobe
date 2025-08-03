@@ -39,18 +39,18 @@ fn hz_to_radian(frequency: f32, sample_rate: f32) -> f32 {
     (frequency / sample_rate) * 2.0 * f32::consts::PI
 }
 
-pub fn low_pass_filter(cutoff: f32, sample_rate: f32, numtaps: usize) -> Vec<f32> {
+pub fn low_pass_filter(cutoff: f32, sample_rate: f32, numtaps: u16) -> Vec<f32> {
     let center_frequency: f32 = hz_to_radian(cutoff, sample_rate);
-    let window_center = (numtaps - 1) as f32 / 2.0;
+    let window_center = f32::from(numtaps - 1) / 2.0;
     let window = (0..numtaps)
-        .map(|n| 0.54 - 0.46 * ((2.0 * f32::consts::PI * n as f32) / (numtaps - 1) as f32).cos())
+        .map(|n| 0.54 - 0.46 * ((2.0 * f32::consts::PI * f32::from(n)) / f32::from(numtaps - 1)).cos())
         .collect::<Vec<f32>>();
 
     // generazione
     let mut coeffs: Vec<f32> = (0..numtaps)
         .map(|n| {
-            let offset = n as f32 - window_center;
-            let current_window_value = match window.get(n) {
+            let offset = f32::from(n) - window_center;
+            let current_window_value = match window.get(usize::from(n)) {
                 Some(&value) => value,
                 None => panic!("low pass filter: no value for index {n}")
             };

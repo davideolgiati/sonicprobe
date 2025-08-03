@@ -131,7 +131,7 @@
 // === OPTIONAL: VERY STRICT (uncomment if desired) ===
 //#![warn(clippy::arithmetic_side_effects)] // Prevents overflow in debug
 //#![warn(clippy::float_arithmetic)] // Prevents float precision issues
-//#![warn(clippy::as_conversions)] // Forces explicit error handling
+#![warn(clippy::as_conversions)] // Forces explicit error handling
 #![warn(clippy::indexing_slicing)] // Prevents panic on out-of-bounds
 
 mod audio_utils;

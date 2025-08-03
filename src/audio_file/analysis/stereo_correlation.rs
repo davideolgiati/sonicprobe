@@ -4,7 +4,7 @@ use std::sync::Arc;
 use rayon::prelude::*;
 
 
-impl super::StereoCorrelationBuilder {
+impl super::StereoCorrelation {
     #[inline]
     pub fn process(left: &Arc<[f32]>, right: &Arc<[f32]>) -> f32 {
         let correlation: f32 = left

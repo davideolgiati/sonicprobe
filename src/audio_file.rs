@@ -1,4 +1,4 @@
-mod builders;
+mod analysis;
 pub mod channel;
 
 use std::fs::File;
@@ -7,10 +7,10 @@ use std::thread;
 
 use flac::{ReadStream, Stream};
 
-use crate::audio_file::builders::ClippingSamplesBuilder;
-use crate::audio_file::builders::PeakBuilder;
-use crate::audio_file::builders::StereoCorrelationBuilder;
-use crate::audio_file::builders::TrueBitDepthBuilder;
+use crate::audio_file::analysis::ClippingSamples;
+use crate::audio_file::analysis::Peak;
+use crate::audio_file::analysis::StereoCorrelation;
+use crate::audio_file::analysis::ActualBitDepth;
 use crate::audio_file::channel::Channel;
 use crate::constants::MAX_16_BIT;
 use crate::constants::MAX_24_BIT;
@@ -42,8 +42,8 @@ fn analyze(samples: Signal) -> (f32, usize) {
     let mut clip_count = 0;
 
     rayon::scope(|s| {
-        s.spawn(|_| peak = PeakBuilder::process(&samples));
-        s.spawn(|_| clip_count = ClippingSamplesBuilder::process(&samples));
+        s.spawn(|_| peak = Peak::process(&samples));
+        s.spawn(|_| clip_count = ClippingSamples::process(&samples));
     });
 
     (peak, clip_count)
@@ -79,8 +79,8 @@ impl AudioFile {
         let right_upsample_worker = new_upsample_thread(right_samples.clone(), sample_rate);
         let left_worker = new_channel_thread(left_samples.clone(), sample_rate, samples_per_channel);
         let right_worker = new_channel_thread(right_samples.clone(), sample_rate, samples_per_channel);
-        let stereo_correlation_worker = thread::spawn(move || StereoCorrelationBuilder::process(&left_samples, &right_samples));
-        let bit_depth_worker = thread::spawn(move || TrueBitDepthBuilder::process(signal, depth));
+        let stereo_correlation_worker = thread::spawn(move || StereoCorrelation::process(&left_samples, &right_samples));
+        let bit_depth_worker = thread::spawn(move || ActualBitDepth::process(signal, depth));
 
         let true_bit_depth = bit_depth_worker.join().unwrap();
         let stereo_correlation = stereo_correlation_worker.join().unwrap();

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-impl super::ZeroCrossingRateBuilder {
+impl super::ZeroCrossingRate {
     #[inline]
     pub fn process(samples: &Arc<[f32]>, duration: f32) -> f32 {
         samples

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-impl super::ClippingSamplesBuilder {
+impl super::ClippingSamples {
     #[inline]
     pub fn process(samples: &Arc<[f32]>) -> usize {
         samples

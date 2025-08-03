@@ -1,6 +1,6 @@
-impl super::RMSBuilder {
-    pub fn new() -> super::RMSBuilder {
-        super::RMSBuilder {
+impl super::RootMeanSquare {
+    pub fn new() -> super::RootMeanSquare {
+        super::RootMeanSquare {
             partials: Vec::new(),
             count: 0,
         }

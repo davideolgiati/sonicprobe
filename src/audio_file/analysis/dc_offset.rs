@@ -1,7 +1,7 @@
 
-impl super::DCOffsetBuilder {
-    pub fn new(count: u64) -> super::DCOffsetBuilder {
-        super::DCOffsetBuilder {
+impl super::DCOffset {
+    pub fn new(count: u64) -> super::DCOffset {
+        super::DCOffset {
             partials: Vec::new(),
             count,
         }

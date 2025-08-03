@@ -4,9 +4,9 @@ use crate::{
     audio_utils::to_dbfs
 };
 
-impl super::DRBuilder {
-    pub fn new(sample_frequency: u32) -> super::DRBuilder {
-        super::DRBuilder {
+impl super::DynamicRange {
+    pub fn new(sample_frequency: u32) -> super::DynamicRange {
+        super::DynamicRange {
             sample_frequency,
             rms_avarage: 0.0,
         }
@@ -22,7 +22,7 @@ impl super::DRBuilder {
             .chunks(chunk_size)
             .zip(samples[chunk_size..samples_end].chunks(chunk_size))
             .map(|(last_chunk, chunk)| {
-                let mut rms_builder = super::RMSBuilder::new();
+                let mut rms_builder = super::RootMeanSquare::new();
 
                 for sample in last_chunk {
                     rms_builder.add(*sample);

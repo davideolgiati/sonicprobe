@@ -2,9 +2,9 @@ use std::sync::Arc;
 
 use rayon::prelude::*;
 
-use crate::{builders::TrueBitDepthBuilder, constants::{MAX_16_BIT, MAX_24_BIT, MAX_32_BIT, MAX_8_BIT}};
+use crate::{constants::{MAX_16_BIT, MAX_24_BIT, MAX_32_BIT, MAX_8_BIT}};
 
-impl TrueBitDepthBuilder {
+impl super::TrueBitDepthBuilder {
     #[inline]
     pub fn process(signal: Arc<[f32]>, reported_depth: u8) -> u8 {
         let factor = match reported_depth {

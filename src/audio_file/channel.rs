@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::{audio_utils::to_dbfs, builders::{ClippingSamplesBuilder, DCOffsetBuilder, DRBuilder, PeakBuilder, RMSBuilder, ZeroCrossingRateBuilder}};
+use crate::{audio_utils::to_dbfs};
 
 #[derive(Clone, Copy)]
 pub struct Channel {
@@ -88,16 +88,16 @@ impl Channel {
         let mut clipping_samples_count = 0;
         let mut dc_offset = 0.0f32;
         let mut zcr = 0.0f32;
-        let mut dr_builder = DRBuilder::new(sample_rate);
+        let mut dr_builder = super::builders::DRBuilder::new(sample_rate);
 
         let duration = samples_per_channel as f32 / sample_rate as f32;
 
         rayon::scope(|s| {
             s.spawn(|_| coumpute_rms(samples, &mut rms));
-            s.spawn(|_| peak = PeakBuilder::process(samples));
-            s.spawn(|_| clipping_samples_count = ClippingSamplesBuilder::process(samples));
+            s.spawn(|_| peak = super::builders::PeakBuilder::process(samples));
+            s.spawn(|_| clipping_samples_count = super::builders::ClippingSamplesBuilder::process(samples));
             s.spawn(|_| coumpute_dc_offset(samples, samples_per_channel, &mut dc_offset));
-            s.spawn(|_| zcr = ZeroCrossingRateBuilder::process(samples, duration));
+            s.spawn(|_| zcr = super::builders::ZeroCrossingRateBuilder::process(samples, duration));
             s.spawn(|_| dr_builder.add(samples));
         });
 
@@ -118,13 +118,13 @@ impl Channel {
 }
 
 fn coumpute_rms(samples: &Arc<[f32]>, output: &mut f32) {
-    let mut builder = RMSBuilder::new();
+    let mut builder = super::builders::RMSBuilder::new();
     samples.iter().for_each(|sample| builder.add(*sample));
     *output = builder.build()
 }
 
 fn coumpute_dc_offset(samples: &Arc<[f32]>, samples_count: u64, output: &mut f32) {
-    let mut builder = DCOffsetBuilder::new(samples_count);
+    let mut builder = super::builders::DCOffsetBuilder::new(samples_count);
     samples.iter().for_each(|sample| builder.add(*sample));
     *output = builder.build()
 }

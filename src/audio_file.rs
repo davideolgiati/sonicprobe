@@ -1,14 +1,17 @@
+mod builders;
+pub mod channel;
+
 use std::fs::File;
 use std::sync::Arc;
 use std::thread;
 
 use flac::{ReadStream, Stream};
 
-use crate::builders::ClippingSamplesBuilder;
-use crate::builders::PeakBuilder;
-use crate::builders::StereoCorrelationBuilder;
-use crate::builders::TrueBitDepthBuilder;
-use crate::channel::Channel;
+use crate::audio_file::builders::ClippingSamplesBuilder;
+use crate::audio_file::builders::PeakBuilder;
+use crate::audio_file::builders::StereoCorrelationBuilder;
+use crate::audio_file::builders::TrueBitDepthBuilder;
+use crate::audio_file::channel::Channel;
 use crate::constants::MAX_16_BIT;
 use crate::constants::MAX_24_BIT;
 use crate::constants::MAX_32_BIT;
@@ -20,7 +23,7 @@ type Frequency = u32;
 type BitPrecision = u8;
 type Milliseconds = f32;
 
-pub struct FlacFile {
+pub struct AudioFile {
     left: Channel, // OK
     right: Channel, // OK
     /* Group next 4 */
@@ -29,7 +32,7 @@ pub struct FlacFile {
     duration: Milliseconds,
     stereo_correlation: f32,
     channels: u8, // OK
-    /* Group next 4 */
+    /* Group next 2 */
     depth: BitPrecision,
     true_depth: BitPrecision,
 }
@@ -61,8 +64,8 @@ fn new_upsample_thread(
     thread::spawn(move || analyze(upsample(data, original_sample_rate)))
 }
 
-impl FlacFile {
-    pub fn new(data_stream: Stream<ReadStream<File>>) -> FlacFile {
+impl AudioFile {
+    pub fn new(data_stream: Stream<ReadStream<File>>) -> AudioFile {
         let channel_count = data_stream.info().channels;
         let sample_rate = data_stream.info().sample_rate;
         let depth = data_stream.info().bits_per_sample;
@@ -86,7 +89,7 @@ impl FlacFile {
         (left.true_peak, left.true_clipping_samples_count) = left_upsample_worker.join().unwrap();
         (right.true_peak, right.true_clipping_samples_count) = right_upsample_worker.join().unwrap();
 
-        FlacFile {
+        AudioFile {
             left,
             right,
             depth,

@@ -1,8 +1,6 @@
 use std::{cmp::Ordering, sync::Arc};
 
-use crate::builders::PeakBuilder;
-
-impl PeakBuilder {
+impl super::PeakBuilder {
     #[inline]
     pub fn process(samples: &Arc<[f32]>) -> f32 {
         match samples

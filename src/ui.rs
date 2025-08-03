@@ -4,7 +4,7 @@ mod filesystem;
 mod table;
 
 use crate::{
-    flac_file::FlacFile,
+    audio_file::AudioFile,
     ui::{
         entry::Entry,
         filesystem::{filename_from_path, get_formatted_file_size},
@@ -28,7 +28,7 @@ fn seconds_to_minute_mark(duration: f32) -> String {
     format!("{:02.0}:{:02.0}", minutes, seconds)
 }
 
-pub fn print_file_details(filename: &str, file: &FlacFile) {
+pub fn print_file_details(filename: &str, file: &AudioFile) {
     let left = file.left();
     let right = file.right();
 

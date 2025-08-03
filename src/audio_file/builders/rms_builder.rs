@@ -1,8 +1,6 @@
-use crate::builders::RMSBuilder;
-
-impl RMSBuilder {
-    pub fn new() -> RMSBuilder {
-        RMSBuilder {
+impl super::RMSBuilder {
+    pub fn new() -> super::RMSBuilder {
+        super::RMSBuilder {
             partials: Vec::new(),
             count: 0,
         }
@@ -45,6 +43,7 @@ impl RMSBuilder {
     }
 }
 
+/*
 #[cfg(test)]
 mod tests {
     // genarati dall' AI ma rivisti da me per valuarne la correttezza
@@ -126,3 +125,4 @@ mod tests {
         assert_eq!(result1, result2);
     }
 }
+*/

@@ -1,13 +1,12 @@
 use std::sync::Arc;
 
 use crate::{
-    audio_utils::to_dbfs,
-    builders::{DRBuilder, RMSBuilder},
+    audio_utils::to_dbfs
 };
 
-impl DRBuilder {
-    pub fn new(sample_frequency: u32) -> DRBuilder {
-        DRBuilder {
+impl super::DRBuilder {
+    pub fn new(sample_frequency: u32) -> super::DRBuilder {
+        super::DRBuilder {
             sample_frequency,
             rms_avarage: 0.0,
         }
@@ -23,7 +22,7 @@ impl DRBuilder {
             .chunks(chunk_size)
             .zip(samples[chunk_size..samples_end].chunks(chunk_size))
             .map(|(last_chunk, chunk)| {
-                let mut rms_builder = RMSBuilder::new();
+                let mut rms_builder = super::RMSBuilder::new();
 
                 for sample in last_chunk {
                     rms_builder.add(*sample);

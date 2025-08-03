@@ -1,8 +1,7 @@
-use crate::builders::DCOffsetBuilder;
 
-impl DCOffsetBuilder {
-    pub fn new(count: u64) -> DCOffsetBuilder {
-        DCOffsetBuilder {
+impl super::DCOffsetBuilder {
+    pub fn new(count: u64) -> super::DCOffsetBuilder {
+        super::DCOffsetBuilder {
             partials: Vec::new(),
             count,
         }

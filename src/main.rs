@@ -1,9 +1,7 @@
 mod audio_utils;
-mod builders;
-mod channel;
 mod cli_args;
 mod dsp;
-mod flac_file;
+mod audio_file;
 mod output_format;
 mod ui;
 mod constants;
@@ -15,7 +13,7 @@ use std::env;
 use std::fs::File;
 
 use crate::cli_args::CliArgs;
-use crate::flac_file::FlacFile;
+use crate::audio_file::AudioFile;
 use crate::output_format::OutputFormat;
 use crate::ui::print_file_details;
 
@@ -24,7 +22,7 @@ fn main() {
     let args: CliArgs = CliArgs::new(&cli_input);
 
     let flac_details = match StreamReader::<File>::from_file(args.file_path()) {
-        Ok(stream) => FlacFile::new(stream),
+        Ok(stream) => AudioFile::new(stream),
         Err(error) => panic!("error: {:?}", error),
     };
 

@@ -92,5 +92,5 @@ pub fn print_file_details(filename: &str, file: &AudioFile) {
         })
         .build();
 
-    println!("\n\n{}", channels_details_table)
+    println!("\n\n{}", channels_details_table);
 }

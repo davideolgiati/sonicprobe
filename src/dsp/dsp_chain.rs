@@ -22,11 +22,11 @@ impl<T: Clone> DSPChain<T> {
 
     pub fn flat_window<R, I, F>(self, size: usize, func: F) -> DSPChain<R>
     where
-        F: Fn(Arc<[T]>, usize, usize) -> I,
+        F: Fn(Arc<[T]>, usize) -> I,
         I: Iterator<Item = R>,
     {
         let new_data = (0..(self.data.len() - size))
-            .flat_map(|index| func(self.data.clone(), index, index + size))
+            .flat_map(|index| func(self.data.clone(), index))
             .collect();
         DSPChain { data: new_data }
     }

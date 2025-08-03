@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::{audio_utils::catmull_rom_interpolation, constants::UPSAMPLE_TARGET_FREQUENCY, dsp::Upsampler};
 
 impl Upsampler {
-    pub fn new(original_frequency: u32) -> Self {
+    pub const fn new(original_frequency: u32) -> Self {
         let multipier: u8 = {
             let ratio = (UPSAMPLE_TARGET_FREQUENCY / original_frequency) as u8;
             if ratio < 1 { 1 } else { ratio }
@@ -13,11 +13,14 @@ impl Upsampler {
     }
 
     #[inline]
-    pub fn submit(&self, window: Arc<[f32]>, start: usize, _end: usize) -> impl Iterator<Item = f32> {
+    pub fn submit(&self, window: Arc<[f32]>, start: usize) -> impl Iterator<Item = f32> {
         (0..self.multipier)
             .map(move |k| {
                 if k == 0 {
-                    window[start + 1]
+                    match window.get(start + 1) {
+                        Some(&value) => value,
+                        None => panic!("bug!")
+                    }
                 } else {
                     catmull_rom_interpolation(
                         &window, start,

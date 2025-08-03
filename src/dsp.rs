@@ -25,8 +25,8 @@ pub fn upsample(samples: Arc<[f32]>, original_sample_rate: u32) -> Arc<[f32]> {
     let low_pass = LowPassFilter::new(original_sample_rate);
 
     DSPChain::new(samples)
-        .flat_window(4, |window: Arc<[f32]>, start: usize, _end: usize| {
-            upsampler.submit(window, start, _end)
+        .flat_window(4, |window: Arc<[f32]>, start: usize| {
+            upsampler.submit(window, start)
         })
         .window(
             crate::dsp::LOW_PASS_FILTER_SIZE,

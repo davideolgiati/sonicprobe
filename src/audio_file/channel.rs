@@ -89,9 +89,9 @@ impl Channel {
         
         let duration = samples_per_channel as f32 / sample_rate as f32;
         
-        rayon::scope(|s| {
-            s.spawn(|_| coumpute_rms(samples, &mut rms));
-            s.spawn(|_| coumpute_dc_offset(samples, samples_per_channel, &mut dc_offset));
+        std::thread::scope(|s| {
+            s.spawn(|| coumpute_rms(samples, &mut rms));
+            s.spawn(|| coumpute_dc_offset(samples, samples_per_channel, &mut dc_offset));
         });
         
         dr_builder.add(samples);

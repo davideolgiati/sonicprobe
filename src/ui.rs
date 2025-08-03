@@ -52,9 +52,10 @@ pub fn print_file_details(filename: &str, file: &AudioFile) {
         Entry::from_hz(file.sample_rate() as f32).formatted()
     );
     println!(
-        "   {:<18} : {} bit",
+        "   {:<18} : {}",
         "Bit depth usage",
-        file.true_bit_depth()
+        Entry::from_bit(file.true_bit_depth()).formatted()
+        
     );
 
     println!("\n\n{}", section_header("STEREO FIELD ANALYSIS"));

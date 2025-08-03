@@ -37,18 +37,6 @@ pub struct AudioFile {
     true_depth: BitPrecision,
 }
 
-fn analyze(samples: Signal) -> (f32, usize) {
-    let mut peak = f32::MIN;
-    let mut clip_count = 0;
-
-    rayon::scope(|s| {
-        s.spawn(|_| peak = Peak::process(&samples));
-        s.spawn(|_| clip_count = ClippingSamples::process(&samples));
-    });
-
-    (peak, clip_count)
-}
-
 fn new_channel_thread(
     samples: Signal,
     sample_rate: Frequency,
@@ -61,7 +49,14 @@ fn new_upsample_thread(
     data: Signal,
     original_sample_rate: Frequency,
 ) -> std::thread::JoinHandle<(f32, usize)> {
-    thread::spawn(move || analyze(upsample(data, original_sample_rate)))
+    thread::spawn(move || {
+        let signal = upsample(data, original_sample_rate);
+        
+        let peak = Peak::process(&signal);
+        let clip_count = ClippingSamples::process(&signal);
+    
+        (peak, clip_count)
+    })
 }
 
 impl AudioFile {
@@ -79,11 +74,10 @@ impl AudioFile {
         let right_upsample_worker = new_upsample_thread(right_samples.clone(), sample_rate);
         let left_worker = new_channel_thread(left_samples.clone(), sample_rate, samples_per_channel);
         let right_worker = new_channel_thread(right_samples.clone(), sample_rate, samples_per_channel);
-        let stereo_correlation_worker = thread::spawn(move || StereoCorrelation::process(&left_samples, &right_samples));
-        let bit_depth_worker = thread::spawn(move || ActualBitDepth::process(signal, depth));
 
-        let true_bit_depth = bit_depth_worker.join().unwrap();
-        let stereo_correlation = stereo_correlation_worker.join().unwrap();
+        let true_bit_depth = ActualBitDepth::process(signal, depth);
+        let stereo_correlation = StereoCorrelation::process(&left_samples, &right_samples);
+
         let mut left = left_worker.join().unwrap();
         let mut right = right_worker.join().unwrap();
         (left.true_peak, left.true_clipping_samples_count) = left_upsample_worker.join().unwrap();

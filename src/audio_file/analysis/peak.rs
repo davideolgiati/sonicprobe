@@ -5,10 +5,9 @@ impl super::Peak {
     pub fn process(samples: &Arc<[f32]>) -> f32 {
         match samples
             .iter()
-            .enumerate()
-            .max_by(|&(_, item1), &(_, item2)| item1.partial_cmp(item2).unwrap_or(Ordering::Equal))
+            .max_by(|&item1, &item2| item1.partial_cmp(item2).unwrap_or(Ordering::Equal))
         {
-            Some((_, &value)) => value,
+            Some(&value) => value,
             None => f32::MIN,
         }
     }

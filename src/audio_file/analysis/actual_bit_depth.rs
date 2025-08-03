@@ -1,7 +1,5 @@
 use std::sync::Arc;
 
-use rayon::prelude::*;
-
 use crate::{constants::{MAX_16_BIT, MAX_24_BIT, MAX_32_BIT, MAX_8_BIT}};
 
 impl super::ActualBitDepth {
@@ -16,7 +14,7 @@ impl super::ActualBitDepth {
         };
 
         signal
-            .par_iter()
+            .iter()
             .map(|sample| {
                 if *sample == 0.0 {
                     return 0u8;
@@ -25,6 +23,7 @@ impl super::ActualBitDepth {
                 let trailing_zeros = ((*sample * factor) as i32).trailing_zeros();
                 (reported_depth as u32 - trailing_zeros) as u8
             })
+            .take_while(|x| *x < reported_depth)
             .max_by(|a, b| a.cmp(b))
             .unwrap()
     }

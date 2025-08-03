@@ -1,8 +1,6 @@
 use std::sync::Arc;
 
-use crate::{
-    audio_utils::to_dbfs
-};
+use crate::audio_utils::to_dbfs;
 
 impl super::DynamicRange {
     pub fn new(sample_frequency: u32) -> super::DynamicRange {

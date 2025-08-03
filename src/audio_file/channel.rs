@@ -84,23 +84,21 @@ impl Channel {
 
     pub fn from_samples(samples: &Arc<[f32]>, sample_rate: u32, samples_per_channel: u64) -> Channel {
         let mut rms = 0.0f32;
-        let mut peak = 0.0f32;
-        let mut clipping_samples_count = 0;
         let mut dc_offset = 0.0f32;
-        let mut zcr = 0.0f32;
         let mut dr_builder = super::analysis::DynamicRange::new(sample_rate);
-
+        
         let duration = samples_per_channel as f32 / sample_rate as f32;
-
+        
         rayon::scope(|s| {
             s.spawn(|_| coumpute_rms(samples, &mut rms));
-            s.spawn(|_| peak = super::analysis::Peak::process(samples));
-            s.spawn(|_| clipping_samples_count = super::analysis::ClippingSamples::process(samples));
             s.spawn(|_| coumpute_dc_offset(samples, samples_per_channel, &mut dc_offset));
-            s.spawn(|_| zcr = super::analysis::ZeroCrossingRate::process(samples, duration));
-            s.spawn(|_| dr_builder.add(samples));
         });
+        
+        dr_builder.add(samples);
 
+        let zcr = super::analysis::ZeroCrossingRate::process(samples, duration);
+        let clipping_samples_count = super::analysis::ClippingSamples::process(samples);
+        let peak = super::analysis::Peak::process(samples);
         let dr = dr_builder.build(peak);
 
         Channel {

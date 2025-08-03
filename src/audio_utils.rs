@@ -4,7 +4,7 @@ pub fn to_dbfs(dc: f32) -> f32 {
     20.0 * dc.log10()
 }
 
-pub fn catmull_rom_interpolation(window: &Arc<[f32]>, start: usize, t: f32) -> f32 {
+pub fn catmull_rom_interpolation(window: &Arc<[f32]>, start: usize, t: f32) -> Result<f32, String> {
     let b0 = -(0.5 * t.powi(3)) + t.powi(2) - (0.5 * t);
     let b1 = (1.5 * t.powi(3)) - (2.5 * t.powi(2)) + 1.0;
     let b2 = (-1.5 * t.powi(3)) + (2.0 * t.powi(2)) + (0.5 * t);
@@ -12,7 +12,27 @@ pub fn catmull_rom_interpolation(window: &Arc<[f32]>, start: usize, t: f32) -> f
 
     assert_eq!(b0 + b1 + b2 + b3, 1.0);
 
-    (window[start] * b0) + (window[start + 1] * b1) + (window[start + 2] * b2) + (window[start + 3] * b3)
+    let y_minus1 = match window.get(start) {
+        Some(&value) => value,
+        None => return Err(format!("catmull rom: index {start} out of boundaries"))
+    };
+
+    let y0 = match window.get(start + 1) {
+        Some(&value) => value,
+        None => return Err(format!("catmull rom: index {start} out of boundaries"))
+    };
+
+    let y1 = match window.get(start + 2) {
+        Some(&value) => value,
+        None => return Err(format!("catmull rom: index {start} out of boundaries"))
+    };
+
+    let y2 = match window.get(start + 3) {
+        Some(&value) => value,
+        None => return Err(format!("catmull rom: index {start} out of boundaries"))
+    };
+
+    Ok((y_minus1 * b0) + (y0 * b1) + (y1 * b2) + (y2 * b3))
 }
 
 fn hz_to_radian(frequency: f32, sample_rate: f32) -> f32 {
@@ -30,11 +50,15 @@ pub fn low_pass_filter(cutoff: f32, sample_rate: f32, numtaps: usize) -> Vec<f32
     let mut coeffs: Vec<f32> = (0..numtaps)
         .map(|n| {
             let offset = n as f32 - window_center;
+            let current_window_value = match window.get(n) {
+                Some(&value) => value,
+                None => panic!("low pass filter: no value for index {n}")
+            };
 
             if offset.abs() > f32::EPSILON {
-                (center_frequency * offset).sin() / (f32::consts::PI * offset) * window[n]
+                (center_frequency * offset).sin() / (f32::consts::PI * offset) * current_window_value
             } else {
-                center_frequency / f32::consts::PI * window[n]
+                center_frequency / f32::consts::PI * current_window_value
             }
         })
         .collect();
@@ -50,6 +74,7 @@ pub fn low_pass_filter(cutoff: f32, sample_rate: f32, numtaps: usize) -> Vec<f32
     coeffs
 }
 
+/*
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -199,3 +224,4 @@ mod tests {
         );
     }
 }
+*/

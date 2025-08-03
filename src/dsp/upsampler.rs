@@ -22,10 +22,13 @@ impl Upsampler {
                         None => panic!("bug!")
                     }
                 } else {
-                    catmull_rom_interpolation(
+                    match catmull_rom_interpolation(
                         &window, start,
                         k as f32 / self.multipier as f32,
-                    )
+                    ) {
+                        Ok(value) => value,
+                        Err(e) => panic!("{e:?}")
+                    }
                 }
             })
     }

@@ -1,4 +1,4 @@
-pub fn format_db(value: f32) -> String {
+pub fn format_db(value: f64) -> String {
     if value > 0.0 {
         format!("+{:.2}", value)
     } else if value == 0.0 {

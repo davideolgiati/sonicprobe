@@ -19,7 +19,7 @@ use crate::constants::MAX_32_BIT;
 use crate::constants::MAX_8_BIT;
 use crate::dsp::upsample;
 
-type Signal = Arc<[f32]>;
+pub type Signal = Arc<[f64]>;
 type Frequency = u32;
 type BitPrecision = u8;
 type Milliseconds = f32;
@@ -31,7 +31,7 @@ pub struct AudioFile {
     samples_per_channel: u64,
     sample_rate: Frequency,
     duration: Milliseconds,
-    stereo_correlation: f32,
+    stereo_correlation: f64,
     channels: u8, // OK
     /* Group next 2 */
     depth: BitPrecision,
@@ -49,7 +49,7 @@ fn new_channel_thread(
 fn new_upsample_thread(
     data: Signal,
     original_sample_rate: Frequency,
-) -> std::thread::JoinHandle<(f32, usize)> {
+) -> std::thread::JoinHandle<(f64, usize)> {
     thread::spawn(move || {
         let signal = upsample(data, original_sample_rate);
         
@@ -121,7 +121,7 @@ impl AudioFile {
         self.true_depth
     }
 
-    pub fn rms_balance(&self) -> f32 {
+    pub fn rms_balance(&self) -> f64 {
         self.left.rms() - self.right.rms()
     }
 
@@ -133,7 +133,7 @@ impl AudioFile {
         self.samples_per_channel
     }
 
-    pub fn stereo_correlation(&self) -> f32 {
+    pub fn stereo_correlation(&self) -> f64 {
         self.stereo_correlation
     }
 
@@ -174,7 +174,7 @@ impl AudioFile {
 }
 
 fn split_sample_array_into_channels(samples: &Signal) -> (Signal, Signal) {
-    let (left_vec, right_vec): (Vec<f32>, Vec<f32>) = samples
+    let (left_vec, right_vec): (Vec<f64>, Vec<f64>) = samples
         .chunks_exact(2)
         .map(|pair| {
             let left_sample = match pair.first() {
@@ -205,20 +205,22 @@ fn read_flac_file(mut data_stream: Stream<ReadStream<File>>, depth: BitPrecision
         8 => data_stream
             .iter::<i8>()
             .map(|s| s.into())
-            .map(|s: f32| s / MAX_8_BIT)
+            .map(|s: f64| s / MAX_8_BIT)
             .collect::<Signal>(),
         16 => data_stream
             .iter::<i16>()
             .map(|s| s.into())
-            .map(|s: f32| s / MAX_16_BIT)
+            .map(|s: f64| s / MAX_16_BIT)
             .collect::<Signal>(),
         24 => data_stream
             .iter::<i32>()
-            .map(|s| (s >> 8) as f32 / MAX_24_BIT)
+            .map(|s| (s >> 8).into())
+            .map(|s: f64|  s / MAX_24_BIT)
             .collect::<Signal>(),
         32 => data_stream
             .iter::<i32>()
-            .map(|s| s as f32 / MAX_32_BIT)
+            .map(|s| (s >> 8).into())
+            .map(|s: f64| s / MAX_32_BIT)
             .collect::<Signal>(),
         _ => panic!("Unknown bit depth"),
     }

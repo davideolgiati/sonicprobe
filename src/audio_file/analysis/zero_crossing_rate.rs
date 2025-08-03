@@ -1,8 +1,10 @@
-use std::{process, sync::Arc};
+use std::process;
+
+use crate::audio_file::Signal;
 
 impl super::ZeroCrossingRate {
     #[inline]
-    pub fn process(samples: &Arc<[f32]>, duration: f32) -> f32 {
+    pub fn process(samples: &Signal, duration: f32) -> f32 {
         samples
             .windows(2)
             .map(|slice| {
@@ -32,7 +34,7 @@ impl super::ZeroCrossingRate {
     }
 }
 
-fn get_value_sign(value: f32) -> i8 {
+fn get_value_sign(value: f64) -> i8 {
     if value < 0.0 {
         return -1;
     }

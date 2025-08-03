@@ -1,30 +1,28 @@
-use std::sync::Arc;
-
-use crate::{audio_utils::to_dbfs};
+use crate::{audio_file::Signal, audio_utils::to_dbfs};
 
 #[derive(Clone, Copy)]
 pub struct Channel {
-    rms: f32,
-    peak: f32,
+    rms: f64,
+    peak: f64,
     clipping_samples_count: usize,
     pub true_clipping_samples_count: usize,
     dc_offset: f32,
     samples_count: u64,
-    pub true_peak: f32,
+    pub true_peak: f64,
     zero_crossing_rate: f32,
-    dr: f32,
+    dr: f64,
 }
 
 impl Channel {
-    pub fn rms(&self) -> f32 {
+    pub fn rms(&self) -> f64 {
         to_dbfs(self.rms)
     }
 
-    pub fn peak(&self) -> f32 {
+    pub fn peak(&self) -> f64 {
         to_dbfs(self.peak)
     }
 
-    pub fn true_peak(&self) -> f32 {
+    pub fn true_peak(&self) -> f64 {
         to_dbfs(self.true_peak)
     }
 
@@ -40,7 +38,7 @@ impl Channel {
         self.dc_offset
     }
 
-    pub fn crest_factor(&self) -> f32 {
+    pub fn crest_factor(&self) -> f64 {
         to_dbfs(self.peak.abs() / self.rms)
     }
 
@@ -48,7 +46,7 @@ impl Channel {
         self.zero_crossing_rate
     }
 
-    pub fn dr(&self) -> f32 {
+    pub fn dr(&self) -> f64 {
         self.dr
     }
 
@@ -82,8 +80,8 @@ impl Channel {
         format!("{{\n{}\n{}}}", output, "\t".repeat(father_tab))
     }
 
-    pub fn from_samples(samples: &Arc<[f32]>, sample_rate: u32, samples_per_channel: u64) -> Channel {
-        let mut rms = 0.0f32;
+    pub fn from_samples(samples: &Signal, sample_rate: u32, samples_per_channel: u64) -> Channel {
+        let mut rms = 0.0f64;
         let mut dc_offset = 0.0f32;
         let mut dr_builder = super::analysis::DynamicRange::new(sample_rate);
         
@@ -115,13 +113,13 @@ impl Channel {
     }
 }
 
-fn coumpute_rms(samples: &Arc<[f32]>, output: &mut f32) {
+fn coumpute_rms(samples: &Signal, output: &mut f64) {
     let mut builder = super::analysis::RootMeanSquare::new();
     samples.iter().for_each(|sample| builder.add(*sample));
     *output = builder.build()
 }
 
-fn coumpute_dc_offset(samples: &Arc<[f32]>, samples_count: u64, output: &mut f32) {
+fn coumpute_dc_offset(samples: &Signal, samples_count: u64, output: &mut f32) {
     let mut builder = super::analysis::DCOffset::new(samples_count);
     samples.iter().for_each(|sample| builder.add(*sample));
     *output = builder.build()

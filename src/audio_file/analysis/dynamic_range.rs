@@ -1,6 +1,6 @@
-use std::{process, sync::Arc};
+use std::process;
 
-use crate::audio_utils::to_dbfs;
+use crate::{audio_file::Signal, audio_utils::to_dbfs};
 
 impl super::DynamicRange {
     pub fn new(sample_frequency: u32) -> super::DynamicRange {
@@ -11,7 +11,7 @@ impl super::DynamicRange {
     }
 
     #[inline]
-    pub fn add(&mut self, samples: &Arc<[f32]>) {
+    pub fn add(&mut self, samples: &Signal) {
         let chunk_size = (self.sample_frequency as f32 * 1.5).round() as usize;
         let reminder = samples.len() % chunk_size;
         let samples_end = samples.len() - reminder;
@@ -23,7 +23,7 @@ impl super::DynamicRange {
             }
         };
 
-        let mut rms_array: Vec<f32> = 
+        let mut rms_array: Vec<f64> = 
             analysable_samples
             .chunks(chunk_size)
             .map(|chunk| {
@@ -47,10 +47,10 @@ impl super::DynamicRange {
             }
         };
 
-        self.rms_avarage = top_20_rms.iter().sum::<f32>() / rms_end as f32;
+        self.rms_avarage = top_20_rms.iter().sum::<f64>() / rms_end as f64;
     }
 
-    pub fn build(&self, peak: f32) -> f32 {
+    pub fn build(&self, peak: f64) -> f64 {
         to_dbfs(peak) - to_dbfs(self.rms_avarage)
     }
 }

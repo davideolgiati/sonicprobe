@@ -25,7 +25,7 @@ pub struct RootMeanSquare {
 
 pub struct DynamicRange {
     sample_frequency: u32,
-    rms_avarage: f32,
+    rms_avarage: f64,
 }
 
 

@@ -1,6 +1,4 @@
-use std::sync::Arc;
-
-use crate::{audio_utils::catmull_rom_interpolation, constants::UPSAMPLE_TARGET_FREQUENCY, dsp::Upsampler};
+use crate::{audio_file::Signal, audio_utils::catmull_rom_interpolation, constants::UPSAMPLE_TARGET_FREQUENCY, dsp::Upsampler};
 
 impl Upsampler {
     pub const fn new(original_frequency: u32) -> Self {
@@ -13,7 +11,7 @@ impl Upsampler {
     }
 
     #[inline]
-    pub fn submit(&self, window: Arc<[f32]>, start: usize) -> impl Iterator<Item = f32> {
+    pub fn submit(&self, window: Signal, start: usize) -> impl Iterator<Item = f64> {
         (0..self.multipier)
             .map(move |k| {
                 if k == 0 {
@@ -24,7 +22,7 @@ impl Upsampler {
                 } else {
                     match catmull_rom_interpolation(
                         &window, start,
-                        f32::from(k) / f32::from(self.multipier),
+                        f64::from(k) / f64::from(self.multipier),
                     ) {
                         Ok(value) => value,
                         Err(e) => panic!("{e:?}")

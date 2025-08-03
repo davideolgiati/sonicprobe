@@ -1,10 +1,12 @@
-use std::{f32, sync::Arc};
+use std::f64;
 
-pub fn to_dbfs(dc: f32) -> f32 {
+use crate::audio_file::Signal;
+
+pub fn to_dbfs(dc: f64) -> f64 {
     20.0 * dc.log10()
 }
 
-pub fn catmull_rom_interpolation(window: &Arc<[f32]>, start: usize, t: f32) -> Result<f32, String> {
+pub fn catmull_rom_interpolation(window: &Signal, start: usize, t: f64) -> Result<f64, String> {
     let b0 = -(0.5 * t.powi(3)) + t.powi(2) - (0.5 * t);
     let b1 = (1.5 * t.powi(3)) - (2.5 * t.powi(2)) + 1.0;
     let b2 = (-1.5 * t.powi(3)) + (2.0 * t.powi(2)) + (0.5 * t);
@@ -35,36 +37,36 @@ pub fn catmull_rom_interpolation(window: &Arc<[f32]>, start: usize, t: f32) -> R
     Ok((y_minus1 * b0) + (y0 * b1) + (y1 * b2) + (y2 * b3))
 }
 
-fn hz_to_radian(frequency: f32, sample_rate: f32) -> f32 {
-    (frequency / sample_rate) * 2.0 * f32::consts::PI
+fn hz_to_radian(frequency: f64, sample_rate: f64) -> f64 {
+    (frequency / sample_rate) * 2.0 * f64::consts::PI
 }
 
-pub fn low_pass_filter(cutoff: f32, sample_rate: f32, numtaps: u16) -> Vec<f32> {
-    let center_frequency: f32 = hz_to_radian(cutoff, sample_rate);
-    let window_center = f32::from(numtaps - 1) / 2.0;
+pub fn low_pass_filter(cutoff: f64, sample_rate: f64, numtaps: u16) -> Vec<f64> {
+    let center_frequency: f64 = hz_to_radian(cutoff, sample_rate);
+    let window_center = f64::from(numtaps - 1) / 2.0;
     let window = (0..numtaps)
-        .map(|n| 0.54 - 0.46 * ((2.0 * f32::consts::PI * f32::from(n)) / f32::from(numtaps - 1)).cos())
-        .collect::<Vec<f32>>();
+        .map(|n| 0.54 - 0.46 * ((2.0 * f64::consts::PI * f64::from(n)) / f64::from(numtaps - 1)).cos())
+        .collect::<Vec<f64>>();
 
     // generazione
-    let mut coeffs: Vec<f32> = (0..numtaps)
+    let mut coeffs: Vec<f64> = (0..numtaps)
         .map(|n| {
-            let offset = f32::from(n) - window_center;
+            let offset = f64::from(n) - window_center;
             let current_window_value = match window.get(usize::from(n)) {
                 Some(&value) => value,
                 None => panic!("low pass filter: no value for index {n}")
             };
 
-            if offset.abs() > f32::EPSILON {
-                (center_frequency * offset).sin() / (f32::consts::PI * offset) * current_window_value
+            if offset.abs() > f64::EPSILON {
+                (center_frequency * offset).sin() / (f64::consts::PI * offset) * current_window_value
             } else {
-                center_frequency / f32::consts::PI * current_window_value
+                center_frequency / f64::consts::PI * current_window_value
             }
         })
         .collect();
 
     // normalizzazione
-    let sum: f32 = coeffs.iter().sum();
+    let sum: f64 = coeffs.iter().sum();
     if sum != 0.0 {
         for coeff in &mut coeffs {
             *coeff /= sum;
@@ -112,7 +114,7 @@ mod tests {
     #[test]
     fn test_catmull_rom_interpolation_properties() {
         let arr = [0.0f32, 1.0f32, 2.0f32, 3.0f32];
-        let data: Arc<[f32]> = Arc::new(arr);
+        let data: Signal = Arc::new(arr);
         // Test 1: At t=0, the output should exactly match the second point (y1).
         assert!((catmull_rom_interpolation(&data, 0, 0.0) - 1.0).abs() < 1e-6);
 

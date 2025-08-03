@@ -1,14 +1,16 @@
-use std::{cmp::Ordering, sync::Arc};
+use std::cmp::Ordering;
+
+use crate::audio_file::Signal;
 
 impl super::Peak {
     #[inline]
-    pub fn process(samples: &Arc<[f32]>) -> f32 {
+    pub fn process(samples: &Signal) -> f64 {
         match samples
             .iter()
             .max_by(|&item1, &item2| item1.partial_cmp(item2).unwrap_or(Ordering::Equal))
         {
             Some(&value) => value,
-            None => f32::MIN,
+            None => f64::MIN,
         }
     }
 }

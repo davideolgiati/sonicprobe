@@ -10,7 +10,7 @@ impl Entry {
                 format!("{} {:>4}", self.value, self.unit)
         }
 
-        pub fn from_db(value: f32) -> Entry {
+        pub fn from_db(value: f64) -> Entry {
                 Entry {
                         value: format_db(value),
                         unit: String::from("dB")
@@ -39,7 +39,7 @@ impl Entry {
                 }
         }
 
-        pub fn from_dr(value: f32) -> Entry {
+        pub fn from_dr(value: f64) -> Entry {
                 let new_value = value.round() as u32;
                 Entry {
                         value: format_dr(new_value),

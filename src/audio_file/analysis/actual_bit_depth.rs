@@ -1,10 +1,8 @@
-use std::sync::Arc;
-
-use crate::{constants::{MAX_16_BIT, MAX_24_BIT, MAX_32_BIT, MAX_8_BIT}};
+use crate::{audio_file::Signal, constants::{MAX_16_BIT, MAX_24_BIT, MAX_32_BIT, MAX_8_BIT}};
 
 impl super::ActualBitDepth {
     #[inline]
-    pub fn process(signal: Arc<[f32]>, reported_depth: u8) -> u8 {
+    pub fn process(signal: Signal, reported_depth: u8) -> u8 {
         let factor = match reported_depth {
             8 => MAX_8_BIT,
             16 => MAX_16_BIT,

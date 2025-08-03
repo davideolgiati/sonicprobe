@@ -9,8 +9,8 @@ impl super::RootMeanSquare {
     }
 
     #[inline]
-    pub fn add(&mut self, value: f32) {
-        let mut current = (value as f64).powi(2);
+    pub fn add(&mut self, value: f64) {
+        let mut current = value.powi(2);
         let mut index: usize = 0;
 
         //TODO: da portare fuori
@@ -40,14 +40,14 @@ impl super::RootMeanSquare {
         self.count += 1;
     }
 
-    pub fn build(&self) -> f32 {
+    pub fn build(&self) -> f64 {
         if self.count == 0 {
-            return 0.0f32;
+            return 0.0f64;
         }
 
         let sum: f64 = self.partials.iter().sum();
 
-        (sum / self.count as f64).sqrt() as f32
+        (sum / self.count as f64).sqrt()
     }
 }
 

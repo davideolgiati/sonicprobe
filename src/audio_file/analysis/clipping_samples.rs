@@ -1,8 +1,8 @@
-use std::sync::Arc;
+use crate::audio_file::Signal;
 
 impl super::ClippingSamples {
     #[inline]
-    pub fn process(samples: &Arc<[f32]>) -> usize {
+    pub fn process(samples: &Signal) -> usize {
         samples
             .iter()
             .filter(|&&x| is_clipping(x))
@@ -11,6 +11,6 @@ impl super::ClippingSamples {
     }
 }
 
-pub fn is_clipping(sample: f32) -> bool {
-    (sample.abs() - 0.95).abs() < f32::EPSILON || sample.abs() > 0.95
+pub fn is_clipping(sample: f64) -> bool {
+    (sample.abs() - 0.95).abs() < f64::EPSILON || sample.abs() > 0.95
 }

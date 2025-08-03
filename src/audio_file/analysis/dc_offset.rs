@@ -9,8 +9,8 @@ impl super::DCOffset {
     }
 
     #[inline]
-    pub fn add(&mut self, value: f32) {
-        let mut current = value as f64;
+    pub fn add(&mut self, value: f64) {
+        let mut current = value;
         let mut index: usize = 0;
 
         for mut partial in self.partials.clone() {

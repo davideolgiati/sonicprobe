@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{process, sync::Arc};
 
 impl super::ZeroCrossingRate {
     #[inline]
@@ -6,7 +6,23 @@ impl super::ZeroCrossingRate {
         samples
             .windows(2)
             .map(|slice| {
-                if get_value_sign(slice[0]) != get_value_sign(slice[1]) {
+                let first_sample = match slice.first() {
+                    Some(&value) => value,
+                    None => {
+                        println!("error: zero crossing rate can't get first sample");
+                        process::exit(1);
+                    }
+                };
+
+                let second_sample = match slice.last() {
+                    Some(&value) => value,
+                    None => {
+                        println!("error: zero crossing rate can't get second sample");
+                        process::exit(1);
+                    }
+                };
+
+                if get_value_sign(first_sample) != get_value_sign(second_sample) {
                     1.0
                 } else {
                     0.0

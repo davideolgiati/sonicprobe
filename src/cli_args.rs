@@ -1,3 +1,5 @@
+use std::process;
+
 use crate::OutputFormat;
 
 pub struct CliArgs {
@@ -11,7 +13,14 @@ impl CliArgs {
             panic!("No input file specified")
         }
 
-        let input_file = &args[1];
+        let input_file = match args.get(1) {
+            Some(value) => value,
+            None => {
+                println!("error: no input provided :(");
+                process::exit(1);
+            }
+        };
+
         let output_format: OutputFormat = {
             if args.len() >= 3
                 && args

@@ -4,7 +4,7 @@ use crate::{
     dsp::LowPassFilter,
 };
 
-use std::{arch::is_x86_feature_detected, sync::Arc};
+use std::{arch::is_x86_feature_detected, process, sync::Arc};
 
 impl LowPassFilter {
     pub fn new(original_frequency: u32) -> Self {
@@ -24,14 +24,23 @@ impl LowPassFilter {
 
     #[inline]
     pub fn submit(&self, window: &Arc<[f32]>, start: usize, end: usize) -> f32 {
+        let current_window = match window.get(start..end) {
+            Some(array) => array,
+            None => {
+                println!("error: low pass filter can't slice signal form sample {start} to {end}");
+                process::exit(1);
+            }
+        };
+
         let window_slice: &[f32; super::LOW_PASS_FILTER_SIZE] =
-            window[start..end].try_into().unwrap_or_else(|_| {
+            current_window.try_into().unwrap_or_else(|_| {
                 panic!(
                     "Window must be exactly {} elements, got {}",
                     LOW_PASS_FILTER_SIZE,
                     window.len()
                 )
             });
+
         dot_product(&self.coeffs, window_slice)
     }
 }

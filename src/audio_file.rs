@@ -2,6 +2,7 @@ mod analysis;
 pub mod channel;
 
 use std::fs::File;
+use std::process;
 use std::sync::Arc;
 use std::thread;
 
@@ -175,7 +176,25 @@ impl AudioFile {
 fn split_sample_array_into_channels(samples: &Signal) -> (Signal, Signal) {
     let (left_vec, right_vec): (Vec<f32>, Vec<f32>) = samples
         .chunks_exact(2)
-        .map(|pair| (pair[0], pair[1]))
+        .map(|pair| {
+            let left_sample = match pair.first() {
+                Some(&sample) => sample,
+                None => {
+                    println!("error: mismatch in channels size");
+                    process::exit(1);
+                }
+            };
+
+            let right_sample = match pair.get(1) {
+                Some(&sample) => sample,
+                None => {
+                    println!("error: mismatch in channels size");
+                    process::exit(1);
+                }
+            };
+
+            (left_sample, right_sample)
+        })
         .unzip();
 
     (Arc::from(left_vec), Arc::from(right_vec))

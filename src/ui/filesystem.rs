@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::{fs, path::Path, process};
 
 use crate::constants::UNITS;
 
@@ -11,10 +11,18 @@ fn format_file_size(bytes: u64) -> String {
         unit_index += 1;
     }
 
+    let unit = match UNITS.get(unit_index) {
+        Some(&value) => value,
+        None => {
+            println!("error: filsystem index {unit_index} is not valid");
+            process::exit(1);
+        }
+    };
+
     if unit_index == 0 {
-        format!("{} {}", bytes, UNITS[unit_index])
+        format!("{} {}", bytes, unit)
     } else {
-        format!("{:.1} {}", size, UNITS[unit_index])
+        format!("{:.1} {}", size, unit)
     }
 }
 

@@ -1,3 +1,4 @@
+use std::process;
 
 impl super::DCOffset {
     pub fn new(count: u64) -> super::DCOffset {
@@ -21,7 +22,13 @@ impl super::DCOffset {
             let low = partial - (high - current);
 
             if low != 0.0 {
-                self.partials[index] = low;
+                match self.partials.get_mut(index) {
+                    Some(value) => *value = low,
+                    None => {
+                        println!("error: dc offset can't update partials at index {index}");
+                        process::exit(1);
+                    }
+                };
                 index += 1;
             }
             current = high

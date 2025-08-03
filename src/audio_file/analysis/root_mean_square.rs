@@ -1,3 +1,5 @@
+use std::process;
+
 impl super::RootMeanSquare {
     pub fn new() -> super::RootMeanSquare {
         super::RootMeanSquare {
@@ -21,7 +23,13 @@ impl super::RootMeanSquare {
             let low = partial - (high - current);
 
             if low != 0.0 {
-                self.partials[index] = low;
+                match self.partials.get_mut(index) {
+                    Some(value) => *value = low,
+                    None => {
+                        println!("error: root mean square can't update partials at index {index}");
+                        process::exit(1);
+                    }
+                };
                 index += 1;
             }
             current = high

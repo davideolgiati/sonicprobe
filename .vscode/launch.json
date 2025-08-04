@@ -19,7 +19,7 @@
                                         "kind": "bin"
                                 }
                         },
-                        "args": ["/home/davide/Musica/test.flac" ],
+                        "args": ["/home/davide/Musica/06 - billie jean.flac" ],
                         "cwd": "${workspaceFolder}"
                 },
                 {

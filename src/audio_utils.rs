@@ -14,24 +14,20 @@ pub fn catmull_rom_interpolation(window: &Signal, start: usize, t: f64) -> Resul
 
     assert!((b0 + b1 + b2 + b3) - 1.0 < f64::EPSILON);
 
-    let y_minus1 = match window.get(start) {
-        Some(&value) => value,
-        None => return Err(format!("catmull rom: index {start} out of boundaries"))
+    let Some(&y_minus1) = window.get(start) else {
+        return Err(format!("catmull rom: index {start} out of boundaries"))
     };
 
-    let y0 = match window.get(start + 1) {
-        Some(&value) => value,
-        None => return Err(format!("catmull rom: index {start} out of boundaries"))
+    let Some(&y0) = window.get(start + 1) else {
+        return Err(format!("catmull rom: index {start} out of boundaries"))
     };
 
-    let y1 = match window.get(start + 2) {
-        Some(&value) => value,
-        None => return Err(format!("catmull rom: index {start} out of boundaries"))
+    let Some(&y1) = window.get(start + 2) else {
+        return Err(format!("catmull rom: index {start} out of boundaries"))
     };
 
-    let y2 = match window.get(start + 3) {
-        Some(&value) => value,
-        None => return Err(format!("catmull rom: index {start} out of boundaries"))
+    let Some(&y2) = window.get(start + 3) else {
+        return Err(format!("catmull rom: index {start} out of boundaries"))
     };
 
     Ok(y2.mul_add(b3, y1.mul_add(b2, y_minus1.mul_add(b0, y0 * b1))))
@@ -52,15 +48,14 @@ pub fn low_pass_filter(cutoff: f64, sample_rate: f64, numtaps: u16) -> Vec<f64> 
     let mut coeffs: Vec<f64> = (0..numtaps)
         .map(|n| {
             let offset = f64::from(n) - window_center;
-            let current_window_value = match window.get(usize::from(n)) {
-                Some(&value) => value,
-                None => panic!("low pass filter: no value for index {n}")
+            let Some(&current_value) = window.get(usize::from(n)) else {
+                panic!("low pass filter: no value for index {n}")
             };
 
             if offset.abs() > f64::EPSILON {
-                (center_frequency * offset).sin() / (f64::consts::PI * offset) * current_window_value
+                (center_frequency * offset).sin() / (f64::consts::PI * offset) * current_value
             } else {
-                center_frequency / f64::consts::PI * current_window_value
+                center_frequency / f64::consts::PI * current_value
             }
         })
         .collect();

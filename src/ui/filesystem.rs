@@ -5,7 +5,18 @@ use crate::constants::UNITS;
 fn format_file_size(bytes: u64) -> String {
     let unit_index = {
         let upper_limit = UNITS.len() - 1;
-        let index = usize::try_from(bytes / 1024).map_or(upper_limit, |value| value);
+        let index = usize::try_from(bytes).map_or(
+            upper_limit,
+            |value| {
+                let mut tmp = value;
+                let mut output = 0;
+                while tmp > 1024 {
+                    tmp /= 1024;
+                    output += 1;
+                }
+                output
+            },
+        );
 
         if bytes < 1024 {
             0usize
@@ -16,8 +27,8 @@ fn format_file_size(bytes: u64) -> String {
         }
     };
 
-    let size = match u64::try_from(unit_index) {
-        Ok(value) => bytes - value * 1024,
+    let size = match u32::try_from(unit_index) {
+        Ok(value) => bytes / 1024u64.pow(value),
         Err(e) => panic!("{e:?}"),
     };
 
@@ -38,7 +49,7 @@ fn format_file_size(bytes: u64) -> String {
 
 pub fn get_formatted_file_size<P: AsRef<Path>>(path: P) -> String {
     fs::metadata(path).map_or_else(
-        |_| "-".to_owned(),
+        |e| panic!("{e:?}"),
         |metadata| {
             let size = metadata.len();
             format_file_size(size)

@@ -8,15 +8,15 @@ use std::thread;
 
 use flac::{ReadStream, Stream};
 
+use crate::audio_file::analysis::ActualBitDepth;
 use crate::audio_file::analysis::ClippingSamples;
 use crate::audio_file::analysis::Peak;
 use crate::audio_file::analysis::StereoCorrelation;
-use crate::audio_file::analysis::ActualBitDepth;
 use crate::audio_file::channel::Channel;
+use crate::constants::MAX_8_BIT;
 use crate::constants::MAX_16_BIT;
 use crate::constants::MAX_24_BIT;
 use crate::constants::MAX_32_BIT;
-use crate::constants::MAX_8_BIT;
 use crate::dsp::upsample;
 
 pub type Signal = Arc<[f64]>;
@@ -25,7 +25,7 @@ type BitPrecision = u8;
 type Milliseconds = i64;
 
 pub struct AudioFile {
-    left: Channel, // OK
+    left: Channel,  // OK
     right: Channel, // OK
     /* Group next 4 */
     samples_per_channel: u64,
@@ -52,10 +52,10 @@ fn new_upsample_thread(
 ) -> std::thread::JoinHandle<(f64, usize)> {
     thread::spawn(move || {
         let signal = upsample(data, original_sample_rate);
-        
+
         let peak = Peak::process(&signal);
         let clip_count = ClippingSamples::process(&signal);
-    
+
         (peak, clip_count)
     })
 }
@@ -73,32 +73,34 @@ impl AudioFile {
 
         let left_upsample_worker = new_upsample_thread(Arc::clone(&left_samples), sample_rate);
         let right_upsample_worker = new_upsample_thread(Arc::clone(&right_samples), sample_rate);
-        let left_worker = new_channel_thread(Arc::clone(&left_samples), sample_rate, samples_per_channel);
-        let right_worker = new_channel_thread(Arc::clone(&right_samples), sample_rate, samples_per_channel);
+        let left_worker =
+            new_channel_thread(Arc::clone(&left_samples), sample_rate, samples_per_channel);
+        let right_worker =
+            new_channel_thread(Arc::clone(&right_samples), sample_rate, samples_per_channel);
 
         let true_bit_depth = ActualBitDepth::process(&signal, depth);
         let stereo_correlation = StereoCorrelation::process(&left_samples, &right_samples);
 
         let mut left = match left_worker.join() {
             Ok(value) => value,
-            Err(e) => panic!("{e:?}")
+            Err(e) => panic!("{e:?}"),
         };
         let mut right = match right_worker.join() {
             Ok(value) => value,
-            Err(e) => panic!("{e:?}")
+            Err(e) => panic!("{e:?}"),
         };
         (left.true_peak, left.true_clipping_samples_count) = match left_upsample_worker.join() {
             Ok(values) => values,
-            Err(e) => panic!("{e:?}")
+            Err(e) => panic!("{e:?}"),
         };
         (right.true_peak, right.true_clipping_samples_count) = match right_upsample_worker.join() {
             Ok(values) => values,
-            Err(e) => panic!("{e:?}")
+            Err(e) => panic!("{e:?}"),
         };
 
         let signed_sample_count: i64 = match samples_per_channel.try_into() {
             Ok(value) => value,
-            Err(e) => panic!("{e:?}")
+            Err(e) => panic!("{e:?}"),
         };
 
         Self {
@@ -110,7 +112,7 @@ impl AudioFile {
             duration: signed_sample_count / i64::from(sample_rate),
             samples_per_channel,
             stereo_correlation,
-            true_depth: true_bit_depth
+            true_depth: true_bit_depth,
         }
     }
 
@@ -194,20 +196,14 @@ fn split_sample_array_into_channels(samples: &Signal) -> (Signal, Signal) {
     let (left_vec, right_vec): (Vec<f64>, Vec<f64>) = samples
         .chunks_exact(2)
         .map(|pair| {
-            let left_sample = match pair.first() {
-                Some(&sample) => sample,
-                None => {
-                    println!("error: mismatch in channels size");
-                    process::exit(1);
-                }
+            let Some(&left_sample) = pair.first() else {
+                println!("error: mismatch in channels size");
+                process::exit(1);
             };
 
-            let right_sample = match pair.get(1) {
-                Some(&sample) => sample,
-                None => {
-                    println!("error: mismatch in channels size");
-                    process::exit(1);
-                }
+            let Some(&right_sample) = pair.get(1) else {
+                println!("error: mismatch in channels size");
+                process::exit(1);
             };
 
             (left_sample, right_sample)
@@ -232,7 +228,7 @@ fn read_flac_file(mut data_stream: Stream<ReadStream<File>>, depth: BitPrecision
         24 => data_stream
             .iter::<i32>()
             .map(|s| (s >> 8).into())
-            .map(|s: f64|  s / MAX_24_BIT)
+            .map(|s: f64| s / MAX_24_BIT)
             .collect::<Signal>(),
         32 => data_stream
             .iter::<i32>()

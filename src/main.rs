@@ -1,7 +1,7 @@
 // Add these at the top of your main.rs or lib.rs
 
 // === CLEAN CODE & SOLID PRINCIPLES ===
-//#![warn(clippy::all)]
+#![warn(clippy::all)]
 #![warn(clippy::pedantic)]
 #![warn(clippy::nursery)]
 //

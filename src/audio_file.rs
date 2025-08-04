@@ -89,11 +89,11 @@ impl AudioFile {
             Ok(value) => value,
             Err(e) => panic!("{e:?}"),
         };
-        (left.true_peak, left.true_clipping_samples_count) = match left_upsample_worker.join() {
+        let (left_true_peak, left_true_clipping_samples_count) = match left_upsample_worker.join() {
             Ok(values) => values,
             Err(e) => panic!("{e:?}"),
         };
-        (right.true_peak, right.true_clipping_samples_count) = match right_upsample_worker.join() {
+        let (right_true_peak, right_true_clipping_samples_count) = match right_upsample_worker.join() {
             Ok(values) => values,
             Err(e) => panic!("{e:?}"),
         };
@@ -102,6 +102,11 @@ impl AudioFile {
             Ok(value) => value,
             Err(e) => panic!("{e:?}"),
         };
+
+        left.true_peak = left_true_peak;
+        left.true_clipping_samples_count = left_true_clipping_samples_count;
+        right.true_peak = right_true_peak;
+        right.true_clipping_samples_count = right_true_clipping_samples_count;
 
         Self {
             left,

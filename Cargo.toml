@@ -6,6 +6,169 @@ edition = "2024"
 [dependencies]
 flac = "0.5.0"
 
+[lints.rust]
+# Core Rust warnings
+# missing_docs = "warn"
+# unsafe_code = "warn"  # Consider "forbid" if you want to completely ban unsafe
+unused = "warn"
+dead_code = "warn"
+unreachable_code = "warn"
+unreachable_patterns = "warn"
+unused_must_use = "warn"
+unused_variables = "warn"
+unused_imports = "warn"
+
+[lints.clippy]
+# Core clippy groups
+all = "warn"
+pedantic = "warn"
+nursery = "warn"
+# restriction = "warn"  # Very strict - enable with caution
+
+# === BUG PREVENTION (CRITICAL) ===
+# Panic prevention
+unwrap_used = "warn"
+expect_used = "warn"
+# panic = "warn"
+unimplemented = "warn"
+todo = "warn"
+unreachable = "warn"
+
+# Memory safety
+mem_forget = "warn"
+mem_replace_with_uninit = "warn"
+uninit_assumed_init = "warn"
+#multiple_unsafe_ops_per_block = "warn"
+#undocumented_unsafe_blocks = "warn"
+
+# Index safety
+indexing_slicing = "warn"
+
+# Arithmetic safety
+# arithmetic_side_effects = "warn"
+# integer_arithmetic = "warn"
+# float_arithmetic = "warn"
+
+# Type safety
+as_conversions = "allow"
+cast_lossless = "allow"
+cast_possible_truncation = "allow"
+cast_possible_wrap = "allow"
+cast_precision_loss = "allow"
+cast_sign_loss = "allow"
+
+# === PERFORMANCE ===
+# String operations
+string_add = "warn"
+string_add_assign = "warn"
+string_slice = "warn"
+str_to_string = "warn"
+string_to_string = "warn"
+inefficient_to_string = "warn"
+single_char_pattern = "warn"
+single_char_add_str = "warn"
+
+# Collection performance
+unnecessary_to_owned = "warn"
+clone_on_ref_ptr = "warn"
+redundant_clone = "warn"
+vec_init_then_push = "warn"
+extend_with_drain = "warn"
+stable_sort_primitive = "warn"
+unnecessary_sort_by = "warn"
+
+# Iteration performance
+needless_collect = "warn"
+or_fun_call = "warn"
+map_unwrap_or = "warn"
+filter_map_next = "warn"
+flat_map_option = "warn"
+
+# === CODE QUALITY ===
+# Complexity
+cognitive_complexity = "warn"
+too_many_lines = "warn"
+too_many_arguments = "warn"
+type_complexity = "warn"
+large_types_passed_by_value = "warn"
+large_enum_variant = "warn"
+
+# Documentation
+# missing_errors_doc = "warn"
+# missing_panics_doc = "warn"
+# missing_safety_doc = "warn"
+
+# Naming and structure
+module_name_repetitions = "warn"
+similar_names = "warn"
+struct_excessive_bools = "warn"
+fn_params_excessive_bools = "warn"
+inconsistent_struct_constructor = "warn"
+
+# === STYLE & IDIOMS ===
+# Pattern matching
+match_same_arms = "warn"
+redundant_pattern_matching = "warn"
+wildcard_enum_match_arm = "warn"
+match_wildcard_for_single_variants = "warn"
+
+# Function design
+must_use_candidate = "warn"
+return_self_not_must_use = "warn"
+unnecessary_wraps = "warn"
+result_large_err = "warn"
+new_without_default = "warn"
+should_implement_trait = "warn"
+
+# Logic errors
+overly_complex_bool_expr = "warn"
+suspicious_else_formatting = "warn"
+suspicious_operation_groupings = "warn"
+float_cmp = "warn"
+float_cmp_const = "warn"
+lossy_float_literal = "warn"
+
+# Iterator correctness
+iter_skip_next = "warn"
+iter_nth_zero = "warn"
+iter_next_slice = "warn"
+suspicious_map = "warn"
+map_entry = "warn"
+
+# === ADDITIONAL STRICT CHECKS ===
+# API design
+len_without_is_empty = "warn"
+wrong_self_convention = "warn"
+inherent_to_string = "warn"
+
+# Thread safety
+mutex_atomic = "warn"
+mutex_integer = "warn"
+
+# Import organization
+wildcard_imports = "warn"
+enum_glob_use = "warn"
+
+# Defensive programming
+shadow_reuse = "warn"
+shadow_same = "warn"
+shadow_unrelated = "warn"
+
+# Debug helpers in production
+# print_stdout = "warn"
+# print_stderr = "warn"
+dbg_macro = "warn"
+
+# Type casting
+unnecessary_cast = "warn"
+
+# === ULTRA-STRICT (uncomment with extreme caution) ===
+single_use_lifetimes = "warn"
+use_self = "warn"
+exhaustive_enums = "warn"
+exhaustive_structs = "warn"
+# implicit_return = "warn"
+question_mark_used = "warn"
 
 [profile.release]
 debug = true

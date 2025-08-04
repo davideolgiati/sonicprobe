@@ -23,7 +23,7 @@ impl super::DynamicRange {
                 println!("error: dynamic range can't slice samples in index 0 to {samples_end}");
                 process::exit(1);
             },
-            |samples| samples,
+            |slice| slice,
         );
 
         let mut rms_array: Vec<f64> = analysable_samples

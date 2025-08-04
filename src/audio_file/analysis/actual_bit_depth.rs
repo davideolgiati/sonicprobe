@@ -18,7 +18,7 @@ impl super::ActualBitDepth {
                     return 0u8;
                 }
 
-                let trailing_zeros = ((*sample * factor) as i32).trailing_zeros();
+                let trailing_zeros = ((*sample * factor).trunc() as i32).trailing_zeros();
                 (reported_depth as u32 - trailing_zeros) as u8
             })
             .take_while(|x| *x < reported_depth)

@@ -21,9 +21,9 @@ fn section_header(title: &str) -> String {
     )
 }
 
-fn seconds_to_minute_mark(duration: f32) -> String {
-    let seconds = duration % 60_f32;
-    let minutes = (duration - seconds) / 60_f32;
+fn seconds_to_minute_mark(duration: u64) -> String {
+    let seconds = duration % 60;
+    let minutes = (duration - seconds) / 60;
 
     format!("{:02.0}:{:02.0}", minutes, seconds)
 }

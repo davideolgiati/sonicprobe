@@ -3,13 +3,26 @@ use std::{fs, path::Path, process};
 use crate::constants::UNITS;
 
 fn format_file_size(bytes: u64) -> String {
-    let mut size = bytes as f64;
-    let mut unit_index = 0;
+    let unit_index = {
+        let upper_limit = UNITS.len() - 1;
+        let index = match usize::try_from(bytes / 1024) {
+            Ok(value) => value,
+            Err(_) => upper_limit
+        };
 
-    while size >= 1024.0 && unit_index < UNITS.len() - 1 {
-        size /= 1024.0;
-        unit_index += 1;
-    }
+        if bytes < 1024 {
+            0usize
+        } else if index > upper_limit {
+            upper_limit
+        } else {
+            index
+        }
+    };
+
+    let size = match u64::try_from(unit_index) {
+        Ok(value) => bytes - value * 1024,
+        Err(e) => panic!("{e:?}")
+    };
 
     let unit = match UNITS.get(unit_index) {
         Some(&value) => value,

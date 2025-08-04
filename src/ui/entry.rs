@@ -40,7 +40,7 @@ impl Entry {
         }
 
         pub fn from_dr(value: f64) -> Entry {
-                let new_value = value.round() as u32;
+                let new_value = value.round().abs() as u64;
                 Entry {
                         value: format_dr(new_value),
                         unit: String::from("DR")

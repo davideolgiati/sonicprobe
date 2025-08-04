@@ -22,6 +22,6 @@ pub fn format_hz(value: u32) -> String {
     format!("{}", value)
 }
 
-pub fn format_dr(value: u32) -> String {
+pub fn format_dr(value: u64) -> String {
     format!("{}", value)
 }

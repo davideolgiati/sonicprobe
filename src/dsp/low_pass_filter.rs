@@ -6,8 +6,8 @@ use std::{arch::is_x86_feature_detected, process};
 
 impl LowPassFilter {
     pub fn new(original_frequency: u32) -> Self {
-        let cutoff_hz: f64 = original_frequency as f64 * 0.8;
-        let upsampled_freq: f64 = UPSAMPLE_TARGET_FREQUENCY as f64;
+        let cutoff_hz: f64 = f64::from(original_frequency) * 0.8;
+        let upsampled_freq: f64 = f64::from(UPSAMPLE_TARGET_FREQUENCY);
 
         let numtaps = match super::LOW_PASS_FILTER_SIZE.try_into() {
             Ok(value) => value,

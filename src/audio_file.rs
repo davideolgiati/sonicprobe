@@ -22,7 +22,7 @@ use crate::dsp::upsample;
 pub type Signal = Arc<[f64]>;
 type Frequency = u32;
 type BitPrecision = u8;
-type Milliseconds = f32;
+type Milliseconds = u64;
 
 pub struct AudioFile {
     left: Channel, // OK
@@ -90,7 +90,7 @@ impl AudioFile {
             depth,
             channels: channel_count,
             sample_rate,
-            duration: samples_per_channel as f32 / sample_rate as f32,
+            duration: samples_per_channel / u64::from(sample_rate),
             samples_per_channel,
             stereo_correlation,
             true_depth: true_bit_depth
@@ -125,7 +125,7 @@ impl AudioFile {
         self.left.rms() - self.right.rms()
     }
 
-    pub fn duration(&self) -> f32 {
+    pub fn duration(&self) -> u64 {
         self.duration
     }
 

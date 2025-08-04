@@ -8,20 +8,14 @@ impl super::ZeroCrossingRate {
         samples
             .windows(2)
             .map(|slice| {
-                let first_sample = match slice.first() {
-                    Some(&value) => value,
-                    None => {
-                        println!("error: zero crossing rate can't get first sample");
-                        process::exit(1);
-                    }
+                let Some(&first_sample) = slice.first() else {
+                    println!("error: zero crossing rate can't get first sample");
+                    process::exit(1);
                 };
 
-                let second_sample = match slice.last() {
-                    Some(&value) => value,
-                    None => {
-                        println!("error: zero crossing rate can't get second sample");
-                        process::exit(1);
-                    }
+                let Some(&second_sample) = slice.last() else {
+                    println!("error: zero crossing rate can't get second sample");
+                    process::exit(1);
                 };
 
                 if get_value_sign(first_sample) == get_value_sign(second_sample) {
@@ -30,7 +24,8 @@ impl super::ZeroCrossingRate {
                     1.0
                 }
             })
-            .sum::<f32>() / duration
+            .sum::<f32>()
+            / duration
     }
 }
 

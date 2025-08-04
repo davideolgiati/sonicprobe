@@ -22,12 +22,11 @@ impl super::DCOffset {
             let low = partial - (high - current);
 
             if low != 0.0 {
-                match self.partials.get_mut(index) {
-                    Some(value) => *value = low,
-                    None => {
-                        println!("error: dc offset can't update partials at index {index}");
-                        process::exit(1);
-                    }
+                if let Some(value) = self.partials.get_mut(index) {
+                    *value = low;
+                } else {
+                    println!("error: dc offset can't update partials at index {index}");
+                    process::exit(1);
                 };
                 index += 1;
             }

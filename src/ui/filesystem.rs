@@ -5,18 +5,15 @@ use crate::constants::UNITS;
 fn format_file_size(bytes: u64) -> String {
     let unit_index = {
         let upper_limit = UNITS.len() - 1;
-        let index = usize::try_from(bytes).map_or(
-            upper_limit,
-            |value| {
-                let mut tmp = value;
-                let mut output = 0;
-                while tmp > 1024 {
-                    tmp /= 1024;
-                    output += 1;
-                }
-                output
-            },
-        );
+        let index = usize::try_from(bytes).map_or(upper_limit, |value| {
+            let mut tmp = value;
+            let mut output = 0;
+            while tmp > 1024 {
+                tmp /= 1024;
+                output += 1;
+            }
+            output
+        });
 
         if bytes < 1024 {
             0usize
@@ -32,12 +29,9 @@ fn format_file_size(bytes: u64) -> String {
         Err(e) => panic!("{e:?}"),
     };
 
-    let unit = match UNITS.get(unit_index) {
-        Some(&value) => value,
-        None => {
-            println!("error: filsystem index {unit_index} is not valid");
-            process::exit(1);
-        }
+    let Some(&unit) = UNITS.get(unit_index) else {
+        println!("error: filsystem index {unit_index} is not valid");
+        process::exit(1);
     };
 
     if unit_index == 0 {

@@ -108,7 +108,7 @@ unsafe fn dot_product_avx2(a: &[f64], b: &[f64]) -> f64 {
     assert_eq!(a.len(), b.len(), "Slices must have the same length");
 
     unsafe {
-        use std::arch::x86_64::*;
+        use std::arch::x86_64::{_mm256_add_pd, _mm256_loadu_pd, _mm256_mul_pd, _mm256_setzero_pd, _mm256_storeu_pd};
         const CHUNK: usize = 4; // AVX2 processes 4 f64 values at once
         let mut sum = _mm256_setzero_pd();
         let pa = a.as_ptr();

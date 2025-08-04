@@ -16,23 +16,23 @@ impl super::RootMeanSquare {
         //TODO: da portare fuori
         for mut partial in self.partials.clone() {
             if current.abs() < partial.abs() {
-                (current, partial) = (partial, current)
+                (current, partial) = (partial, current);
             }
 
             let high = current + partial;
             let low = partial - (high - current);
 
             if low != 0.0 {
-                match self.partials.get_mut(index) {
-                    Some(value) => *value = low,
-                    None => {
-                        println!("error: root mean square can't update partials at index {index}");
-                        process::exit(1);
-                    }
+                if let Some(value) = self.partials.get_mut(index) {
+                    *value = low;
+                } else {
+                    println!("error: root mean square can't update partials at index {index}");
+                    process::exit(1);
                 };
                 index += 1;
             }
-            current = high
+            
+            current = high;
         }
 
         self.partials.truncate(index);

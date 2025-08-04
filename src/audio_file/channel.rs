@@ -6,7 +6,7 @@ pub struct Channel {
     peak: f64,
     clipping_samples_count: usize,
     pub true_clipping_samples_count: usize,
-    dc_offset: f32,
+    dc_offset: f64,
     samples_count: u64,
     pub true_peak: f64,
     zero_crossing_rate: f32,
@@ -26,15 +26,15 @@ impl Channel {
         to_dbfs(self.true_peak)
     }
 
-    pub fn clipping_samples_quota(&self) -> f32 {
-        (self.clipping_samples_count as f64 / self.samples_count as f64) as f32
+    pub fn clipping_samples_quota(&self) -> f64 {
+        self.clipping_samples_count as f64 / self.samples_count as f64
     }
 
-    pub fn true_clipping_samples_quota(&self) -> f32 {
-        (self.true_clipping_samples_count as f64 / self.samples_count as f64) as f32
+    pub fn true_clipping_samples_quota(&self) -> f64 {
+        self.true_clipping_samples_count as f64 / self.samples_count as f64
     }
 
-    pub fn dc_offset(&self) -> f32 {
+    pub const fn dc_offset(&self) -> f64 {
         self.dc_offset
     }
 
@@ -42,11 +42,11 @@ impl Channel {
         to_dbfs(self.peak.abs() / self.rms)
     }
 
-    pub fn zero_crossing_rate(&self) -> f32 {
+    pub const fn zero_crossing_rate(&self) -> f32 {
         self.zero_crossing_rate
     }
 
-    pub fn dr(&self) -> f64 {
+    pub const fn dr(&self) -> f64 {
         self.dr
     }
 
@@ -80,9 +80,9 @@ impl Channel {
         format!("{{\n{}\n{}}}", output, "\t".repeat(father_tab))
     }
 
-    pub fn from_samples(samples: &Signal, sample_rate: u32, samples_per_channel: u64) -> Channel {
+    pub fn from_samples(samples: &Signal, sample_rate: u32, samples_per_channel: u64) -> Self {
         let mut rms = 0.0f64;
-        let mut dc_offset = 0.0f32;
+        let mut dc_offset = 0.0f64;
         let mut dr_builder = super::analysis::DynamicRange::new(sample_rate);
         
         let duration = samples_per_channel as f32 / sample_rate as f32;
@@ -99,7 +99,7 @@ impl Channel {
         let peak = super::analysis::Peak::process(samples);
         let dr = dr_builder.build(peak);
 
-        Channel {
+        Self {
             rms,
             peak,
             true_peak: 0.0,
@@ -116,11 +116,11 @@ impl Channel {
 fn coumpute_rms(samples: &Signal, output: &mut f64) {
     let mut builder = super::analysis::RootMeanSquare::new();
     samples.iter().for_each(|sample| builder.add(*sample));
-    *output = builder.build()
+    *output = builder.build();
 }
 
-fn coumpute_dc_offset(samples: &Signal, samples_count: u64, output: &mut f32) {
+fn coumpute_dc_offset(samples: &Signal, samples_count: u64, output: &mut f64) {
     let mut builder = super::analysis::DCOffset::new(samples_count);
     samples.iter().for_each(|sample| builder.add(*sample));
-    *output = builder.build()
+    *output = builder.build();
 }

@@ -8,8 +8,8 @@ pub struct Table {
 }
 
 impl Table {
-    pub fn new(left: Channel, right: Channel) -> Table {
-        Table {
+    pub fn new(left: Channel, right: Channel) -> Self {
+        Self {
             left,
             right,
             elements: vec![table_head()],
@@ -17,7 +17,7 @@ impl Table {
     }
 
     #[inline]
-pub fn add(mut self, title: &str, mapping_fn: fn(Channel) -> Entry) -> Table {
+    pub fn add(mut self, title: &str, mapping_fn: fn(Channel) -> Entry) -> Self {
         let left = mapping_fn(self.left);
         let right = mapping_fn(self.right);
         let new_row = table_row(title, &left.formatted(), &right.formatted());
@@ -26,7 +26,7 @@ pub fn add(mut self, title: &str, mapping_fn: fn(Channel) -> Entry) -> Table {
         self
     }
 
-    pub fn set_headers(mut self, title: &str, left: &str, right: &str) -> Table {
+    pub fn set_headers(mut self, title: &str, left: &str, right: &str) -> Self {
         let new_row = table_row(title, left, right);
         self.elements.push(new_row);
 
@@ -34,7 +34,7 @@ pub fn add(mut self, title: &str, mapping_fn: fn(Channel) -> Entry) -> Table {
     }
 
     #[inline]
-pub fn add_section(mut self) -> Table {
+    pub fn add_section(mut self) -> Self {
         self.elements.push(table_section());
 
         self
@@ -59,5 +59,5 @@ fn table_section() -> String {
 }
 
 fn table_row(title: &str, left: &str, right: &str) -> String {
-    format!("│  {:<22}  │    {:>14}  │    {:>14}  │", title, left, right)
+    format!("│  {title:<22}  │    {left:>14}  │    {right:>14}  │")
 }

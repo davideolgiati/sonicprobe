@@ -1,8 +1,8 @@
 use std::process;
 
 impl super::DCOffset {
-    pub fn new(count: u64) -> super::DCOffset {
-        super::DCOffset {
+    pub const fn new(count: u64) -> Self {
+        Self {
             partials: Vec::new(),
             count,
         }
@@ -15,7 +15,7 @@ impl super::DCOffset {
 
         for mut partial in self.partials.clone() {
             if current.abs() < partial.abs() {
-                (current, partial) = (partial, current)
+                (current, partial) = (partial, current);
             }
 
             let high = current + partial;
@@ -31,20 +31,20 @@ impl super::DCOffset {
                 };
                 index += 1;
             }
-            current = high
+            current = high;
         }
 
         self.partials.truncate(index);
-        self.partials.push(current)
+        self.partials.push(current);
     }
 
-    pub fn build(self) -> f32 {
+    pub fn build(self) -> f64 {
         if self.count == 0 {
-            return 0.0f32;
+            return 0.0f64;
         }
 
         let sum: f64 = self.partials.iter().sum();
 
-        (sum / self.count as f64) as f32
+        sum / self.count as f64
     }
 }

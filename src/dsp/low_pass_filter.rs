@@ -1,5 +1,8 @@
 use crate::{
-    audio_file::Signal, audio_utils::low_pass_filter, constants::{LOW_PASS_FILTER_SIZE, UPSAMPLE_TARGET_FREQUENCY}, dsp::LowPassFilter
+    audio_file::Signal,
+    audio_utils::low_pass_filter,
+    constants::{LOW_PASS_FILTER_SIZE, UPSAMPLE_TARGET_FREQUENCY},
+    dsp::LowPassFilter,
 };
 
 use std::{arch::is_x86_feature_detected, process};
@@ -11,11 +14,10 @@ impl LowPassFilter {
 
         let numtaps = match super::LOW_PASS_FILTER_SIZE.try_into() {
             Ok(value) => value,
-            Err(e) => panic!("{e:?}")
+            Err(e) => panic!("{e:?}"),
         };
 
-        let coeffs: Vec<f64> =
-            low_pass_filter(cutoff_hz, upsampled_freq, numtaps);
+        let coeffs: Vec<f64> = low_pass_filter(cutoff_hz, upsampled_freq, numtaps);
 
         let mut coeffs_slice = [0.0f64; super::LOW_PASS_FILTER_SIZE];
         coeffs_slice.copy_from_slice(&coeffs);
@@ -27,13 +29,13 @@ impl LowPassFilter {
 
     #[inline]
     pub fn submit(&self, window: &Signal, start: usize, end: usize) -> f64 {
-        let current_window = match window.get(start..end) {
-            Some(array) => array,
-            None => {
+        let current_window = window.get(start..end).map_or_else(
+            || {
                 println!("error: low pass filter can't slice signal form sample {start} to {end}");
                 process::exit(1);
-            }
-        };
+            },
+            |array| array,
+        );
 
         let window_slice: &[f64; super::LOW_PASS_FILTER_SIZE] =
             current_window.try_into().unwrap_or_else(|_| {
@@ -56,10 +58,9 @@ fn dot_product(coeffs: &[f64; LOW_PASS_FILTER_SIZE], samples: &[f64; LOW_PASS_FI
     }
 }
 
-#[inline(always)]
-pub fn dot_product_scalar<const N: usize>(a: &[f64;N], b: &[f64;N]) -> f64 {
+pub fn dot_product_scalar<const N: usize>(a: &[f64; N], b: &[f64; N]) -> f64 {
     assert_eq!(a.len(), b.len(), "Slices must have the same length");
-    
+
     let mut sum0 = 0.0f64;
     let mut sum1 = 0.0f64;
     let mut sum2 = 0.0f64;
@@ -67,7 +68,7 @@ pub fn dot_product_scalar<const N: usize>(a: &[f64;N], b: &[f64;N]) -> f64 {
     let pa = a.as_ptr();
     let pb = b.as_ptr();
     let mut i = 0;
-    
+
     while i + 16 <= N {
         unsafe {
             sum0 += *pa.add(i) * *pb.add(i);
@@ -89,7 +90,7 @@ pub fn dot_product_scalar<const N: usize>(a: &[f64;N], b: &[f64;N]) -> f64 {
         }
         i += 16;
     }
-    
+
     // Handle any leftover elements
     while i < N {
         unsafe {
@@ -97,7 +98,7 @@ pub fn dot_product_scalar<const N: usize>(a: &[f64;N], b: &[f64;N]) -> f64 {
         }
         i += 1;
     }
-    
+
     sum0 + sum1 + sum2 + sum3
 }
 
@@ -105,7 +106,7 @@ pub fn dot_product_scalar<const N: usize>(a: &[f64;N], b: &[f64;N]) -> f64 {
 #[target_feature(enable = "avx2")]
 unsafe fn dot_product_avx2(a: &[f64], b: &[f64]) -> f64 {
     assert_eq!(a.len(), b.len(), "Slices must have the same length");
-    
+
     unsafe {
         use std::arch::x86_64::*;
         const CHUNK: usize = 4; // AVX2 processes 4 f64 values at once
@@ -114,25 +115,25 @@ unsafe fn dot_product_avx2(a: &[f64], b: &[f64]) -> f64 {
         let pb = b.as_ptr();
         let len = a.len();
         let mut i = 0;
-        
+
         while i + CHUNK <= len {
             let va = _mm256_loadu_pd(pa.add(i));
             let vb = _mm256_loadu_pd(pb.add(i));
             sum = _mm256_add_pd(sum, _mm256_mul_pd(va, vb));
             i += CHUNK;
         }
-        
+
         // Extract and sum the 4 f64 values from the AVX2 register
         let mut tmp = [0f64; CHUNK];
         _mm256_storeu_pd(tmp.as_mut_ptr(), sum);
         let mut total = tmp.iter().sum::<f64>();
-        
+
         // Handle any remaining elements
         while i < len {
             total += *pa.add(i) * *pb.add(i);
             i += 1;
         }
-        
+
         total
     }
 }

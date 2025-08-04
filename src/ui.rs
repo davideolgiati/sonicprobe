@@ -21,23 +21,24 @@ fn section_header(title: &str) -> String {
     )
 }
 
-fn seconds_to_minute_mark(duration: u64) -> String {
+fn seconds_to_minute_mark(duration: i64) -> String {
     let seconds = duration % 60;
     let minutes = (duration - seconds) / 60;
 
-    format!("{:02.0}:{:02.0}", minutes, seconds)
+    format!("{minutes:02.0}:{seconds:02.0}")
 }
 
 pub fn print_file_details(filename: &str, file: &AudioFile) {
     let left = file.left();
     let right = file.right();
+    let filename = filename_from_path(filename).map_or_else(|| filename.to_owned(), |value| value);
 
     println!("{}", "=".repeat(70));
     println!("{:^70}", "SONICPROBE - AUDIO ANALYSIS REPORT");
     println!("{}\n", "=".repeat(70));
 
     println!("{}", section_header("FILE DETAILS"));
-    println!("   {:<18} : {}", "Filename", filename_from_path(filename));
+    println!("   {:<18} : {}", "Filename", filename);
     println!("   {:<18} : {}", "Size", get_formatted_file_size(filename));
     println!("   {:<18} : {}", "Sample Count", file.samples_count());
     println!(
@@ -92,5 +93,5 @@ pub fn print_file_details(filename: &str, file: &AudioFile) {
         })
         .build();
 
-    println!("\n\n{}", channels_details_table);
+    println!("\n\n{channels_details_table}");
 }

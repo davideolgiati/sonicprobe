@@ -1,8 +1,8 @@
 use std::process;
 
 impl super::RootMeanSquare {
-    pub fn new() -> super::RootMeanSquare {
-        super::RootMeanSquare {
+    pub const fn new() -> Self {
+        Self {
             partials: Vec::new(),
             count: 0,
         }

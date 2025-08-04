@@ -1,27 +1,27 @@
 pub fn format_db(value: f64) -> String {
     if value > 0.0 {
-        format!("+{:.2}", value)
+        format!("+{value:.2}")
     } else if value == 0.0 {
         String::from("0.00")
     } else {
-        format!("{:.2}", value)
+        format!("{value:.2}")
     }
 }
 
-pub fn format_volt(value: f32) -> String {
+pub fn format_volt(value: f64) -> String {
     if value > 0.0 {
-        format!("+{:.5}", value)
+        format!("+{value:.5}")
     } else if value == 0.0 {
         String::from("0.00000")
     } else {
-        format!("{:.5}", value)
+        format!("{value:.5}")
     }
 }
 
-pub fn format_hz(value: u32) -> String {
-    format!("{}", value)
+pub fn format_hz(value: i64) -> String {
+    format!("{value}")
 }
 
-pub fn format_dr(value: u64) -> String {
-    format!("{}", value)
+pub fn format_dr(value: i64) -> String {
+    format!("{value}")
 }

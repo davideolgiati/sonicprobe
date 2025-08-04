@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::dsp::DSPChain;
 
 impl<T: Clone> DSPChain<T> {
-    pub fn new(data: Arc<[T]>) -> Self {
+    pub const fn new(data: Arc<[T]>) -> Self {
         Self {
             data,
         }
@@ -26,7 +26,7 @@ impl<T: Clone> DSPChain<T> {
         I: Iterator<Item = R>,
     {
         let new_data = (0..(self.data.len() - size))
-            .flat_map(|index| func(self.data.clone(), index))
+            .flat_map(|index| func(Arc::clone(&self.data), index))
             .collect();
         DSPChain { data: new_data }
     }

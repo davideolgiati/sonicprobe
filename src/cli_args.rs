@@ -8,18 +8,16 @@ pub struct CliArgs {
 }
 
 impl CliArgs {
-    pub fn new(args: &[String]) -> CliArgs {
-        if args.len() < 2 {
-            panic!("No input file specified")
-        }
+    pub fn new(args: &[String]) -> Self {
+        assert!((args.len() >= 2), "No input file specified");
 
-        let input_file = match args.get(1) {
-            Some(value) => value,
-            None => {
+        let input_file = args.get(1).map_or_else(
+            || {
                 println!("error: no input provided :(");
                 process::exit(1);
-            }
-        };
+            },
+            |value| value,
+        );
 
         let output_format: OutputFormat = {
             if args.len() >= 3
@@ -33,17 +31,17 @@ impl CliArgs {
             }
         };
 
-        CliArgs {
+        Self {
             file_path: input_file.clone(),
             output_format,
         }
     }
 
-    pub fn file_path(&self) -> &String {
+    pub const fn file_path(&self) -> &String {
         &self.file_path
     }
 
-    pub fn output_format(&self) -> &OutputFormat {
+    pub const fn output_format(&self) -> &OutputFormat {
         &self.output_format
     }
 }

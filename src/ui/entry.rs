@@ -10,52 +10,52 @@ impl Entry {
                 format!("{} {:>4}", self.value, self.unit)
         }
 
-        pub fn from_db(value: f64) -> Entry {
-                Entry {
+        pub fn from_db(value: f64) -> Self {
+                Self {
                         value: format_db(value),
                         unit: String::from("dB")
                 }
         }
 
-        pub fn from_volt(value: f32) -> Entry {
-                Entry {
+        pub fn from_volt(value: f64) -> Self {
+                Self {
                         value: format_volt(value),
                         unit: String::from("V")
                 }
         }
 
-        pub fn from_hz(value: f64) -> Entry {
-                let new_value = value.round() as u32;
-                Entry { 
+        pub fn from_hz(value: f64) -> Self {
+                let new_value = value.round() as i64;
+                Self { 
                         value: format_hz(new_value),
                         unit: String::from("Hz")
                 }
         }
 
-        pub fn from_percent(value: f32) -> Entry {
-                Entry {
+        pub fn from_percent(value: f64) -> Self {
+                Self {
                         value: format_percent(value),
                         unit: String::from("%")
                 }
         }
 
-        pub fn from_dr(value: f64) -> Entry {
-                let new_value = value.round().abs() as u64;
-                Entry {
+        pub fn from_dr(value: f64) -> Self {
+                let new_value = value.round().abs() as i64;
+                Self {
                         value: format_dr(new_value),
                         unit: String::from("DR")
                 }
         }
 
-        pub fn from_bit(value: u8) -> Entry {
-                Entry { 
-                        value: format!("{}", value), 
+        pub fn from_bit(value: u8) -> Self {
+                Self { 
+                        value: format!("{value}"), 
                         unit: String::from("bit") 
                 }
         }
 }
 
-pub fn format_percent(value: f32) -> String {
+pub fn format_percent(value: f64) -> String {
         if value > 0.0 {
             format!("+{:.5}", value * 100.0)
         } else if value == 0.0 {

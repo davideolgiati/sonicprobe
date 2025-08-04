@@ -24,10 +24,10 @@ impl super::ZeroCrossingRate {
                     }
                 };
 
-                if get_value_sign(first_sample) != get_value_sign(second_sample) {
-                    1.0
-                } else {
+                if get_value_sign(first_sample) == get_value_sign(second_sample) {
                     0.0
+                } else {
+                    1.0
                 }
             })
             .sum::<f32>() / duration

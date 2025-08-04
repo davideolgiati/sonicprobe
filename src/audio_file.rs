@@ -22,7 +22,7 @@ use crate::dsp::upsample;
 pub type Signal = Arc<[f64]>;
 type Frequency = u32;
 type BitPrecision = u8;
-type Milliseconds = u64;
+type Milliseconds = i64;
 
 pub struct AudioFile {
     left: Channel, // OK
@@ -61,7 +61,7 @@ fn new_upsample_thread(
 }
 
 impl AudioFile {
-    pub fn new(data_stream: Stream<ReadStream<File>>) -> AudioFile {
+    pub fn new(data_stream: Stream<ReadStream<File>>) -> Self {
         let channel_count = data_stream.info().channels;
         let sample_rate = data_stream.info().sample_rate;
         let depth = data_stream.info().bits_per_sample;
@@ -71,53 +71,70 @@ impl AudioFile {
 
         let (left_samples, right_samples) = split_sample_array_into_channels(&signal);
 
-        let left_upsample_worker = new_upsample_thread(left_samples.clone(), sample_rate);
-        let right_upsample_worker = new_upsample_thread(right_samples.clone(), sample_rate);
-        let left_worker = new_channel_thread(left_samples.clone(), sample_rate, samples_per_channel);
-        let right_worker = new_channel_thread(right_samples.clone(), sample_rate, samples_per_channel);
+        let left_upsample_worker = new_upsample_thread(Arc::clone(&left_samples), sample_rate);
+        let right_upsample_worker = new_upsample_thread(Arc::clone(&right_samples), sample_rate);
+        let left_worker = new_channel_thread(Arc::clone(&left_samples), sample_rate, samples_per_channel);
+        let right_worker = new_channel_thread(Arc::clone(&right_samples), sample_rate, samples_per_channel);
 
-        let true_bit_depth = ActualBitDepth::process(signal, depth);
+        let true_bit_depth = ActualBitDepth::process(&signal, depth);
         let stereo_correlation = StereoCorrelation::process(&left_samples, &right_samples);
 
-        let mut left = left_worker.join().unwrap();
-        let mut right = right_worker.join().unwrap();
-        (left.true_peak, left.true_clipping_samples_count) = left_upsample_worker.join().unwrap();
-        (right.true_peak, right.true_clipping_samples_count) = right_upsample_worker.join().unwrap();
+        let mut left = match left_worker.join() {
+            Ok(value) => value,
+            Err(e) => panic!("{e:?}")
+        };
+        let mut right = match right_worker.join() {
+            Ok(value) => value,
+            Err(e) => panic!("{e:?}")
+        };
+        (left.true_peak, left.true_clipping_samples_count) = match left_upsample_worker.join() {
+            Ok(values) => values,
+            Err(e) => panic!("{e:?}")
+        };
+        (right.true_peak, right.true_clipping_samples_count) = match right_upsample_worker.join() {
+            Ok(values) => values,
+            Err(e) => panic!("{e:?}")
+        };
 
-        AudioFile {
+        let signed_sample_count: i64 = match samples_per_channel.try_into() {
+            Ok(value) => value,
+            Err(e) => panic!("{e:?}")
+        };
+
+        Self {
             left,
             right,
             depth,
             channels: channel_count,
             sample_rate,
-            duration: samples_per_channel / u64::from(sample_rate),
+            duration: signed_sample_count / i64::from(sample_rate),
             samples_per_channel,
             stereo_correlation,
             true_depth: true_bit_depth
         }
     }
 
-    pub fn left(&self) -> &Channel {
+    pub const fn left(&self) -> &Channel {
         &self.left
     }
 
-    pub fn right(&self) -> &Channel {
+    pub const fn right(&self) -> &Channel {
         &self.right
     }
 
-    pub fn channel_count(&self) -> u8 {
+    pub const fn channel_count(&self) -> u8 {
         self.channels
     }
 
-    pub fn sample_rate(&self) -> u32 {
+    pub const fn sample_rate(&self) -> u32 {
         self.sample_rate
     }
 
-    pub fn depth(&self) -> BitPrecision {
+    pub const fn depth(&self) -> BitPrecision {
         self.depth
     }
 
-    pub fn true_bit_depth(&self) -> u8 {
+    pub const fn true_bit_depth(&self) -> u8 {
         self.true_depth
     }
 
@@ -125,20 +142,20 @@ impl AudioFile {
         self.left.rms() - self.right.rms()
     }
 
-    pub fn duration(&self) -> u64 {
+    pub const fn duration(&self) -> i64 {
         self.duration
     }
 
-    pub fn samples_count(&self) -> u64 {
+    pub const fn samples_count(&self) -> u64 {
         self.samples_per_channel
     }
 
-    pub fn stereo_correlation(&self) -> f64 {
+    pub const fn stereo_correlation(&self) -> f64 {
         self.stereo_correlation
     }
 
     pub fn to_json_string(&self) -> String {
-        let inner_tab: String = "\t".to_string();
+        let inner_tab: String = "\t".to_owned();
         let output = [
             format!(
                 "{}\"channel_count\": {},\n",
@@ -169,7 +186,7 @@ impl AudioFile {
         ]
         .concat();
 
-        format!("{{\n{}}}", output,)
+        format!("{{\n{output}}}",)
     }
 }
 
@@ -204,12 +221,12 @@ fn read_flac_file(mut data_stream: Stream<ReadStream<File>>, depth: BitPrecision
     match depth {
         8 => data_stream
             .iter::<i8>()
-            .map(|s| s.into())
+            .map(std::convert::Into::into)
             .map(|s: f64| s / MAX_8_BIT)
             .collect::<Signal>(),
         16 => data_stream
             .iter::<i16>()
-            .map(|s| s.into())
+            .map(std::convert::Into::into)
             .map(|s: f64| s / MAX_16_BIT)
             .collect::<Signal>(),
         24 => data_stream
@@ -219,7 +236,7 @@ fn read_flac_file(mut data_stream: Stream<ReadStream<File>>, depth: BitPrecision
             .collect::<Signal>(),
         32 => data_stream
             .iter::<i32>()
-            .map(|s| (s >> 8).into())
+            .map(std::convert::Into::into)
             .map(|s: f64| s / MAX_32_BIT)
             .collect::<Signal>(),
         _ => panic!("Unknown bit depth"),

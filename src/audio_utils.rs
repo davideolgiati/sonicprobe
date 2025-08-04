@@ -7,12 +7,12 @@ pub fn to_dbfs(dc: f64) -> f64 {
 }
 
 pub fn catmull_rom_interpolation(window: &Signal, start: usize, t: f64) -> Result<f64, String> {
-    let b0 = -(0.5 * t.powi(3)) + t.powi(2) - (0.5 * t);
-    let b1 = (1.5 * t.powi(3)) - (2.5 * t.powi(2)) + 1.0;
-    let b2 = (-1.5 * t.powi(3)) + (2.0 * t.powi(2)) + (0.5 * t);
-    let b3 = (0.5 * t.powi(3)) - (0.5 * t.powi(2));
+    let b0 = 0.5f64.mul_add(-t, t.mul_add(t, -(0.5 * t.powi(3))));
+    let b1 = 1.5f64.mul_add(t.powi(3), -(2.5 * t.powi(2))) + 1.0;
+    let b2 = 0.5f64.mul_add(t, (-1.5f64).mul_add(t.powi(3), 2.0 * t.powi(2)));
+    let b3 = 0.5f64.mul_add(t.powi(3), -(0.5 * t.powi(2)));
 
-    assert_eq!(b0 + b1 + b2 + b3, 1.0);
+    assert!((b0 + b1 + b2 + b3) - 1.0 < f64::EPSILON);
 
     let y_minus1 = match window.get(start) {
         Some(&value) => value,
@@ -34,7 +34,7 @@ pub fn catmull_rom_interpolation(window: &Signal, start: usize, t: f64) -> Resul
         None => return Err(format!("catmull rom: index {start} out of boundaries"))
     };
 
-    Ok((y_minus1 * b0) + (y0 * b1) + (y1 * b2) + (y2 * b3))
+    Ok(y2.mul_add(b3, y1.mul_add(b2, y_minus1.mul_add(b0, y0 * b1))))
 }
 
 fn hz_to_radian(frequency: f64, sample_rate: f64) -> f64 {
@@ -45,7 +45,7 @@ pub fn low_pass_filter(cutoff: f64, sample_rate: f64, numtaps: u16) -> Vec<f64> 
     let center_frequency: f64 = hz_to_radian(cutoff, sample_rate);
     let window_center = f64::from(numtaps - 1) / 2.0;
     let window = (0..numtaps)
-        .map(|n| 0.54 - 0.46 * ((2.0 * f64::consts::PI * f64::from(n)) / f64::from(numtaps - 1)).cos())
+        .map(|n| 0.46f64.mul_add(-((2.0 * f64::consts::PI * f64::from(n)) / f64::from(numtaps - 1)).cos(), 0.54))
         .collect::<Vec<f64>>();
 
     // generazione

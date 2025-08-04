@@ -27,9 +27,19 @@ fn main() {
         }
     };
 
-    if *args.output_format() == OutputFormat::Json {
-        println!("{}", flac_details.to_json_string());
-    } else {
-        print_file_details(args.file_path(), &flac_details);
+    match flac_details {
+        Ok(audio_file) => {
+            if *args.output_format() == OutputFormat::Json {
+                println!("{}", audio_file.to_json_string());
+            } else {
+                print_file_details(args.file_path(), &audio_file);
+            }
+        }
+        Err(e) => {
+            println!("{e:?}");
+            process::exit(1);
+        }
     }
+
+
 }

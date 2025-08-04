@@ -61,7 +61,7 @@ fn new_upsample_thread(
 }
 
 impl AudioFile {
-    pub fn new(data_stream: Stream<ReadStream<File>>) -> Self {
+    pub fn new(data_stream: Stream<ReadStream<File>>) -> Result<Self, String> {
         let channel_count = data_stream.info().channels;
         let sample_rate = data_stream.info().sample_rate;
         let depth = data_stream.info().bits_per_sample;
@@ -83,24 +83,25 @@ impl AudioFile {
 
         let mut left = match left_worker.join() {
             Ok(value) => value,
-            Err(e) => panic!("{e:?}"),
+            Err(e) => return Err(format!("AudioFile::new error: {e:?}")),
         };
         let mut right = match right_worker.join() {
             Ok(value) => value,
-            Err(e) => panic!("{e:?}"),
+            Err(e) => return Err(format!("AudioFile::new error: {e:?}")),
         };
         let (left_true_peak, left_true_clipping_samples_count) = match left_upsample_worker.join() {
             Ok(values) => values,
-            Err(e) => panic!("{e:?}"),
+            Err(e) => return Err(format!("AudioFile::new error: {e:?}")),
         };
-        let (right_true_peak, right_true_clipping_samples_count) = match right_upsample_worker.join() {
-            Ok(values) => values,
-            Err(e) => panic!("{e:?}"),
-        };
+        let (right_true_peak, right_true_clipping_samples_count) =
+            match right_upsample_worker.join() {
+                Ok(values) => values,
+                Err(e) => return Err(format!("AudioFile::new error: {e:?}")),
+            };
 
         let signed_sample_count: i64 = match samples_per_channel.try_into() {
             Ok(value) => value,
-            Err(e) => panic!("{e:?}"),
+            Err(e) => return Err(format!("AudioFile::new error: {e:?}")),
         };
 
         left.true_peak = left_true_peak;
@@ -108,7 +109,7 @@ impl AudioFile {
         right.true_peak = right_true_peak;
         right.true_clipping_samples_count = right_true_clipping_samples_count;
 
-        Self {
+        Ok(Self {
             left,
             right,
             depth,
@@ -118,7 +119,7 @@ impl AudioFile {
             samples_per_channel,
             stereo_correlation,
             true_depth: true_bit_depth,
-        }
+        })
     }
 
     pub const fn left(&self) -> &Channel {

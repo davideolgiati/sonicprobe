@@ -2,7 +2,6 @@ mod analysis;
 pub mod channel;
 
 use std::fs::File;
-use std::process;
 use std::sync::Arc;
 use std::thread;
 
@@ -67,9 +66,9 @@ impl AudioFile {
         let depth = data_stream.info().bits_per_sample;
         let samples_per_channel = data_stream.info().total_samples;
 
-        let signal = read_flac_file(data_stream, depth);
+        let signal = read_flac_file(data_stream, depth)?;
 
-        let (left_samples, right_samples) = split_sample_array_into_channels(&signal);
+        let (left_samples, right_samples) = split_sample_array_into_channels(&signal)?;
 
         let left_upsample_worker = new_upsample_thread(Arc::clone(&left_samples), sample_rate);
         let right_upsample_worker = new_upsample_thread(Arc::clone(&right_samples), sample_rate);
@@ -198,49 +197,43 @@ impl AudioFile {
     }
 }
 
-fn split_sample_array_into_channels(samples: &Signal) -> (Signal, Signal) {
-    let (left_vec, right_vec): (Vec<f64>, Vec<f64>) = samples
+fn split_sample_array_into_channels(samples: &Signal) -> Result<(Signal, Signal), String> {
+    let pairs: Result<Vec<(f64, f64)>, String> = samples
         .chunks_exact(2)
         .map(|pair| {
-            let Some(&left_sample) = pair.first() else {
-                println!("error: mismatch in channels size");
-                process::exit(1);
-            };
-
-            let Some(&right_sample) = pair.get(1) else {
-                println!("error: mismatch in channels size");
-                process::exit(1);
-            };
-
-            (left_sample, right_sample)
+            let left_sample = pair.first().ok_or("error: mismatch in channels size")?;
+            let right_sample = pair.last().ok_or("error: mismatch in channels size")?;
+            Ok((*left_sample, *right_sample))
         })
-        .unzip();
+        .collect();
 
-    (Arc::from(left_vec), Arc::from(right_vec))
+    let (left_vec, right_vec): (Vec<f64>, Vec<f64>) = pairs?.into_iter().unzip();
+
+    Ok((Arc::from(left_vec), Arc::from(right_vec)))
 }
 
-fn read_flac_file(mut data_stream: Stream<ReadStream<File>>, depth: BitPrecision) -> Signal {
+fn read_flac_file(mut data_stream: Stream<ReadStream<File>>, depth: BitPrecision) -> Result<Signal, String> {
     match depth {
-        8 => data_stream
+        8 => Ok(data_stream
             .iter::<i8>()
             .map(std::convert::Into::into)
             .map(|s: f64| s / MAX_8_BIT)
-            .collect::<Signal>(),
-        16 => data_stream
+            .collect::<Signal>()),
+        16 => Ok(data_stream
             .iter::<i16>()
             .map(std::convert::Into::into)
             .map(|s: f64| s / MAX_16_BIT)
-            .collect::<Signal>(),
-        24 => data_stream
+            .collect::<Signal>()),
+        24 => Ok(data_stream
             .iter::<i32>()
             .map(|s| (s >> 8).into())
             .map(|s: f64| s / MAX_24_BIT)
-            .collect::<Signal>(),
-        32 => data_stream
+            .collect::<Signal>()),
+        32 => Ok(data_stream
             .iter::<i32>()
             .map(std::convert::Into::into)
             .map(|s: f64| s / MAX_32_BIT)
-            .collect::<Signal>(),
-        _ => panic!("Unknown bit depth"),
+            .collect::<Signal>()),
+        _ => Err(format!("Unknown bit depth: {depth} bit")),
     }
 }

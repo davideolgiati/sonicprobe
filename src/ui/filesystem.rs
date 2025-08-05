@@ -1,8 +1,8 @@
-use std::{fs, path::Path, process};
+use std::{fs, path::Path};
 
 use crate::constants::UNITS;
 
-fn format_file_size(bytes: u64) -> String {
+fn format_file_size(bytes: u64) -> Result<String, String> {
     let unit_index = {
         let upper_limit = UNITS.len() - 1;
         let index = usize::try_from(bytes).map_or(upper_limit, |value| {
@@ -26,29 +26,30 @@ fn format_file_size(bytes: u64) -> String {
 
     let size = match u32::try_from(unit_index) {
         Ok(value) => bytes / 1024u64.pow(value),
-        Err(e) => panic!("{e:?}"),
+        Err(e) => return Err(format!("{e:?}")),
     };
 
     let Some(&unit) = UNITS.get(unit_index) else {
-        println!("error: filsystem index {unit_index} is not valid");
-        process::exit(1);
+        return Err(format!("error: filsystem index {unit_index} is not valid"));
     };
 
     if unit_index == 0 {
-        format!("{bytes} {unit}")
+        Ok(format!("{bytes} {unit}"))
     } else {
-        format!("{size:.1} {unit}")
+        Ok(format!("{size:.1} {unit}"))
     }
 }
 
-pub fn get_formatted_file_size<P: AsRef<Path>>(path: P) -> String {
-    fs::metadata(path).map_or_else(
+pub fn get_formatted_file_size<P: AsRef<Path>>(path: P) -> Result<String, String> {
+    let size = fs::metadata(path).map_or_else(
         |e| panic!("{e:?}"),
         |metadata| {
-            let size = metadata.len();
-            format_file_size(size)
+            metadata.len()
         },
-    )
+    );
+    
+    let formatted = format_file_size(size)?;
+    Ok(formatted)
 }
 
 pub fn filename_from_path(filepath: &str) -> Option<String> {

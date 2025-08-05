@@ -32,6 +32,7 @@ pub fn print_file_details(filepath: &str, file: &AudioFile) {
     let left = file.left();
     let right = file.right();
     let filename = filename_from_path(filepath).map_or_else(|| filepath.to_owned(), |value| value);
+    let formatted_size = get_formatted_file_size(filepath).unwrap_or_else(|_| "?".to_owned());
 
     println!("{}", "=".repeat(70));
     println!("{:^70}", "SONICPROBE - AUDIO ANALYSIS REPORT");
@@ -39,7 +40,7 @@ pub fn print_file_details(filepath: &str, file: &AudioFile) {
 
     println!("{}", section_header("FILE DETAILS"));
     println!("   {:<18} : {}", "Filename", filename);
-    println!("   {:<18} : {}", "Size", get_formatted_file_size(filepath));
+    println!("   {:<18} : {}", "Size", formatted_size);
     println!("   {:<18} : {}", "Sample Count", file.samples_count());
     println!(
         "   {:<18} : {}",

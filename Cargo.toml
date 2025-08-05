@@ -29,7 +29,7 @@ nursery = "warn"
 # Panic prevention
 unwrap_used = "warn"
 expect_used = "warn"
-# panic = "warn"
+panic = "warn"
 unimplemented = "warn"
 todo = "warn"
 unreachable = "warn"
@@ -168,7 +168,7 @@ use_self = "warn"
 exhaustive_enums = "warn"
 exhaustive_structs = "warn"
 # implicit_return = "warn"
-question_mark_used = "warn"
+# question_mark_used = "warn"
 
 [profile.release]
 debug = true

@@ -8,18 +8,15 @@ use std::thread;
 use flac::{ReadStream, Stream};
 
 use crate::audio_file::analysis::ActualBitDepth;
-use crate::audio_file::analysis::ClippingSamples;
-use crate::audio_file::analysis::Peak;
 use crate::audio_file::analysis::StereoCorrelation;
 use crate::audio_file::channel::Channel;
 use crate::constants::MAX_8_BIT;
 use crate::constants::MAX_16_BIT;
 use crate::constants::MAX_24_BIT;
 use crate::constants::MAX_32_BIT;
-use crate::dsp::upsample;
 
 pub type Signal = Arc<[f64]>;
-type Frequency = u32;
+pub type Frequency = u32;
 type BitPrecision = u8;
 type Milliseconds = i64;
 
@@ -41,23 +38,11 @@ fn new_channel_thread(
     samples: Signal,
     sample_rate: Frequency,
     samples_per_channel: u64,
-) -> std::thread::JoinHandle<Channel> {
+) -> std::thread::JoinHandle<Result<Channel, String>> {
     thread::spawn(move || Channel::from_samples(&samples, sample_rate, samples_per_channel))
 }
 
-fn new_upsample_thread(
-    data: Signal,
-    original_sample_rate: Frequency,
-) -> std::thread::JoinHandle<(f64, usize)> {
-    thread::spawn(move || {
-        let signal = upsample(data, original_sample_rate);
 
-        let peak = Peak::process(&signal);
-        let clip_count = ClippingSamples::process(&signal);
-
-        (peak, clip_count)
-    })
-}
 
 impl AudioFile {
     pub fn new(data_stream: Stream<ReadStream<File>>) -> Result<Self, String> {
@@ -69,9 +54,7 @@ impl AudioFile {
         let signal = read_flac_file(data_stream, depth)?;
 
         let (left_samples, right_samples) = split_sample_array_into_channels(&signal)?;
-
-        let left_upsample_worker = new_upsample_thread(Arc::clone(&left_samples), sample_rate);
-        let right_upsample_worker = new_upsample_thread(Arc::clone(&right_samples), sample_rate);
+        
         let left_worker =
             new_channel_thread(Arc::clone(&left_samples), sample_rate, samples_per_channel);
         let right_worker =
@@ -80,33 +63,20 @@ impl AudioFile {
         let true_bit_depth = ActualBitDepth::process(&signal, depth);
         let stereo_correlation = StereoCorrelation::process(&left_samples, &right_samples);
 
-        let mut left = match left_worker.join() {
-            Ok(value) => value,
+        let left = match left_worker.join() {
+            Ok(value) => value?,
             Err(e) => return Err(format!("AudioFile::new error: {e:?}")),
         };
-        let mut right = match right_worker.join() {
-            Ok(value) => value,
+        
+        let right = match right_worker.join() {
+            Ok(value) => value?,
             Err(e) => return Err(format!("AudioFile::new error: {e:?}")),
         };
-        let (left_true_peak, left_true_clipping_samples_count) = match left_upsample_worker.join() {
-            Ok(values) => values,
-            Err(e) => return Err(format!("AudioFile::new error: {e:?}")),
-        };
-        let (right_true_peak, right_true_clipping_samples_count) =
-            match right_upsample_worker.join() {
-                Ok(values) => values,
-                Err(e) => return Err(format!("AudioFile::new error: {e:?}")),
-            };
-
+        
         let signed_sample_count: i64 = match samples_per_channel.try_into() {
             Ok(value) => value,
             Err(e) => return Err(format!("AudioFile::new error: {e:?}")),
         };
-
-        left.true_peak = left_true_peak;
-        left.true_clipping_samples_count = left_true_clipping_samples_count;
-        right.true_peak = right_true_peak;
-        right.true_clipping_samples_count = right_true_clipping_samples_count;
 
         Ok(Self {
             left,

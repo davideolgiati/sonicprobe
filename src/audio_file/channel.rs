@@ -1,14 +1,20 @@
-use crate::{audio_file::Signal, audio_utils::to_dbfs};
+use std::{sync::Arc, thread};
+
+use crate::{
+    audio_file::{analysis::DynamicRange, Frequency, Signal},
+    audio_utils::to_dbfs,
+    dsp::upsample,
+};
 
 #[derive(Clone, Copy)]
 pub struct Channel {
     rms: f64,
     peak: f64,
     clipping_samples_count: usize,
-    pub true_clipping_samples_count: usize,
+    true_clipping_samples_count: usize,
     dc_offset: f64,
     samples_count: u64,
-    pub true_peak: f64,
+    true_peak: f64,
     zero_crossing_rate: f32,
     dr: f64,
 }
@@ -80,36 +86,44 @@ impl Channel {
         format!("{{\n{}\n{}}}", output, "\t".repeat(father_tab))
     }
 
-    pub fn from_samples(samples: &Signal, sample_rate: u32, samples_per_channel: u64) -> Self {
+    pub fn from_samples(
+        samples: &Signal,
+        sample_rate: Frequency,
+        samples_per_channel: u64,
+    ) -> Result<Self, String> {
+        let upsample_worker = new_upsample_thread(Arc::clone(samples), sample_rate);
         let mut rms = 0.0f64;
         let mut dc_offset = 0.0f64;
-        let mut dr_builder = super::analysis::DynamicRange::new(sample_rate);
-        
+
         let duration = samples_per_channel as f32 / sample_rate as f32;
-        
+
         std::thread::scope(|s| {
             s.spawn(|| coumpute_rms(samples, &mut rms));
             s.spawn(|| coumpute_dc_offset(samples, samples_per_channel, &mut dc_offset));
         });
-        
-        dr_builder.add(samples);
+
 
         let zcr = super::analysis::ZeroCrossingRate::process(samples, duration);
         let clipping_samples_count = super::analysis::ClippingSamples::process(samples);
         let peak = super::analysis::Peak::process(samples);
-        let dr = dr_builder.build(peak);
+        let dr = DynamicRange::process(samples, sample_rate, peak)?;
 
-        Self {
+        let (true_peak, true_clipping_samples_count) = match upsample_worker.join() {
+            Ok(values) => values,
+            Err(e) => return Err(format!("AudioFile::new error: {e:?}")),
+        };
+
+        Ok(Self {
             rms,
             peak,
-            true_peak: 0.0,
+            true_peak,
             samples_count: samples_per_channel,
             zero_crossing_rate: zcr,
             dc_offset,
             clipping_samples_count,
-            true_clipping_samples_count: 0,
+            true_clipping_samples_count,
             dr,
-        }
+        })
     }
 }
 
@@ -123,4 +137,18 @@ fn coumpute_dc_offset(samples: &Signal, samples_count: u64, output: &mut f64) {
     let mut builder = super::analysis::DCOffset::new(samples_count);
     samples.iter().for_each(|sample| builder.add(*sample));
     *output = builder.build();
+}
+
+fn new_upsample_thread(
+    data: Signal,
+    original_sample_rate: Frequency,
+) -> std::thread::JoinHandle<(f64, usize)> {
+    thread::spawn(move || {
+        let signal = upsample(data, original_sample_rate);
+
+        let peak = super::analysis::Peak::process(&signal);
+        let clip_count = super::analysis::ClippingSamples::process(&signal);
+
+        (peak, clip_count)
+    })
 }

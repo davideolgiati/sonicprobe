@@ -12,6 +12,7 @@ pub struct ClippingSamples;
 pub struct ZeroCrossingRate;
 pub struct StereoCorrelation;
 pub struct ActualBitDepth;
+pub struct DynamicRange;
 
 pub struct DCOffset {
     partials: Vec<f64>,
@@ -23,9 +24,5 @@ pub struct RootMeanSquare {
     count: u64,
 }
 
-pub struct DynamicRange {
-    sample_frequency: u32,
-    rms_avarage: f64,
-}
 
 

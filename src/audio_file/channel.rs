@@ -1,7 +1,7 @@
 use std::{sync::Arc, thread};
 
 use crate::{
-    audio_file::{analysis::DynamicRange, Frequency, Signal},
+    audio_file::{analysis::{DCOffset, DynamicRange, RootMeanSquare}, Frequency, Signal},
     audio_utils::to_dbfs,
     dsp::upsample,
 };
@@ -92,17 +92,11 @@ impl Channel {
         samples_per_channel: u64,
     ) -> Result<Self, String> {
         let upsample_worker = new_upsample_thread(Arc::clone(samples), sample_rate);
-        let mut rms = 0.0f64;
-        let mut dc_offset = 0.0f64;
 
         let duration = samples_per_channel as f32 / sample_rate as f32;
 
-        std::thread::scope(|s| {
-            s.spawn(|| coumpute_rms(samples, &mut rms));
-            s.spawn(|| coumpute_dc_offset(samples, samples_per_channel, &mut dc_offset));
-        });
-
-
+        let dc_offset = DCOffset::process(samples);
+        let rms = RootMeanSquare::process(samples);
         let zcr = super::analysis::ZeroCrossingRate::process(samples, duration);
         let clipping_samples_count = super::analysis::ClippingSamples::process(samples);
         let peak = super::analysis::Peak::process(samples);
@@ -125,18 +119,6 @@ impl Channel {
             dr,
         })
     }
-}
-
-fn coumpute_rms(samples: &Signal, output: &mut f64) {
-    let mut builder = super::analysis::RootMeanSquare::new();
-    samples.iter().for_each(|sample| builder.add(*sample));
-    *output = builder.build();
-}
-
-fn coumpute_dc_offset(samples: &Signal, samples_count: u64, output: &mut f64) {
-    let mut builder = super::analysis::DCOffset::new(samples_count);
-    samples.iter().for_each(|sample| builder.add(*sample));
-    *output = builder.build();
 }
 
 fn new_upsample_thread(

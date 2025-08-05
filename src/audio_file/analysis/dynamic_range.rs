@@ -21,15 +21,7 @@ impl super::DynamicRange {
 
         let mut rms_array: Vec<f64> = analysable_samples
             .chunks(chunk_size)
-            .map(|chunk| {
-                let mut rms_builder = super::RootMeanSquare::new();
-
-                for sample in chunk {
-                    rms_builder.add(*sample);
-                }
-
-                rms_builder.build()
-            })
+            .map(super::RootMeanSquare::process)
             .collect();
 
         let rms_end = (rms_array.len() * 20) / 100;

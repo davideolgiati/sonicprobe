@@ -41,15 +41,13 @@ fn format_file_size(bytes: u64) -> Result<String, String> {
 }
 
 pub fn get_formatted_file_size<P: AsRef<Path>>(path: P) -> Result<String, String> {
-    let size = fs::metadata(path).map_or_else(
-        |e| panic!("{e:?}"),
-        |metadata| {
-            metadata.len()
+    match fs::metadata(path) {
+        Ok(metadata) => {
+            let formatted = format_file_size(metadata.len())?;
+            Ok(formatted)
         },
-    );
-    
-    let formatted = format_file_size(size)?;
-    Ok(formatted)
+        Err(e) => Err(format!("{e:?}"))
+    }
 }
 
 pub fn filename_from_path(filepath: &str) -> Option<String> {

@@ -69,7 +69,7 @@ pub fn dot_product_scalar<const N: usize>(a: &[f64; N], b: &[f64; N]) -> f64 {
     let pb = b.as_ptr();
     let mut i = 0;
 
-    while i + 16 <= N {
+    while i + 8 <= N {
         unsafe {
             sum0 += *pa.add(i) * *pb.add(i);
             sum1 += *pa.add(i + 1) * *pb.add(i + 1);
@@ -79,16 +79,8 @@ pub fn dot_product_scalar<const N: usize>(a: &[f64; N], b: &[f64; N]) -> f64 {
             sum1 += *pa.add(i + 5) * *pb.add(i + 5);
             sum2 += *pa.add(i + 6) * *pb.add(i + 6);
             sum3 += *pa.add(i + 7) * *pb.add(i + 7);
-            sum0 += *pa.add(i + 8) * *pb.add(i + 8);
-            sum1 += *pa.add(i + 9) * *pb.add(i + 9);
-            sum2 += *pa.add(i + 10) * *pb.add(i + 10);
-            sum3 += *pa.add(i + 11) * *pb.add(i + 11);
-            sum0 += *pa.add(i + 12) * *pb.add(i + 12);
-            sum1 += *pa.add(i + 13) * *pb.add(i + 13);
-            sum2 += *pa.add(i + 14) * *pb.add(i + 14);
-            sum3 += *pa.add(i + 15) * *pb.add(i + 15);
         }
-        i += 16;
+        i += 8;
     }
 
     // Handle any leftover elements

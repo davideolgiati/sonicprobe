@@ -1,12 +1,15 @@
-use std::sync::Arc;
+use std::{sync::Arc, thread};
 
-use crate::{audio_file::Signal, constants::LOW_PASS_FILTER_SIZE};
+use crate::{
+    audio_file::{
+        analysis::{ClippingSamples, Peak},
+        types::{Frequency, Signal},
+    },
+    constants::LOW_PASS_FILTER_SIZE,
+};
 
-mod dsp_chain;
 mod low_pass_filter;
 mod upsampler;
-
-
 
 pub struct LowPassFilter {
     coeffs: Arc<[f64]>,
@@ -16,21 +19,26 @@ struct Upsampler {
     multipier: u8,
 }
 
-struct DSPChain<T> {
-    data: Arc<[T]>,
+pub fn upsample(source: Signal, sample_rate: Frequency) -> std::thread::JoinHandle<(f64, usize)> {
+    thread::spawn(move || {
+        let signal = upsample_chain(&source, sample_rate);
+
+        let peak = Peak::process(&signal);
+        let clip_count = ClippingSamples::process(&signal);
+
+        (peak, clip_count)
+    })
 }
 
-pub fn upsample(samples: Signal, original_sample_rate: u32) -> Signal {
-    let upsampler = Upsampler::new(original_sample_rate);
-    let low_pass = LowPassFilter::new(original_sample_rate);
+fn upsample_chain(source: &Signal, source_sample_rate: u32) -> Signal {
+    let upsampler = Upsampler::new(source_sample_rate);
+    let low_pass = LowPassFilter::new(source_sample_rate);
 
-    DSPChain::new(samples)
-        .flat_window(4, |window: Signal, start: usize| {
-            upsampler.submit(window, start)
-        })
-        .window(
-            crate::dsp::LOW_PASS_FILTER_SIZE,
-            |window: &[f64]| low_pass.submit(window),
-        )
+    let upsampled_signal: Vec<f64> = (0..(source.len() - 4))
+        .flat_map(|start| upsampler.submit(Arc::clone(source), start))
+        .collect();
+
+    upsampled_signal.windows(LOW_PASS_FILTER_SIZE)
+        .map(|window| low_pass.submit(window))
         .collect()
 }

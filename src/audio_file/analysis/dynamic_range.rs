@@ -1,6 +1,6 @@
 use std::process;
 
-use crate::{audio_file::{Frequency, Signal}, audio_utils::to_dbfs};
+use crate::{audio_file::{Frequency, Signal}};
 
 impl super::DynamicRange {
     #[inline]
@@ -41,6 +41,6 @@ impl super::DynamicRange {
 
         let rms_avarage = top_20_rms.iter().sum::<f64>() / rms_end as f64;
 
-        Ok(to_dbfs(peak) - to_dbfs(rms_avarage))
+        Ok(peak - rms_avarage)
     }
 }

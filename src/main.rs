@@ -5,6 +5,7 @@ mod constants;
 mod dsp;
 mod output_format;
 mod ui;
+mod stereo_signal;
 
 use flac::StreamReader;
 use std::fs::File;
@@ -30,7 +31,7 @@ fn main() {
     match flac_details {
         Ok(audio_file) => {
             if *args.output_format() == OutputFormat::Json {
-                println!("{}", audio_file.to_json_string());
+                println!("{}", audio_file.to_json());
             } else {
                 print_file_details(args.file_path(), &audio_file);
             }

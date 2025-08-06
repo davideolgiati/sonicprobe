@@ -1,93 +1,9 @@
-use crate::audio_file::analysis::floating_point_utils::map_sum_lossless;
+use crate::{audio_file::analysis::floating_point_utils::map_sum_lossless, audio_utils::to_dbfs};
 
 impl super::RootMeanSquare {
     #[inline]
     pub fn process(values: &[f64]) -> f64 {
         let sum = map_sum_lossless(values, |x| x.powi(2));
-        (sum / values.len() as f64).sqrt()
+        to_dbfs((sum / values.len() as f64).sqrt())
     }
 }
-
-/*
-#[cfg(test)]
-mod tests {
-    // genarati dall' AI ma rivisti da me per valuarne la correttezza
-    use super::*;
-
-    #[test]
-    fn test_new_creates_empty_builder() {
-        let builder = RMSBuilder::new();
-        assert_eq!(builder.count, 0);
-        assert_eq!(builder.partials.len(), 0);
-    }
-
-    #[test]
-    fn test_add_single_value() {
-        let mut builder = RMSBuilder::new();
-        builder.add(3.0);
-        let result = builder.build();
-        assert_eq!(result, 3.0); // RMS of single value is the value itself
-    }
-
-    #[test]
-    fn test_add_multiple_values() {
-        let mut builder = RMSBuilder::new();
-        builder.add(3.0);
-        builder.add(4.0);
-        builder.add(5.0);
-        let result = builder.build();
-        // RMS of [3, 4, 5] = sqrt((9 + 16 + 25) / 3) = sqrt(50/3) ≈ 4.08
-        assert!((result - 4.08248).abs() < 0.001);
-    }
-
-    #[test]
-    fn test_zero_values() {
-        let mut builder = RMSBuilder::new();
-        builder.add(0.0);
-        builder.add(0.0);
-        let result = builder.build();
-        assert_eq!(result, 0.0);
-    }
-
-    #[test]
-    fn test_negative_values() {
-        let mut builder = RMSBuilder::new();
-        builder.add(-3.0);
-        builder.add(-4.0);
-        let result = builder.build();
-        // RMS of [-3, -4] = sqrt((9 + 16) / 2) = sqrt(12.5) = 3.536
-        assert!((result - 3.5355).abs() < 0.001);
-    }
-
-    #[test]
-    fn test_mixed_positive_negative() {
-        let mut builder = RMSBuilder::new();
-        builder.add(-3.0);
-        builder.add(4.0);
-        let result = builder.build();
-        // RMS of [-3, 4] = sqrt((9 + 16) / 2) = sqrt(12.5) = 3.536
-        assert!((result - 3.5355).abs() < 0.001);
-    }
-
-    #[test]
-    fn test_build_without_adding_values() {
-        let builder = RMSBuilder::new();
-        let result = builder.build();
-        // This tests edge case - might return 0.0 or NaN depending on implementation
-        assert!(result.is_nan() || result == 0.0);
-    }
-
-    #[test]
-    fn test_multiple_builds() {
-        let mut builder = RMSBuilder::new();
-        builder.add(3.0);
-        builder.add(4.0);
-
-        let result1 = builder.build();
-        let result2 = builder.build();
-
-        // Build should be idempotent
-        assert_eq!(result1, result2);
-    }
-}
-*/

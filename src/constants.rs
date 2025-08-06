@@ -1,4 +1,4 @@
-pub const UPSAMPLE_TARGET_FREQUENCY: u32 = 192_000;
+pub const TARGET_SAMPLE_RATE: u32 = 192_000;
 pub const LOW_PASS_FILTER_SIZE: usize = 48;
 
 pub const MAX_8_BIT: f64 = 127.0;

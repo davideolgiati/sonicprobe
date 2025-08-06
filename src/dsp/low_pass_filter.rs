@@ -1,22 +1,21 @@
 use crate::{
-    audio_utils::low_pass_filter,
-    constants::UPSAMPLE_TARGET_FREQUENCY,
+    constants::TARGET_SAMPLE_RATE,
     dsp::LowPassFilter,
 };
 
-use std::{sync::Arc};
+use std::{f64, sync::Arc};
 
 impl LowPassFilter {
-    pub fn new(original_frequency: u32) -> Self {
-        let cutoff_hz: f64 = f64::from(original_frequency) * 0.8;
-        let upsampled_freq: f64 = f64::from(UPSAMPLE_TARGET_FREQUENCY);
+    pub fn new(source_sample_rate: u32) -> Self {
+        let cutoff_hz: f64 = f64::from(source_sample_rate) * 0.8;
+        let upscaled_sample_rate: f64 = f64::from(TARGET_SAMPLE_RATE);
 
         let numtaps = match super::LOW_PASS_FILTER_SIZE.try_into() {
             Ok(value) => value,
             Err(e) => panic!("{e:?}"),
         };
 
-        let coeffs: Vec<f64> = low_pass_filter(cutoff_hz, upsampled_freq, numtaps);
+        let coeffs: Vec<f64> = low_pass_filter(cutoff_hz, upscaled_sample_rate, numtaps);
 
         let mut coeffs_slice = [0.0f64; super::LOW_PASS_FILTER_SIZE];
         coeffs_slice.copy_from_slice(&coeffs);
@@ -34,12 +33,14 @@ impl LowPassFilter {
 
 #[inline]
 pub fn dot_product_scalar(a: &[f64], b: &[f64]) -> f64 {
+    assert_eq!(a.len(), 48);
+    assert_eq!(b.len(), 48);
+
     let mut sum = [0.0f64; 4];
     let pa = a.as_ptr();
     let pb = b.as_ptr();
-    let mut i = 7;
 
-    while i <= 48 {
+    for i in (7..48).step_by(8) {
         unsafe {
             sum[0] += *pa.add(i) * *pb.add(i);
             sum[1] += *pa.add(i - 1) * *pb.add(i - 1);
@@ -50,11 +51,50 @@ pub fn dot_product_scalar(a: &[f64], b: &[f64]) -> f64 {
             sum[2] += *pa.add(i - 6) * *pb.add(i - 6);
             sum[3] += *pa.add(i - 7) * *pb.add(i - 7);
         }
-        i += 8;
     }
 
     sum[0] + sum[1] + sum[2] + sum[3]
 }
+
+
+fn hz_to_radian(frequency: f64, sample_rate: f64) -> f64 {
+    (frequency / sample_rate) * 2.0 * f64::consts::PI
+}
+
+fn low_pass_filter(cutoff: f64, sample_rate: f64, numtaps: u16) -> Vec<f64> {
+    let center_frequency: f64 = hz_to_radian(cutoff, sample_rate);
+    let window_center = f64::from(numtaps - 1) / 2.0;
+    let window = (0..numtaps)
+        .map(|n| 0.46f64.mul_add(-((2.0 * f64::consts::PI * f64::from(n)) / f64::from(numtaps - 1)).cos(), 0.54))
+        .collect::<Vec<f64>>();
+
+    // generazione
+    let mut coeffs: Vec<f64> = (0..numtaps)
+        .map(|n| {
+            let offset = f64::from(n) - window_center;
+            let Some(&current_value) = window.get(usize::from(n)) else {
+                panic!("low pass filter: no value for index {n}")
+            };
+
+            if offset.abs() > f64::EPSILON {
+                (center_frequency * offset).sin() / (f64::consts::PI * offset) * current_value
+            } else {
+                center_frequency / f64::consts::PI * current_value
+            }
+        })
+        .collect();
+
+    // normalizzazione
+    let sum: f64 = coeffs.iter().sum();
+    if sum != 0.0 {
+        for coeff in &mut coeffs {
+            *coeff /= sum;
+        }
+    }
+
+    coeffs
+}
+
 
 #[cfg(test)]
 mod tests {

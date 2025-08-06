@@ -9,7 +9,7 @@ mod upsampler;
 
 
 pub struct LowPassFilter {
-    coeffs: [f64; LOW_PASS_FILTER_SIZE],
+    coeffs: Arc<[f64]>,
 }
 
 struct Upsampler {
@@ -30,7 +30,7 @@ pub fn upsample(samples: Signal, original_sample_rate: u32) -> Signal {
         })
         .window(
             crate::dsp::LOW_PASS_FILTER_SIZE,
-            |window: &Signal, start: usize, end: usize| low_pass.submit(window, start, end),
+            |window: &[f64]| low_pass.submit(window),
         )
         .collect()
 }

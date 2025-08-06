@@ -11,11 +11,11 @@ impl<T: Clone> DSPChain<T> {
 
     pub fn window<R, F>(self, size: usize, func: F) -> DSPChain<R>
     where
-        F: Fn(&Arc<[T]>, usize, usize) -> R,
+        F: Fn(&[T]) -> R,
         R: Clone,
     {
         let new_data = (0..(self.data.len() - size))
-            .map(|index| func(&self.data, index, index + size))
+            .map(|index| func(&self.data[index..index + size]))
             .collect();
         DSPChain { data: new_data }
     }

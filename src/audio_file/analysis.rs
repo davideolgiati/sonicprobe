@@ -16,6 +16,3 @@ pub struct ActualBitDepth;
 pub struct DynamicRange;
 pub struct DCOffset;
 pub struct RootMeanSquare;
-
-
-

@@ -1,13 +1,28 @@
 use std::process;
 
-use crate::{audio_file::{Frequency, Signal}};
+use crate::{
+    audio_file::{Frequency, Signal},
+    sonicprobe_error::SonicProbeError,
+};
 
 impl super::DynamicRange {
     #[inline]
-    pub fn process(samples: &Signal, sample_rate: Frequency, peak: f64) -> Result<f64, String> {
+    #[allow(clippy::cast_sign_loss)]
+    #[allow(clippy::cast_precision_loss)]
+    #[allow(clippy::cast_possible_truncation)]
+    pub fn process(
+        samples: &Signal,
+        sample_rate: Frequency,
+        peak: f64,
+    ) -> Result<f64, SonicProbeError> {
         let chunk_size = match usize::try_from((sample_rate * 15) / 100) {
             Ok(value) => value,
-            Err(e) => return Err(format!("{e:?}")),
+            Err(e) => {
+                return Err(SonicProbeError {
+                    location: format!("{}:{}", file!(), line!()),
+                    message: format!("{e:?}"),
+                });
+            }
         };
         let reminder = samples.len() % chunk_size;
         let samples_end = samples.len() - reminder;
@@ -19,10 +34,11 @@ impl super::DynamicRange {
             |slice| slice,
         );
 
-        let mut rms_array: Vec<f64> = analysable_samples
-            .chunks(chunk_size)
-            .map(super::RootMeanSquare::process)
-            .collect();
+        let mut rms_array: Vec<f64> = Vec::new();
+
+        for chunk in analysable_samples.chunks(chunk_size) {
+            rms_array.push(super::RootMeanSquare::process(chunk)?);
+        }
 
         let rms_end = (rms_array.len() * 20) / 100;
 
@@ -39,7 +55,15 @@ impl super::DynamicRange {
             |rms_slice| rms_slice,
         );
 
-        let rms_avarage = top_20_rms.iter().sum::<f64>() / rms_end as f64;
+        let size = rms_end as f64;
+        if (size as usize) != rms_end {
+            return Err(SonicProbeError {
+                location: format!("{}:{}", file!(), line!()),
+                message: format!("cannot represent usize value {rms_end} exactly in f64"),
+            });
+        }
+
+        let rms_avarage = top_20_rms.iter().sum::<f64>() / size;
 
         Ok(peak - rms_avarage)
     }

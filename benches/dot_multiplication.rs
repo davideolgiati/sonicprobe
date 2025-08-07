@@ -19,6 +19,7 @@ fn low_pass_filter() -> Vec<f64> {
 }
 
 impl LowPassFilter {
+    #[must_use] 
     pub fn new() -> Self {
 
         let coeffs: Vec<f64> = low_pass_filter();

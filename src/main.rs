@@ -6,6 +6,7 @@ mod dsp;
 mod output_format;
 mod ui;
 mod stereo_signal;
+mod sonicprobe_error;
 
 use flac::StreamReader;
 use std::fs::File;

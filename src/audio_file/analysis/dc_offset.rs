@@ -1,9 +1,26 @@
-use crate::audio_file::analysis::floating_point_utils::map_sum_lossless;
+use crate::{
+    audio_file::analysis::floating_point_utils::map_sum_lossless, sonicprobe_error::SonicProbeError,
+};
 
 impl super::DCOffset {
     #[inline]
-    pub fn process(values: &[f64]) -> f64 {
-        let sum = map_sum_lossless(values, |x| x);
-        sum / values.len() as f64
+    #[allow(clippy::cast_sign_loss)]
+    #[allow(clippy::cast_precision_loss)]
+    #[allow(clippy::cast_possible_truncation)]
+    pub fn process(values: &[f64]) -> Result<f64, SonicProbeError> {
+        let sum = map_sum_lossless(values, |x| x)?;
+
+        let size = values.len() as f64;
+        if (size as usize) != values.len() {
+            return Err(SonicProbeError {
+                location: format!("{}:{}", file!(), line!()),
+                message: format!(
+                    "cannot represent usize value {} exactly in f64",
+                    values.len()
+                ),
+            });
+        }
+
+        Ok(sum / size)
     }
 }

@@ -65,12 +65,12 @@ indexing_slicing = "warn"
 # float_arithmetic = "warn"
 
 # Type safety
-as_conversions = "allow"
-cast_lossless = "allow"
-cast_possible_truncation = "allow"
-cast_possible_wrap = "allow"
-cast_precision_loss = "allow"
-cast_sign_loss = "allow"
+# as_conversions = "allow"
+# cast_lossless = "allow"
+# cast_possible_truncation = "allow"
+# cast_possible_wrap = "allow"
+# cast_precision_loss = "allow"
+# cast_sign_loss = "allow"
 
 # === PERFORMANCE ===
 # String operations

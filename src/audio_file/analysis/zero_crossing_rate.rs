@@ -4,7 +4,7 @@ use crate::audio_file::Signal;
 
 impl super::ZeroCrossingRate {
     #[inline]
-    pub fn process(samples: &Signal, duration: f32) -> f32 {
+    pub fn process(samples: &Signal, duration: f64) -> f64 {
         samples
             .windows(2)
             .map(|slice| {
@@ -24,7 +24,7 @@ impl super::ZeroCrossingRate {
                     1.0
                 }
             })
-            .sum::<f32>()
+            .sum::<f64>()
             / duration
     }
 }

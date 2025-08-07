@@ -40,7 +40,7 @@ pub fn print_file_details(filepath: &str, file: &AudioFile) {
     println!("{}", section_header("FILE DETAILS"));
     println!("   {:<18} : {}", "Filename", filename);
     println!("   {:<18} : {}", "Size", formatted_size);
-    println!("   {:<18} : {}", "Sample Count", file.samples_per_channel * file.channels as u64);
+    println!("   {:<18} : {}", "Sample Count", file.samples_per_channel * u64::from(file.channels));
     println!(
         "   {:<18} : {}",
         "Duration",
@@ -75,15 +75,15 @@ pub fn print_file_details(filepath: &str, file: &AudioFile) {
     let channels_details_table = Table::new(left, right)
         .set_headers("CHANNEL ANALYSIS", "LEFT", "RIGHT")
         .add_section()
-        .add("RMS Level", |c| Entry::from_db(c.rms))
-        .add("Peak Level", |c| Entry::from_db(c.peak))
-        .add("True Peak", |c| Entry::from_db(c.true_peak))
+        .add("RMS Level", |c| Entry::from_db(c.rms()))
+        .add("Peak Level", |c| Entry::from_db(c.peak()))
+        .add("True Peak", |c| Entry::from_db(c.true_peak()))
         .add("Crest Factor", |c| Entry::from_db(c.crest_factor()))
-        .add("DC Offset", |c| Entry::from_volt(c.dc_offset))
+        .add("DC Offset", |c| Entry::from_volt(c.dc_offset()))
         .add("Zero Crossing Rate", |c| {
-            Entry::from_hz(f64::from(c.zero_crossing_rate))
+            Entry::from_hz(c.zero_crossing_rate())
         })
-        .add("Dynamic Range", |c| Entry::from_dr(c.dr))
+        .add("Dynamic Range", |c| Entry::from_dr(c.dr()))
         .add_section()
         .add("Clipping", |c| {
             Entry::from_percent(c.clipping_samples_quota())

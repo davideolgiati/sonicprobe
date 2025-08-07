@@ -3,7 +3,6 @@ pub mod channel;
 pub mod types;
 
 use std::fs::File;
-use std::sync::Arc;
 
 use flac::{ReadStream, Stream};
 use serde::Serialize;
@@ -11,11 +10,12 @@ use serde::Serialize;
 use crate::audio_file::analysis::ActualBitDepth;
 use crate::audio_file::analysis::StereoCorrelation;
 use crate::audio_file::channel::Channel;
-use crate::audio_file::channel::new_channel_therad;
+use crate::audio_file::channel::ChannelBuilder;
 use crate::audio_file::types::BitPrecision;
 use crate::audio_file::types::Frequency;
 use crate::audio_file::types::Milliseconds;
 use crate::audio_file::types::Signal;
+use crate::sonicprobe_error::SonicProbeError;
 use crate::stereo_signal::StereoSignal;
 
 #[derive(Serialize)]
@@ -32,29 +32,51 @@ pub struct AudioFile {
 }
 
 impl AudioFile {
-    pub fn new(stream: Stream<ReadStream<File>>) -> Result<Self, String> {
+    pub fn new(stream: Stream<ReadStream<File>>) -> Result<Self, SonicProbeError> {
         let source = StereoSignal::from_flac(stream)?;
-        let process_channel = new_channel_therad(source.sample_rate, source.samples_per_channel);
 
-        let left_worker = process_channel(Arc::clone(&source.left));
-        let right_worker = process_channel(Arc::clone(&source.right));
+        let left_worker = ChannelBuilder::new(
+            &source.left,
+            source.sample_rate
+        )
+        .build_async();
+        let right_worker = ChannelBuilder::new(
+            &source.right,
+            source.sample_rate
+        )
+        .build_async();
 
-        let true_bit_depth = ActualBitDepth::process(&source.interleaved, source.depth);
+        let true_bit_depth = ActualBitDepth::process(&source.interleaved, source.depth)?;
         let stereo_correlation = StereoCorrelation::process(&source.left, &source.right);
 
         let left = match left_worker.join() {
             Ok(value) => value?,
-            Err(e) => return Err(format!("AudioFile::new error: {e:?}")),
+            Err(e) => {
+                return Err(SonicProbeError {
+                    location: format!("{}:{}", file!(), line!()),
+                    message: format!("{e:?}"),
+                });
+            }
         };
 
         let right = match right_worker.join() {
             Ok(value) => value?,
-            Err(e) => return Err(format!("AudioFile::new error: {e:?}")),
+            Err(e) => {
+                return Err(SonicProbeError {
+                    location: format!("{}:{}", file!(), line!()),
+                    message: format!("{e:?}"),
+                });
+            }
         };
 
         let signed_sample_count: i64 = match source.samples_per_channel.try_into() {
             Ok(value) => value,
-            Err(e) => return Err(format!("AudioFile::new error: {e:?}")),
+            Err(e) => {
+                return Err(SonicProbeError {
+                    location: format!("{}:{}", file!(), line!()),
+                    message: format!("{e:?}"),
+                });
+            }
         };
 
         Ok(Self {
@@ -71,7 +93,7 @@ impl AudioFile {
     }
 
     pub fn rms_balance(&self) -> f64 {
-        self.left.rms - self.right.rms
+        self.left.rms() - self.right.rms()
     }
 
     pub fn to_json(&self) -> String {

@@ -35,39 +35,39 @@ impl AudioFile {
     pub fn new(stream: Stream<ReadStream<File>>) -> Result<Self, SonicProbeError> {
         let source = StereoSignal::from_flac(stream)?;
 
-        let left_worker = ChannelBuilder::new(
+        let left = ChannelBuilder::new(
             &source.left,
             source.sample_rate
         )
-        .build_async();
-        let right_worker = ChannelBuilder::new(
+        .build()?;
+        let right = ChannelBuilder::new(
             &source.right,
             source.sample_rate
         )
-        .build_async();
+        .build()?;
 
         let true_bit_depth = ActualBitDepth::process(&source.interleaved, source.depth)?;
         let stereo_correlation = StereoCorrelation::process(&source.left, &source.right);
 
-        let left = match left_worker.join() {
-            Ok(value) => value?,
-            Err(e) => {
-                return Err(SonicProbeError {
-                    location: format!("{}:{}", file!(), line!()),
-                    message: format!("{e:?}"),
-                });
-            }
-        };
+        //let left = match left_worker.join() {
+        //    Ok(value) => value?,
+        //    Err(e) => {
+        //        return Err(SonicProbeError {
+        //            location: format!("{}:{}", file!(), line!()),
+        //            message: format!("{e:?}"),
+        //        });
+        //    }
+        //};
 
-        let right = match right_worker.join() {
-            Ok(value) => value?,
-            Err(e) => {
-                return Err(SonicProbeError {
-                    location: format!("{}:{}", file!(), line!()),
-                    message: format!("{e:?}"),
-                });
-            }
-        };
+        //let right = match right_worker.join() {
+        //    Ok(value) => value?,
+        //    Err(e) => {
+        //        return Err(SonicProbeError {
+        //            location: format!("{}:{}", file!(), line!()),
+        //            message: format!("{e:?}"),
+        //        });
+        //    }
+        //};
 
         let signed_sample_count: i64 = match source.samples_per_channel.try_into() {
             Ok(value) => value,

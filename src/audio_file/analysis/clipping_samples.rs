@@ -2,7 +2,7 @@ use crate::audio_file::Signal;
 
 impl super::ClippingSamples {
     #[inline]
-    pub fn process(samples: &Signal) -> usize {
+    pub fn process(samples: &Signal) -> u64 {
         samples
             .iter()
             .filter(|&&x| is_clipping(x))

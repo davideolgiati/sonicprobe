@@ -20,7 +20,7 @@ struct Upsampler {
     multipier: u8,
 }
 
-pub fn upsample(source: Signal, sample_rate: Frequency) -> std::thread::JoinHandle<Result<(f64, usize), SonicProbeError>> {
+pub fn upsample(source: Signal, sample_rate: Frequency) -> std::thread::JoinHandle<Result<(f64, u64), SonicProbeError>> {
     thread::spawn(move || {
         let signal = upsample_chain(&source, sample_rate)?;
 
@@ -31,7 +31,7 @@ pub fn upsample(source: Signal, sample_rate: Frequency) -> std::thread::JoinHand
     })
 }
 
-fn upsample_chain(source: &Signal, source_sample_rate: u32) -> Result<Signal, SonicProbeError> {
+pub fn upsample_chain(source: &Signal, source_sample_rate: u32) -> Result<Signal, SonicProbeError> {
     let upsampler = Upsampler::new(source_sample_rate)?;
     let low_pass = LowPassFilter::new(source_sample_rate)?;
 

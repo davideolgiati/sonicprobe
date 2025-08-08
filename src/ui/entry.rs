@@ -59,10 +59,10 @@ impl Entry {
 
 pub fn format_percent(value: f64) -> String {
     if value > 0.0 {
-        format!("+{:.5}", value * 100.0)
+        format!("+{value:.5}")
     } else if value == 0.0 {
-        String::from("0.00000")
+        String::from("0")
     } else {
-        format!("-{:.5}", value * 100.0)
+        format!("-{value:.5}")
     }
 }

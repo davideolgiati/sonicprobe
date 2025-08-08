@@ -1,11 +1,11 @@
 use serde::Serialize;
-use std::{sync::Arc, thread};
+use std::sync::Arc;
 
 use crate::{
     audio_file::{
         analysis::{ClippingSamples, DCOffset, DynamicRange, Peak, RootMeanSquare, ZeroCrossingRate}, Frequency, Signal
     },
-    dsp::upsample,
+    dsp::upsample_chain,
     sonicprobe_error::SonicProbeError,
 };
 
@@ -17,8 +17,8 @@ pub struct Channel {
     peak: f64,
     rms: f64,
     dr: f64,
-    true_clipping_samples_count: usize,
-    clipping_samples_count: usize,
+    true_clipping_samples_count: u64,
+    clipping_samples_count: u64,
     zero_crossing_rate: f64,
 }
 
@@ -31,12 +31,12 @@ impl Channel {
     #[inline] pub const fn zero_crossing_rate(&self) -> f64 { self.zero_crossing_rate }
 
     #[allow(clippy::cast_precision_loss)]
-    pub fn clipping_samples_quota(&self) -> f64 {
+    pub fn clipping_samples_ratio(&self) -> f64 {
         self.clipping_samples_count as f64 / self.samples_count as f64
     }
 
     #[allow(clippy::cast_precision_loss)]
-    pub fn true_clipping_samples_quota(&self) -> f64 {
+    pub fn true_clipping_samples_ratio(&self) -> f64 {
         self.true_clipping_samples_count as f64 / self.samples_count as f64
     }
 
@@ -46,6 +46,7 @@ impl Channel {
 }
 
 #[repr(C)]
+#[allow(clippy::module_name_repetitions)]
 pub struct ChannelBuilder {
     signal: Signal,
     duration: f64,
@@ -53,38 +54,33 @@ pub struct ChannelBuilder {
 }
 
 impl ChannelBuilder {
+    #[allow(clippy::cast_precision_loss)]
     pub fn new(signal: &Signal, sample_rate: Frequency) -> Self {
         Self {
             signal: Arc::clone(signal),
             sample_rate,
-            duration: signal.len() as f64 / sample_rate as f64
+            duration: signal.len() as f64 / f64::from(sample_rate)
         }
     }
 
-    pub fn build_async(self) -> std::thread::JoinHandle<Result<Channel, SonicProbeError>> {
-        thread::spawn(move || from_samples(&self))
+    pub fn build(self) -> Result<Channel, SonicProbeError> {
+        from_samples(&self)
     }
+
 }
 
 pub fn from_samples(builder: &ChannelBuilder) -> Result<Channel, SonicProbeError> {
     let samples = &builder.signal;
-    let upsample_worker = upsample(Arc::clone(samples), builder.sample_rate);
+    let upsampled_signal = upsample_chain(samples, builder.sample_rate)?;
 
+    let peak = Peak::process(samples);
     let dc_offset = DCOffset::process(samples)?;
     let rms = RootMeanSquare::process(samples)?;
     let zcr = ZeroCrossingRate::process(samples, builder.duration);
     let clipping_samples_count = ClippingSamples::process(samples);
-    let peak = Peak::process(samples);
 
-    let (true_peak, true_clipping_samples_count) = match upsample_worker.join() {
-        Ok(values) => values?,
-        Err(e) => {
-            return Err(SonicProbeError {
-                location: format!("{}:{}", file!(), line!()),
-                message: format!("{e:?}"),
-            });
-        }
-    };
+    let true_peak = Peak::process(&upsampled_signal);
+    let true_clipping_samples_count = ClippingSamples::process(&upsampled_signal);
 
     let dr = DynamicRange::process(samples, builder.sample_rate, true_peak)?;
 

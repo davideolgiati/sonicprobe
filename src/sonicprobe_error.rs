@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{any::Any, fmt};
 
 pub struct SonicProbeError {
     pub message: String,
@@ -19,5 +19,25 @@ impl fmt::Debug for SonicProbeError {
             "SonicProbeError {{ location: {}, message: {} }}",
             self.location, self.message
         )
+    }
+}
+
+// Implement From for thread join errors
+impl From<Box<dyn Any + Send>> for SonicProbeError {
+    fn from(panic_payload: Box<dyn Any + Send>) -> Self {
+        let message = panic_payload.downcast_ref::<&str>().map_or_else(
+            || {
+                panic_payload.downcast_ref::<String>().map_or_else(
+                    || "Thread panicked with unknown payload".to_owned(),
+                    |s| format!("Thread panicked: {s}"),
+                )
+            },
+            |s| format!("Thread panicked: {s}"),
+        );
+
+        Self {
+            message,
+            location: "std::thread::join".to_owned(),
+        }
     }
 }

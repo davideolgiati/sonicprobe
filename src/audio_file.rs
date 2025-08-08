@@ -3,6 +3,8 @@ pub mod channel;
 pub mod types;
 
 use std::fs::File;
+use std::sync::Arc;
+use std::thread;
 
 use flac::{ReadStream, Stream};
 use serde::Serialize;
@@ -35,16 +37,17 @@ impl AudioFile {
     pub fn new(stream: Stream<ReadStream<File>>) -> Result<Self, SonicProbeError> {
         let source = StereoSignal::from_flac(stream)?;
 
-        let left = ChannelBuilder::new(
-            &source.left,
-            source.sample_rate
-        )
-        .build()?;
-        let right = ChannelBuilder::new(
-            &source.right,
-            source.sample_rate
-        )
-        .build()?;
+        let left_handle = thread::spawn({
+            let left_data = Arc::clone(&source.left);
+            let sample_rate = source.sample_rate;
+            move || ChannelBuilder::new(&left_data, sample_rate).build()
+        });
+
+        let right_handle = thread::spawn({
+            let right_data = Arc::clone(&source.right);
+            let sample_rate = source.sample_rate;
+            move || ChannelBuilder::new(&right_data, sample_rate).build()
+        });
 
         let true_bit_depth = ActualBitDepth::process(&source.interleaved, source.depth)?;
         let stereo_correlation = StereoCorrelation::process(&source.left, &source.right);
@@ -58,6 +61,9 @@ impl AudioFile {
                 });
             }
         };
+
+        let left = left_handle.join()??;
+        let right = right_handle.join()??;
 
         Ok(Self {
             left,

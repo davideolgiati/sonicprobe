@@ -9,7 +9,7 @@ impl super::RootMeanSquare {
     #[allow(clippy::cast_precision_loss)]
     #[allow(clippy::cast_possible_truncation)]
     pub fn process(values: &[f64]) -> Result<f64, SonicProbeError> {
-        let sum = map_sum_lossless(values, |x| x.powi(2))?;
+        let sum = map_sum_lossless(values, |x| x.powi(2));
 
         let size = values.len() as f64;
         if (size as usize) != values.len() {

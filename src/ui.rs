@@ -86,10 +86,10 @@ pub fn print_file_details(filepath: &str, file: &AudioFile) {
         .add("Dynamic Range", |c| Entry::from_dr(c.dr()))
         .add_section()
         .add("Clipping", |c| {
-            Entry::from_percent(c.clipping_samples_ratio())
+            Entry::from_percent(c.clipping_samples_ratio() * 100.0)
         })
         .add("True Clipping", |c| {
-            Entry::from_percent(c.true_clipping_samples_ratio())
+            Entry::from_percent(c.true_clipping_samples_ratio() * 100.0)
         })
         .build();
 

@@ -4,7 +4,7 @@ use std::{f64, sync::Arc};
 
 impl LowPassFilter {
     pub fn new(source_sample_rate: u32) -> Result<Self, SonicProbeError> {
-        let cutoff_hz: f64 = f64::from(source_sample_rate) * 0.8;
+        let cutoff_hz: f64 = f64::from(source_sample_rate) / 2.0;
         let upscaled_sample_rate: f64 = f64::from(TARGET_SAMPLE_RATE);
 
         let numtaps = match super::LOW_PASS_FILTER_SIZE.try_into() {
@@ -71,10 +71,8 @@ fn low_pass_filter(
     let window_center = f64::from(numtaps - 1) / 2.0;
     let window = (0..numtaps)
         .map(|n| {
-            0.46f64.mul_add(
-                -((2.0 * f64::consts::PI * f64::from(n)) / f64::from(numtaps - 1)).cos(),
-                0.54,
-            )
+            // Hann window
+            0.5 - 0.5 * ((2.0 * f64::consts::PI * n as f64) / (numtaps - 1) as f64).cos()
         })
         .collect::<Vec<f64>>();
 
@@ -103,6 +101,7 @@ fn low_pass_filter(
     if sum != 0.0 {
         for coeff in &mut coeffs {
             *coeff /= sum;
+            *coeff *= (TARGET_SAMPLE_RATE as f64 / (cutoff * 2.0)).trunc();
         }
     }
 

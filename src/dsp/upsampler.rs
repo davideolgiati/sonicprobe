@@ -32,20 +32,22 @@ impl Upsampler {
 
         for k in 0..self.multipier {
             if k == 0 {
-                let Some(&data) = window.get(start + 1) else {
+                let Some(&data) = window.get(start) else {
                     return Err(SonicProbeError {
                         location: format!("{}:{}", file!(), line!()),
-                        message: format!("no value for index {}", start + 1),
+                        message: format!("no value for index {start}"),
                     });
                 };
                 output.push(data);
             } else {
+                /*
                 let value = catmull_rom_interpolation(
                     window,
                     start,
                     f64::from(k) / f64::from(self.multipier),
                 )?;
-                output.push(value);
+                */
+                output.push(0.0);
             }
         }
 

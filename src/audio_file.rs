@@ -49,26 +49,6 @@ impl AudioFile {
         let true_bit_depth = ActualBitDepth::process(&source.interleaved, source.depth)?;
         let stereo_correlation = StereoCorrelation::process(&source.left, &source.right);
 
-        //let left = match left_worker.join() {
-        //    Ok(value) => value?,
-        //    Err(e) => {
-        //        return Err(SonicProbeError {
-        //            location: format!("{}:{}", file!(), line!()),
-        //            message: format!("{e:?}"),
-        //        });
-        //    }
-        //};
-
-        //let right = match right_worker.join() {
-        //    Ok(value) => value?,
-        //    Err(e) => {
-        //        return Err(SonicProbeError {
-        //            location: format!("{}:{}", file!(), line!()),
-        //            message: format!("{e:?}"),
-        //        });
-        //    }
-        //};
-
         let signed_sample_count: i64 = match source.samples_per_channel.try_into() {
             Ok(value) => value,
             Err(e) => {

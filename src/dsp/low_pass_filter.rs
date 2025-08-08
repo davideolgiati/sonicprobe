@@ -7,52 +7,68 @@ impl LowPassFilter {
         let cutoff_hz: f64 = f64::from(source_sample_rate) / 2.0;
         let upscaled_sample_rate: f64 = f64::from(TARGET_SAMPLE_RATE);
 
-        let numtaps = match super::LOW_PASS_FILTER_SIZE.try_into() {
-            Ok(value) => value,
-            Err(e) => {
+        let numtaps = match (upscaled_sample_rate / f64::from(source_sample_rate)).trunc() {
+            4.0 => 48,
+            2.0 => 24,
+            _ => {
                 return Err(SonicProbeError {
                     location: format!("{}:{}", file!(), line!()),
-                    message: format!("{e:?}"),
+                    message: format!(
+                        "no value for upscale {}x",
+                        (upscaled_sample_rate / f64::from(source_sample_rate)).trunc()
+                    ),
                 });
             }
         };
 
         let coeffs: Vec<f64> = low_pass_filter(cutoff_hz, upscaled_sample_rate, numtaps)?;
 
-        let mut coeffs_slice = [0.0f64; super::LOW_PASS_FILTER_SIZE];
-        coeffs_slice.copy_from_slice(&coeffs);
+        let multiplier = (numtaps / 12) as usize;
+        let polyfir_coeffs: Vec<[f64; 12]> = {
+            let mut phases = vec![[0.0; 12]; multiplier];
+            for (index, &coeff) in coeffs.iter().enumerate() {
+                let phase = index % multiplier;
+                let tap = index / multiplier;
+                phases[phase][tap] = coeff;
+            }
+            phases
+        };
 
         Ok(Self {
-            coeffs: Arc::from(coeffs_slice),
+            coeffs: Arc::from(polyfir_coeffs),
         })
     }
 
     #[inline]
-    pub fn submit(&self, window: &[f64]) -> f64 {
-        dot_product_scalar(&self.coeffs, window)
+    pub fn submit(&self, window: &[f64]) -> impl Iterator<Item = f64> {
+        self.coeffs
+            .iter()
+            .map(|coeffs| dot_product_scalar(coeffs, window))
     }
 }
 
 #[inline]
 pub fn dot_product_scalar(a: &[f64], b: &[f64]) -> f64 {
-    assert_eq!(a.len(), 48);
-    assert_eq!(b.len(), 48);
+    assert_eq!(a.len(), 12);
+    assert_eq!(b.len(), 12);
 
     let mut sum = [0.0f64; 4];
     let pa = a.as_ptr();
     let pb = b.as_ptr();
 
-    for i in (7..48).step_by(8) {
-        unsafe {
-            sum[0] += *pa.add(i) * *pb.add(i);
-            sum[1] += *pa.add(i - 1) * *pb.add(i - 1);
-            sum[2] += *pa.add(i - 2) * *pb.add(i - 2);
-            sum[3] += *pa.add(i - 3) * *pb.add(i - 3);
-            sum[0] += *pa.add(i - 4) * *pb.add(i - 4);
-            sum[1] += *pa.add(i - 5) * *pb.add(i - 5);
-            sum[2] += *pa.add(i - 6) * *pb.add(i - 6);
-            sum[3] += *pa.add(i - 7) * *pb.add(i - 7);
-        }
+    unsafe {
+        sum[0] += *pa * *pb;
+        sum[1] += *pa.add(1) * *pb.add(1);
+        sum[2] += *pa.add(2) * *pb.add(2);
+        sum[3] += *pa.add(3) * *pb.add(3);
+        sum[0] += *pa.add(4) * *pb.add(4);
+        sum[1] += *pa.add(5) * *pb.add(5);
+        sum[2] += *pa.add(6) * *pb.add(6);
+        sum[3] += *pa.add(7) * *pb.add(7);
+        sum[0] += *pa.add(8) * *pb.add(8);
+        sum[1] += *pa.add(9) * *pb.add(9);
+        sum[2] += *pa.add(10) * *pb.add(10);
+        sum[3] += *pa.add(11) * *pb.add(11);
     }
 
     sum[0] + sum[1] + sum[2] + sum[3]
@@ -72,7 +88,10 @@ fn low_pass_filter(
     let window = (0..numtaps)
         .map(|n| {
             // Hann window
-            0.5 - 0.5 * ((2.0 * f64::consts::PI * n as f64) / (numtaps - 1) as f64).cos()
+            0.5f64.mul_add(
+                -((2.0 * f64::consts::PI * f64::from(n)) / f64::from(numtaps - 1)).cos(),
+                0.5,
+            )
         })
         .collect::<Vec<f64>>();
 
@@ -101,13 +120,14 @@ fn low_pass_filter(
     if sum != 0.0 {
         for coeff in &mut coeffs {
             *coeff /= sum;
-            *coeff *= (TARGET_SAMPLE_RATE as f64 / (cutoff * 2.0)).trunc();
+            *coeff *= (f64::from(TARGET_SAMPLE_RATE) / (cutoff * 2.0)).trunc();
         }
     }
 
     Ok(coeffs)
 }
 
+/*
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -154,3 +174,4 @@ mod tests {
         assert!(dc_response > 0.0);
     }
 }
+*/

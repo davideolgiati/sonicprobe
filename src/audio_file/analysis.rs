@@ -1,4 +1,4 @@
-mod clipping_samples;
+pub mod clipping_samples;
 mod dc_offset;
 mod dynamic_range;
 mod peak;

@@ -98,10 +98,8 @@ pub fn from_samples(builder: &ChannelBuilder) -> Result<Channel, SonicProbeError
     let zcr = ZeroCrossingRate::process(samples, builder.duration);
     let clipping_samples_count = ClippingSamples::process(samples);
     
-    let upsampled_signal = upsample_chain(samples, builder.sample_rate)?;
-    let true_peak = Peak::process(&upsampled_signal);
-    let true_clipping_samples_count = ClippingSamples::process(&upsampled_signal);
-
+    let (true_peak, true_clipping_samples_count) = upsample_chain(samples, builder.sample_rate)?;
+    
     let dr = DynamicRange::process(samples, builder.sample_rate, true_peak)?;
 
     Ok(Channel {

@@ -3,7 +3,10 @@ use std::sync::Arc;
 
 use crate::{
     audio_file::{
-        analysis::{ClippingSamples, DCOffset, DynamicRange, Peak, RootMeanSquare, ZeroCrossingRate}, Frequency, Signal
+        Frequency, Signal,
+        analysis::{
+            ClippingSamples, DCOffset, DynamicRange, Peak, RootMeanSquare, ZeroCrossingRate,
+        },
     },
     dsp::upsample_chain,
     sonicprobe_error::SonicProbeError,
@@ -23,12 +26,30 @@ pub struct Channel {
 }
 
 impl Channel {
-    #[inline] pub const fn dc_offset(&self) -> f64 { self.dc_offset }
-    #[inline] pub const fn true_peak(&self) -> f64 { self.true_peak }
-    #[inline] pub const fn peak(&self) -> f64 { self.peak }
-    #[inline] pub const fn rms(&self) -> f64 { self.rms }
-    #[inline] pub const fn dr(&self) -> f64 { self.dr }
-    #[inline] pub const fn zero_crossing_rate(&self) -> f64 { self.zero_crossing_rate }
+    #[inline]
+    pub const fn dc_offset(&self) -> f64 {
+        self.dc_offset
+    }
+    #[inline]
+    pub const fn true_peak(&self) -> f64 {
+        self.true_peak
+    }
+    #[inline]
+    pub const fn peak(&self) -> f64 {
+        self.peak
+    }
+    #[inline]
+    pub const fn rms(&self) -> f64 {
+        self.rms
+    }
+    #[inline]
+    pub const fn dr(&self) -> f64 {
+        self.dr
+    }
+    #[inline]
+    pub const fn zero_crossing_rate(&self) -> f64 {
+        self.zero_crossing_rate
+    }
 
     #[allow(clippy::cast_precision_loss)]
     pub fn clipping_samples_ratio(&self) -> f64 {
@@ -59,26 +80,25 @@ impl ChannelBuilder {
         Self {
             signal: Arc::clone(signal),
             sample_rate,
-            duration: signal.len() as f64 / f64::from(sample_rate)
+            duration: signal.len() as f64 / f64::from(sample_rate),
         }
     }
 
     pub fn build(self) -> Result<Channel, SonicProbeError> {
         from_samples(&self)
     }
-
 }
 
 pub fn from_samples(builder: &ChannelBuilder) -> Result<Channel, SonicProbeError> {
     let samples = &builder.signal;
-    let upsampled_signal = upsample_chain(samples, builder.sample_rate)?;
-
+    
     let peak = Peak::process(samples);
     let dc_offset = DCOffset::process(samples)?;
     let rms = RootMeanSquare::process(samples)?;
     let zcr = ZeroCrossingRate::process(samples, builder.duration);
     let clipping_samples_count = ClippingSamples::process(samples);
-
+    
+    let upsampled_signal = upsample_chain(samples, builder.sample_rate)?;
     let true_peak = Peak::process(&upsampled_signal);
     let true_clipping_samples_count = ClippingSamples::process(&upsampled_signal);
 

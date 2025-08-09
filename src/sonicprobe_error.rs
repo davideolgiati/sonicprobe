@@ -1,4 +1,4 @@
-use std::{any::Any, fmt};
+use std::{any::Any, fmt, num::TryFromIntError};
 
 pub struct SonicProbeError {
     pub message: String,
@@ -38,6 +38,16 @@ impl From<Box<dyn Any + Send>> for SonicProbeError {
         Self {
             message,
             location: "std::thread::join".to_owned(),
+        }
+    }
+}
+
+// Implement From for TryFromIntError
+impl From<TryFromIntError> for SonicProbeError {
+    fn from(error: TryFromIntError) -> Self {
+        Self {
+            message: format!("Integer conversion failed: {error}"),
+            location: "std::num::TryFromIntError".to_owned(),
         }
     }
 }

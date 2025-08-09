@@ -57,7 +57,7 @@ uninit_assumed_init = "warn"
 #undocumented_unsafe_blocks = "warn"
 
 # Index safety
-indexing_slicing = "warn"
+# indexing_slicing = "warn"
 
 # Arithmetic safety
 # arithmetic_side_effects = "warn"

@@ -61,7 +61,7 @@ pub fn format_percent(value: f64) -> String {
     if value > 0.0 {
         format!("+{value:.5}")
     } else if value == 0.0 {
-        String::from("0")
+        format!("{value:.5}")
     } else {
         format!("-{value:.5}")
     }

@@ -50,7 +50,7 @@ pub fn print_file_details(filepath: &str, file: &AudioFile) {
         "   {:<18} : {} / {}",
         "Format",
         Entry::from_bit(file.depth).formatted(),
-        Entry::from_hz(f64::from(file.sample_rate)).formatted()
+        file.sample_rate.description()
     );
     println!(
         "   {:<18} : {}",

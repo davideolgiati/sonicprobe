@@ -3,19 +3,17 @@ use std::{fs::File, sync::Arc};
 use flac::{ReadStream, Stream};
 
 use crate::{
-    audio_file::types::{BitPrecision, Signal},
-    constants::{MAX_8_BIT, MAX_16_BIT, MAX_24_BIT, MAX_32_BIT},
+    audio_file::types::{BitPrecision, Frequency, Signal},
+    constants::{MAX_16_BIT, MAX_24_BIT, MAX_32_BIT, MAX_8_BIT},
     sonicprobe_error::SonicProbeError,
 };
-
-const VALID_SAMPLE_RATES: [u32; 6] = [44100, 48000, 88200, 96000, 176_400, 192_000];
 
 pub struct StereoSignal {
     pub interleaved: Signal,
     pub left: Signal,
     pub right: Signal,
     pub samples_per_channel: u64,
-    pub sample_rate: u32,
+    pub sample_rate: Frequency,
     pub depth: BitPrecision,
 }
 
@@ -30,16 +28,7 @@ impl StereoSignal {
             });
         }
 
-        if !VALID_SAMPLE_RATES.contains(&infos.sample_rate) {
-            return Err(SonicProbeError {
-                location: format!("{}:{}", file!(), line!()),
-                message: format!(
-                    "Currently only {VALID_SAMPLE_RATES:?} sample rates are supported"
-                ),
-            });
-        }
-
-        let sample_rate = infos.sample_rate;
+        let sample_rate = Frequency::new(infos.sample_rate)?;
         let depth = infos.bits_per_sample;
         let samples_per_channel = infos.total_samples;
 

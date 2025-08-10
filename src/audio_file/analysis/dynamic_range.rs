@@ -15,14 +15,10 @@ impl super::DynamicRange {
         sample_rate: Frequency,
         peak: f64,
     ) -> Result<f64, SonicProbeError> {
-        let chunk_size = match usize::try_from((sample_rate * 15) / 100) {
-            Ok(value) => value,
-            Err(e) => {
-                return Err(SonicProbeError {
-                    location: format!("{}:{}", file!(), line!()),
-                    message: format!("{e:?}"),
-                });
-            }
+        let chunk_size = match sample_rate {
+            Frequency::CdQuality | Frequency::ProAudio => 7200,
+            Frequency::HiResDouble | Frequency::DvdAudio => 14400,
+            Frequency::StudioMaster | Frequency::UltraHiRes => 28800
         };
         let reminder = samples.len() % chunk_size;
         let samples_end = samples.len() - reminder;

@@ -74,7 +74,7 @@ impl AudioFile {
             depth: source.depth,
             sample_rate: source.sample_rate,
             samples_per_channel: source.samples_per_channel,
-            duration: signed_sample_count / i64::from(source.sample_rate),
+            duration: signed_sample_count / i64::from(source.sample_rate.to_hz()),
         })
     }
 

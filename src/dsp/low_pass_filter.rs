@@ -1,22 +1,19 @@
-use crate::{constants::TARGET_SAMPLE_RATE, dsp::LowPassFilter, sonicprobe_error::SonicProbeError};
+use crate::{audio_file::types::Frequency, constants::TARGET_SAMPLE_RATE, dsp::LowPassFilter, sonicprobe_error::SonicProbeError};
 
 use std::{f64, sync::Arc};
 
 impl LowPassFilter {
-    pub fn new(source_sample_rate: u32) -> Result<Self, SonicProbeError> {
+    pub fn new(source_sample_rate: Frequency) -> Result<Self, SonicProbeError> {
         let cutoff_hz: f64 = f64::from(source_sample_rate) / 2.0;
         let upscaled_sample_rate: f64 = f64::from(TARGET_SAMPLE_RATE);
 
-        let numtaps = match (upscaled_sample_rate / f64::from(source_sample_rate)).trunc() {
-            4.0 => 48,
-            2.0 => 24,
-            _ => {
+        let numtaps = match source_sample_rate {
+            Frequency::CdQuality | Frequency::ProAudio => 48,
+            Frequency::HiResDouble | Frequency::DvdAudio => 24,
+            Frequency::StudioMaster | Frequency::UltraHiRes => {
                 return Err(SonicProbeError {
                     location: format!("{}:{}", file!(), line!()),
-                    message: format!(
-                        "no value for upscale {}x",
-                        (upscaled_sample_rate / f64::from(source_sample_rate)).trunc()
-                    ),
+                    message: "upscaling for 176,400Hz and 192,000Hz not implemented".to_owned(),
                 });
             }
         };

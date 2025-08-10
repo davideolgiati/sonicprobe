@@ -1,4 +1,4 @@
-pub const TARGET_SAMPLE_RATE: u32 = 192_000;
+pub const TARGET_SAMPLE_RATE: f64 = 192_000.0;
 
 pub const MAX_8_BIT: f64 = 127.0;
 pub const MAX_16_BIT: f64 = 32767.0;

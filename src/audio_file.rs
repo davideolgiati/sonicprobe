@@ -13,7 +13,7 @@ use crate::audio_file::analysis::ActualBitDepth;
 use crate::audio_file::analysis::StereoCorrelation;
 use crate::audio_file::channel::Channel;
 use crate::audio_file::channel::ChannelBuilder;
-use crate::audio_file::types::BitPrecision;
+use crate::audio_file::types::BitDepth;
 use crate::audio_file::types::Frequency;
 use crate::audio_file::types::Milliseconds;
 use crate::audio_file::types::Signal;
@@ -29,8 +29,8 @@ pub struct AudioFile {
     pub duration: Milliseconds,
     pub stereo_correlation: f64,
     pub channels: u8,
-    pub depth: BitPrecision,
-    pub true_depth: BitPrecision,
+    pub depth: BitDepth,
+    pub true_depth: u8,
 }
 
 impl AudioFile {

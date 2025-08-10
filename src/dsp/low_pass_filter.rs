@@ -1,12 +1,12 @@
-use crate::{audio_file::types::Frequency, constants::TARGET_SAMPLE_RATE, dsp::LowPassFilter, sonicprobe_error::SonicProbeError};
+use crate::{
+    audio_file::types::Frequency, constants::TARGET_SAMPLE_RATE, dsp::LowPassFilter,
+    sonicprobe_error::SonicProbeError,
+};
 
 use std::{f64, sync::Arc};
 
 impl LowPassFilter {
     pub fn new(source_sample_rate: Frequency) -> Result<Self, SonicProbeError> {
-        let cutoff_hz: f64 = f64::from(source_sample_rate) / 2.0;
-        let upscaled_sample_rate: f64 = f64::from(TARGET_SAMPLE_RATE);
-
         let numtaps = match source_sample_rate {
             Frequency::CdQuality | Frequency::ProAudio => 48,
             Frequency::HiResDouble | Frequency::DvdAudio => 24,
@@ -18,14 +18,24 @@ impl LowPassFilter {
             }
         };
 
-        let coeffs: Vec<f64> = low_pass_filter(cutoff_hz, upscaled_sample_rate, numtaps)?;
+        let coeffs: Vec<f64> = low_pass_filter(source_sample_rate, numtaps)?;
 
-        let multiplier = (numtaps / 12) as usize;
+        let phases_count = match source_sample_rate {
+            Frequency::CdQuality | Frequency::ProAudio => 4,
+            Frequency::HiResDouble | Frequency::DvdAudio => 2,
+            Frequency::StudioMaster | Frequency::UltraHiRes => {
+                return Err(SonicProbeError {
+                    location: format!("{}:{}", file!(), line!()),
+                    message: "upscaling for 176,400Hz and 192,000Hz not implemented".to_owned(),
+                });
+            }
+        };
+
         let polyfir_coeffs: Vec<[f64; 12]> = {
-            let mut phases = vec![[0.0; 12]; multiplier];
+            let mut phases = vec![[0.0; 12]; phases_count];
             for (index, &coeff) in coeffs.iter().enumerate() {
-                let phase = index % multiplier;
-                let tap = index / multiplier;
+                let phase = index % phases_count;
+                let tap = index / phases_count;
                 phases[phase][tap] = coeff;
             }
             phases
@@ -71,16 +81,27 @@ pub fn dot_product_scalar(a: &[f64], b: &[f64]) -> f64 {
     sum[0] + sum[1] + sum[2] + sum[3]
 }
 
-fn hz_to_radian(frequency: f64, sample_rate: f64) -> f64 {
-    (frequency / sample_rate) * 2.0 * f64::consts::PI
+fn hz_to_radian(cutoff: f64) -> f64 {
+    (cutoff / TARGET_SAMPLE_RATE) * 2.0 * f64::consts::PI
 }
 
-fn low_pass_filter(
-    cutoff: f64,
-    sample_rate: f64,
-    numtaps: u16,
-) -> Result<Vec<f64>, SonicProbeError> {
-    let center_frequency: f64 = hz_to_radian(cutoff, sample_rate);
+fn low_pass_filter(sample_rate: Frequency, numtaps: u16) -> Result<Vec<f64>, SonicProbeError> {
+    let cutoff: f64 = match sample_rate {
+        Frequency::CdQuality => 22050.0,
+        Frequency::ProAudio => 24000.0,
+        Frequency::HiResDouble => 44100.0,
+        Frequency::DvdAudio => 48000.0,
+        Frequency::UltraHiRes => 88200.0,
+        Frequency::StudioMaster => 96000.0,
+    };
+
+    let signal_boost: f64 = match sample_rate {
+        Frequency::ProAudio | Frequency::CdQuality => 4.0,
+        Frequency::HiResDouble | Frequency::DvdAudio => 2.0,
+        Frequency::UltraHiRes | Frequency::StudioMaster => 1.0,
+    };
+
+    let center_frequency: f64 = hz_to_radian(cutoff);
     let window_center = f64::from(numtaps - 1) / 2.0;
     let window = (0..numtaps)
         .map(|n| {
@@ -117,7 +138,7 @@ fn low_pass_filter(
     if sum != 0.0 {
         for coeff in &mut coeffs {
             *coeff /= sum;
-            *coeff *= (f64::from(TARGET_SAMPLE_RATE) / (cutoff * 2.0)).trunc();
+            *coeff *= signal_boost;
         }
     }
 

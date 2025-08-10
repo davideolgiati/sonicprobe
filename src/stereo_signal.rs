@@ -3,7 +3,7 @@ use std::{fs::File, sync::Arc};
 use flac::{ReadStream, Stream};
 
 use crate::{
-    audio_file::types::{BitPrecision, Frequency, Signal},
+    audio_file::types::{BitDepth, Frequency, Signal},
     constants::{MAX_16_BIT, MAX_24_BIT, MAX_32_BIT, MAX_8_BIT},
     sonicprobe_error::SonicProbeError,
 };
@@ -14,7 +14,7 @@ pub struct StereoSignal {
     pub right: Signal,
     pub samples_per_channel: u64,
     pub sample_rate: Frequency,
-    pub depth: BitPrecision,
+    pub depth: BitDepth,
 }
 
 impl StereoSignal {
@@ -29,10 +29,10 @@ impl StereoSignal {
         }
 
         let sample_rate = Frequency::new(infos.sample_rate)?;
-        let depth = infos.bits_per_sample;
+        let depth = BitDepth::new(infos.bits_per_sample)?;
         let samples_per_channel = infos.total_samples;
 
-        let interleaved = read_audio_signal(stream, depth)?;
+        let interleaved = read_audio_signal(stream, depth);
 
         let (left, right) = deinterleave(&interleaved)?;
 
@@ -68,32 +68,28 @@ fn deinterleave(interleaved: &Signal) -> Result<(Signal, Signal), SonicProbeErro
 
 fn read_audio_signal(
     mut stream: Stream<ReadStream<File>>,
-    depth: BitPrecision,
-) -> Result<Signal, SonicProbeError> {
+    depth: BitDepth,
+) -> Signal {
     match depth {
-        8 => Ok(stream
+        BitDepth::Legacy => stream
             .iter::<i8>()
             .map(std::convert::Into::into)
             .map(|s: f64| s / MAX_8_BIT)
-            .collect::<Signal>()),
-        16 => Ok(stream
+            .collect::<Signal>(),
+        BitDepth::CdStandard => stream
             .iter::<i16>()
             .map(std::convert::Into::into)
             .map(|s: f64| s / MAX_16_BIT)
-            .collect::<Signal>()),
-        24 => Ok(stream
+            .collect::<Signal>(),
+        BitDepth::Professional => stream
             .iter::<i32>()
             .map(|s| (s >> 8).into())
             .map(|s: f64| s / MAX_24_BIT)
-            .collect::<Signal>()),
-        32 => Ok(stream
+            .collect::<Signal>(),
+        BitDepth::StudioMaster => stream
             .iter::<i32>()
             .map(std::convert::Into::into)
             .map(|s: f64| s / MAX_32_BIT)
-            .collect::<Signal>()),
-        _ => Err(SonicProbeError {
-            message: "error: mismatch in channels size".to_owned(),
-            location: format!("Unknown bit depth: {depth} bit"),
-        }),
+            .collect::<Signal>(),
     }
 }

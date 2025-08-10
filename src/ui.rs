@@ -47,10 +47,14 @@ pub fn print_file_details(filepath: &str, file: &AudioFile) {
         seconds_to_minute_mark(file.duration)
     );
     println!(
-        "   {:<18} : {} / {}",
-        "Format",
-        Entry::from_bit(file.depth).formatted(),
+        "   {:<18} : {}",
+        "Sample Rate",
         file.sample_rate.description()
+    );
+    println!(
+        "   {:<18} : {} ",
+        "Bit Depth",
+        file.depth.description()
     );
     println!(
         "   {:<18} : {}",

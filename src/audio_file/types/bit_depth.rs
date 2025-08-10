@@ -20,7 +20,7 @@ impl BitDepth {
             32 => Ok(Self::StudioMaster),
             _ => Err(SonicProbeError {
                 location: format!("{}:{}", file!(), line!()),
-                message: format!("Currently {value}-bit depth is not supported"),
+                message: format!("Currently {value} bit depth is not supported"),
             }),
         }
     }
@@ -36,18 +36,10 @@ impl BitDepth {
 
     pub const fn description(self) -> &'static str {
         match self {
-            Self::Legacy => {
-                "8 bit - Legacy format with limited dynamic range and audible quantization"
-            }
-            Self::CdStandard => {
-                "16 bit - CD standard with 96dB dynamic range, suitable for most consumer audio"
-            }
-            Self::Professional => {
-                "24 bit - Professional standard with 144dB dynamic range and inaudible noise floor"
-            }
-            Self::StudioMaster => {
-                "32 bit - Studio master quality with maximum headroom for professional processing"
-            }
+            Self::Legacy => " 8  bit - Legacy format",
+            Self::CdStandard => "16  bit - CD standard",
+            Self::Professional => "24  bit - Professional standard",
+            Self::StudioMaster => "32  bit - Studio master quality",
         }
     }
 }

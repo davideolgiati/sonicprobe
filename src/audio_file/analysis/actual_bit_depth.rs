@@ -14,7 +14,7 @@ impl super::ActualBitDepth {
             BitDepth::StudioMaster => MAX_32_BIT,
         };
 
-        let mut res = 0u8;
+        let mut actual_depth = 0u8;
 
         for &sample in interleaved.iter() {
             if sample == 0.0 {
@@ -23,28 +23,17 @@ impl super::ActualBitDepth {
 
             let reconstructed_value: i32 = unsafe { (sample * factor).trunc().to_int_unchecked() };
 
-            let actual_length = match u8::try_from(reconstructed_value.trailing_zeros()) {
-                Ok(value) => depth.to_bits() - value,
-                Err(_) => {
-                    return Err(SonicProbeError {
-                        location: format!("{}:{}", file!(), line!()),
-                        message: format!(
-                            "error safe casting form u32 to u8 value {}",
-                            reconstructed_value.trailing_zeros()
-                        ),
-                    });
-                }
-            };
+            let sample_depth: u8 = depth.to_bits() - u8::try_from(reconstructed_value.trailing_zeros())?;
 
-            if actual_length > res {
-                res = actual_length;
+            if sample_depth > actual_depth {
+                actual_depth = sample_depth;
             }
 
-            if res == depth.to_bits() {
+            if actual_depth == depth.to_bits() {
                 break;
             }
         }
 
-        Ok(res)
+        Ok(actual_depth)
     }
 }

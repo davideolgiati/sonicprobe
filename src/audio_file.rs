@@ -24,7 +24,7 @@ use crate::stereo_signal::StereoSignal;
 pub struct AudioFile {
     pub left: Channel,
     pub right: Channel,
-    pub samples_per_channel: u64,
+    pub samples_per_channel: usize,
     pub sample_rate: Frequency,
     pub duration: Milliseconds,
     pub stereo_correlation: f64,
@@ -49,8 +49,8 @@ impl AudioFile {
             move || ChannelBuilder::new(&right_data, sample_rate).build()
         });
 
-        let true_bit_depth = ActualBitDepth::process(&source.interleaved, source.depth)?;
-        let stereo_correlation = StereoCorrelation::process(&source.interleaved);
+        let true_bit_depth = ActualBitDepth::process(&source.left, &source.right, source.depth)?;
+        let stereo_correlation = StereoCorrelation::process(&source.left, &source.right);
 
         let signed_sample_count: i64 = source.samples_per_channel.try_into()?;
 

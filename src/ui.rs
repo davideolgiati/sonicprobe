@@ -40,7 +40,7 @@ pub fn print_file_details(filepath: &str, file: &AudioFile) {
     println!("{}", section_header("FILE DETAILS"));
     println!("   {:<18} : {}", "Filename", filename);
     println!("   {:<18} : {}", "Size", formatted_size);
-    println!("   {:<18} : {}", "Sample Count", file.samples_per_channel * u64::from(file.channels));
+    println!("   {:<18} : {}", "Sample Count", file.samples_per_channel * usize::from(file.channels));
     println!(
         "   {:<18} : {}",
         "Duration",

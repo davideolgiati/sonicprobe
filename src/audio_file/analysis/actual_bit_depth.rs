@@ -6,7 +6,7 @@ use crate::{
 
 impl super::ActualBitDepth {
     #[inline]
-    pub fn process(interleaved: &Signal, depth: BitDepth) -> Result<u8, SonicProbeError> {
+    pub fn process(left: &Signal, right: &Signal, depth: BitDepth) -> Result<u8, SonicProbeError> {
         let factor = match depth {
             BitDepth::Legacy => MAX_8_BIT,
             BitDepth::CdStandard => MAX_16_BIT,
@@ -16,7 +16,25 @@ impl super::ActualBitDepth {
 
         let mut actual_depth = 0u8;
 
-        for &sample in interleaved.iter() {
+        for &sample in left.iter() {
+            if sample == 0.0 {
+                continue;
+            }
+
+            let reconstructed_value: i32 = unsafe { (sample * factor).trunc().to_int_unchecked() };
+
+            let sample_depth: u8 = depth.to_bits() - u8::try_from(reconstructed_value.trailing_zeros())?;
+
+            if sample_depth > actual_depth {
+                actual_depth = sample_depth;
+            }
+
+            if actual_depth == depth.to_bits() {
+                break;
+            }
+        }
+
+        for &sample in right.iter() {
             if sample == 0.0 {
                 continue;
             }

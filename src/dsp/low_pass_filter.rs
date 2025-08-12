@@ -33,10 +33,10 @@ impl LowPassFilter {
 
         let polyfir_coeffs: Vec<[f64; 12]> = {
             let mut phases = vec![[0.0; 12]; phases_count];
-            for (index, &coeff) in coeffs.iter().enumerate() {
-                let phase = index % phases_count;
-                let tap = index / phases_count;
-                phases[phase][tap] = coeff;
+            for (tap, coeff) in coeffs.chunks(phases_count).enumerate() {
+                for phase in 0..phases_count {
+                    phases[phase][tap] = coeff[phase];
+                }
             }
             phases
         };

@@ -24,3 +24,59 @@ impl super::DCOffset {
         Ok(sum / size)
     }
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use std::sync::Arc;
+
+    use crate::audio_file::analysis::DCOffset;
+
+
+    #[test]
+    fn zero() {
+        let samples: Arc<[f64]> = (1..11).map(|i| {
+            if i % 2 == 0 {
+                f64::from(-(i / 2))
+            } else {
+                f64::from((i + 1) / 2)
+            }
+        })
+        .collect();
+        let res = DCOffset::process(&samples).unwrap();
+
+        assert!((res - 0.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn positive() {
+        let samples: Arc<[f64]> = (1..11).map(|i| {
+            if i % 2 == 0 {
+                f64::from(-(i / 2))
+            } else {
+                f64::from((i + 1) / 2)
+            }
+        })
+        .map(|val| val + 0.002)
+        .collect();
+        let res = DCOffset::process(&samples).unwrap();
+
+        assert!((res - 0.002).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn negative() {
+                let samples: Arc<[f64]> = (1..11).map(|i| {
+            if i % 2 == 0 {
+                f64::from(-(i / 2))
+            } else {
+                f64::from((i + 1) / 2)
+            }
+        })
+        .map(|val| val - 0.002)
+        .collect();
+        let res = DCOffset::process(&samples).unwrap();
+
+        assert!((res + 0.002).abs() < f64::EPSILON);
+    }
+}

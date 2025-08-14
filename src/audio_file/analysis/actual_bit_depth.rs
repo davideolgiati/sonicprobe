@@ -63,7 +63,7 @@ impl super::ActualBitDepth {
 mod tests {
     use crate::{
         audio_file::{analysis::ActualBitDepth, types::BitDepth},
-        constants::{MAX_16_BIT, MAX_8_BIT},
+        constants::{MAX_8_BIT, MAX_16_BIT},
     };
 
     #[test]
@@ -82,7 +82,7 @@ mod tests {
         assert_eq!(res, 8u8);
     }
 
-        #[test]
+    #[test]
     fn padded_data() {
         let left = [10, 20, 30, 111]
             .iter()
@@ -98,7 +98,7 @@ mod tests {
         assert_eq!(res, 8u8);
     }
 
-            #[test]
+    #[test]
     fn mixed_data() {
         let left = [10, 20, 30, 111]
             .iter()

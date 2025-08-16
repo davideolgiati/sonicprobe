@@ -3,13 +3,10 @@ use std::sync::Arc;
 
 use crate::{
     audio_file::{
-        Frequency, Signal,
         analysis::{
             ClippingSamples, DCOffset, DynamicRange, Peak, RootMeanSquare, ZeroCrossingRate,
-        },
-    },
-    dsp::upsample_chain,
-    sonicprobe_error::SonicProbeError,
+        }, Frequency, Signal
+    }, audio_utils::to_dbfs, dsp::upsample_chain, sonicprobe_error::SonicProbeError
 };
 
 #[derive(Clone, Copy, Serialize)]
@@ -96,13 +93,13 @@ pub fn from_samples(builder: &ChannelBuilder) -> Result<Channel, SonicProbeError
     
     let peak = Peak::process(samples);
     let dc_offset = DCOffset::process(samples)?;
-    let rms = RootMeanSquare::process(samples)?;
+    let rms = to_dbfs(RootMeanSquare::process(samples)?);
     let zcr = ZeroCrossingRate::process(samples, builder.duration);
     let clipping_samples_count = ClippingSamples::process(samples);
     
     let (true_peak, true_clipping_samples_count) = upsample_chain(samples, builder.sample_rate)?;
     
-    let dr = DynamicRange::process(samples, builder.sample_rate, true_peak)?;
+    let dr = to_dbfs(DynamicRange::process(samples, builder.sample_rate));
 
     Ok(Channel {
         rms,

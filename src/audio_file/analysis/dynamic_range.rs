@@ -1,8 +1,7 @@
-use std::process;
+use core::f64;
 
 use crate::{
-    audio_file::{Frequency, Signal},
-    sonicprobe_error::SonicProbeError,
+    audio_file::{analysis::floating_point_utils::map_sum_lossless, Frequency, Signal}
 };
 
 impl super::DynamicRange {
@@ -12,55 +11,51 @@ impl super::DynamicRange {
     #[allow(clippy::cast_possible_truncation)]
     pub fn process(
         samples: &Signal,
-        sample_rate: Frequency,
-        peak: f64,
-    ) -> Result<f64, SonicProbeError> {
-        let chunk_size = match sample_rate {
-            Frequency::CdQuality | Frequency::ProAudio => 7200,
-            Frequency::HiResDouble | Frequency::DvdAudio => 14400,
-            Frequency::StudioMaster | Frequency::UltraHiRes => 28800
-        };
-        let reminder = samples.len() % chunk_size;
-        let samples_end = samples.len() - reminder;
-        let analysable_samples = samples.get(0..samples_end).map_or_else(
-            || {
-                println!("error: dynamic range can't slice samples in index 0 to {samples_end}");
-                process::exit(1);
-            },
-            |slice| slice,
-        );
+        sample_rate: Frequency
+    ) -> f64 {
+        let chunk_size = get_chunk_size(sample_rate);
+        let target_population = ((samples.len() / chunk_size) * 20) / 100;
 
-        let mut rms_array: Vec<f64> = Vec::new();
+        let mut quietest: Vec<f64> = vec![f64::MAX; target_population];
+        let mut loudest: Vec<f64> = vec![f64::MIN; target_population];
+        let mut count = 0usize;
 
-        for chunk in analysable_samples.chunks(chunk_size) {
-            rms_array.push(super::RootMeanSquare::process(chunk)?);
+        for current_rms in samples.chunks(chunk_size).map(|val | (map_sum_lossless(val, |x| x.powi(2)) / chunk_size as f64).sqrt()) {
+            if count < target_population {
+                loudest[target_population - 1] = current_rms;
+                sort_array(&mut loudest, |a, b| a > b);
+                quietest[target_population - 1] = current_rms;
+                sort_array(&mut quietest, |a, b| a < b);
+                count += 1;
+                continue;
+            }
+
+            if quietest[target_population - 1] > current_rms {
+                quietest[target_population - 1] = current_rms;
+                sort_array(&mut quietest, |a, b| a < b);
+            }
+
+            if loudest[target_population - 1] < current_rms {
+                loudest[target_population - 1] = current_rms;
+                sort_array(&mut loudest, |a, b| a > b);
+            }
         }
 
-        let rms_end = (rms_array.len() * 20) / 100;
+        let loudest_avg = loudest.iter().sum::<f64>() / target_population as f64;
+        let quietest_avg = quietest.iter().sum::<f64>() / target_population as f64;
 
-        rms_array.sort_by(|a, b| {
-            b.partial_cmp(a)
-                .map_or(std::cmp::Ordering::Equal, |value| value)
-        });
+        loudest_avg / quietest_avg
+    }
+}
 
-        let top_20_rms = rms_array.get(0..rms_end).map_or_else(
-            || {
-                println!("error: dynamic range can't slice rms in index 0 to {rms_end}");
-                process::exit(1);
-            },
-            |rms_slice| rms_slice,
-        );
+const fn get_chunk_size(sample_rate: Frequency) -> usize {
+    sample_rate.to_hz() as usize * 3
+}
 
-        let size = rms_end as f64;
-        if (size as usize) != rms_end {
-            return Err(SonicProbeError {
-                location: format!("{}:{}", file!(), line!()),
-                message: format!("cannot represent usize value {rms_end} exactly in f64"),
-            });
-        }
-
-        let rms_avarage = top_20_rms.iter().sum::<f64>() / size;
-
-        Ok(peak - rms_avarage)
+fn sort_array<T: Fn(f64, f64) -> bool>(array: &mut [f64], cmp_fn: T){
+    let mut current = array.len() - 1;
+    while current >= 1 && cmp_fn(array[current], array[current - 1]) {
+        (array[current], array[current - 1]) = (array[current - 1], array[current]);
+        current -= 1;
     }
 }

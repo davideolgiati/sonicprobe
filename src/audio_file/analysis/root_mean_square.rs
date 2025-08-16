@@ -1,5 +1,5 @@
 use crate::{
-    audio_file::analysis::floating_point_utils::map_sum_lossless, audio_utils::to_dbfs,
+    audio_file::analysis::floating_point_utils::map_sum_lossless,
     sonicprobe_error::SonicProbeError,
 };
 
@@ -22,6 +22,6 @@ impl super::RootMeanSquare {
             });
         }
 
-        Ok(to_dbfs((sum / size).sqrt()))
+        Ok((sum / size).sqrt())
     }
 }

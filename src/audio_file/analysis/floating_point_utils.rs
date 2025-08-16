@@ -11,3 +11,4 @@ pub fn map_sum_lossless<T: Fn(f64) -> f64>(input: &[f64], mapping_fn: T) -> f64 
 
     sum
 }
+

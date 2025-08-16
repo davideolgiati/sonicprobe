@@ -50,12 +50,18 @@ impl AudioFile {
         });
 
         let true_bit_depth = ActualBitDepth::process(&source.left, &source.right, source.depth)?;
-        let stereo_correlation = StereoCorrelation::process(&source.left, &source.right);
 
         let signed_sample_count: i64 = source.samples_per_channel.try_into()?;
 
         let left = left_handle.join()??;
         let right = right_handle.join()??;
+
+        let stereo_correlation = StereoCorrelation::process(
+            &source.left,
+            &source.right,
+            left.dc_offset(),
+            right.dc_offset(),
+        );
 
         Ok(Self {
             left,

@@ -19,7 +19,7 @@ pub struct Channel {
     dr: f64,
     true_clipping_samples_count: u64,
     clipping_samples_count: u64,
-    zero_crossing_rate: f64,
+    zero_crossing_rate: u64,
 }
 
 impl Channel {
@@ -44,7 +44,7 @@ impl Channel {
         self.dr
     }
     #[inline]
-    pub const fn zero_crossing_rate(&self) -> f64 {
+    pub const fn zero_crossing_rate(&self) -> u64 {
         self.zero_crossing_rate
     }
 
@@ -94,7 +94,7 @@ pub fn from_samples(builder: &ChannelBuilder) -> Result<Channel, SonicProbeError
     let peak = Peak::process(samples);
     let dc_offset = DCOffset::process(samples)?;
     let rms = to_dbfs(RootMeanSquare::process(samples)?);
-    let zcr = ZeroCrossingRate::process(samples, builder.duration);
+    let zcr = ZeroCrossingRate::process(samples, builder.sample_rate);
     let clipping_samples_count = ClippingSamples::process(samples);
     
     let (true_peak, true_clipping_samples_count) = upsample_chain(samples, builder.sample_rate)?;

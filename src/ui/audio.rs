@@ -18,7 +18,7 @@ pub fn format_volt(value: f64) -> String {
     }
 }
 
-pub fn format_hz(value: i64) -> String {
+pub fn format_hz(value: u64) -> String {
     format!("{value}")
 }
 

@@ -1,31 +1,31 @@
-use std::process;
-
-use crate::audio_file::Signal;
+use crate::audio_file::types::{Frequency, Signal};
 
 impl super::ZeroCrossingRate {
     #[inline]
-    pub fn process(samples: &Signal, duration: f64) -> f64 {
-        samples
-            .windows(2)
-            .map(|slice| {
-                let Some(&first_sample) = slice.first() else {
-                    println!("error: zero crossing rate can't get first sample");
-                    process::exit(1);
-                };
+    pub fn process(samples: &Signal, sample_rate: Frequency) -> u64 {
+        let mut buffer = vec![0u64; sample_rate.to_hz() as usize];
+        let mut buff_index = 0usize;
 
-                let Some(&second_sample) = slice.last() else {
-                    println!("error: zero crossing rate can't get second sample");
-                    process::exit(1);
-                };
+        let mut crossing_rates = vec![0u64; (samples.len() / buffer.len()) + 1];
+        let mut cr_index = 0usize;
 
-                if get_value_sign(first_sample) == get_value_sign(second_sample) {
-                    0.0
-                } else {
-                    1.0
-                }
-            })
-            .sum::<f64>()
-            / duration
+        for window in samples.windows(2) {
+            if buff_index == buffer.len() {
+                crossing_rates[cr_index] = buffer.iter().sum::<u64>();
+                cr_index += 1;
+                buff_index = 0;
+            }
+            
+            if get_value_sign(window[0]) == get_value_sign(window[1]) {
+                buffer[buff_index] = 0;
+            } else {
+                buffer[buff_index] = 1;
+            }
+
+            buff_index += 1;
+        }
+
+        crossing_rates.iter().sum::<u64>() / crossing_rates.len() as u64
     }
 }
 

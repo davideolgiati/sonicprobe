@@ -1,18 +1,13 @@
 use core::f64;
 
-use crate::{
-    audio_file::{analysis::floating_point_utils::map_sum_lossless, Frequency, Signal}
-};
+use crate::audio_file::{Frequency, Signal, analysis::floating_point_utils::map_sum_lossless};
 
 impl super::DynamicRange {
     #[inline]
     #[allow(clippy::cast_sign_loss)]
     #[allow(clippy::cast_precision_loss)]
     #[allow(clippy::cast_possible_truncation)]
-    pub fn process(
-        samples: &Signal,
-        sample_rate: Frequency
-    ) -> f64 {
+    pub fn process(samples: &Signal, sample_rate: Frequency) -> f64 {
         let chunk_size = get_chunk_size(sample_rate);
         let target_population = ((samples.len() / chunk_size) * 20) / 100;
 
@@ -20,7 +15,9 @@ impl super::DynamicRange {
         let mut loudest: Vec<f64> = vec![f64::MIN; target_population];
         let mut count = 0usize;
 
-        for current_rms in samples.chunks(chunk_size).map(|val | (map_sum_lossless(val, |x| x.powi(2)) / chunk_size as f64).sqrt()) {
+        for current_chunk in samples.chunks(chunk_size) {
+            let current_rms = (map_sum_lossless(current_chunk, |x| x.powi(2)) / chunk_size as f64).sqrt();
+            
             if count < target_population {
                 loudest[target_population - 1] = current_rms;
                 sort_array(&mut loudest, |a, b| a > b);
@@ -52,7 +49,7 @@ const fn get_chunk_size(sample_rate: Frequency) -> usize {
     sample_rate.to_hz() as usize * 3
 }
 
-fn sort_array<T: Fn(f64, f64) -> bool>(array: &mut [f64], cmp_fn: T){
+fn sort_array<T: Fn(f64, f64) -> bool>(array: &mut [f64], cmp_fn: T) {
     let mut current = array.len() - 1;
     while current >= 1 && cmp_fn(array[current], array[current - 1]) {
         (array[current], array[current - 1]) = (array[current - 1], array[current]);

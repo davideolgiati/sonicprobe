@@ -25,10 +25,9 @@ impl Entry {
     }
 
     #[allow(clippy::cast_possible_truncation)]
-    pub fn from_hz(value: f64) -> Self {
-        let new_value = value.round() as i64;
+    pub fn from_hz(value: u64) -> Self {
         Self {
-            value: format_hz(new_value),
+            value: format_hz(value),
             unit: String::from("Hz"),
         }
     }

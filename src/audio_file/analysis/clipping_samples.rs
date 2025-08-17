@@ -1,7 +1,5 @@
 use crate::audio_file::Signal;
 
-const CLIP_EPSILON: f64 = 1e-12;
-
 impl super::ClippingSamples {
     #[inline]
     pub fn process(samples: &Signal) -> u64 {
@@ -18,11 +16,8 @@ impl super::ClippingSamples {
 
 #[inline]
 pub fn is_clipping(sample: f64) -> bool {
-    if !sample.is_finite() {
-        return true;
-    }
-
-    sample.abs() > 1.0 + CLIP_EPSILON || (sample.abs() - 1.0).abs() <= CLIP_EPSILON
+    sample.abs() > 1.0 + crate::constants::CLIP_EPSILON
+        || (sample.abs() - 1.0).abs() <= crate::constants::CLIP_EPSILON
 }
 
 #[cfg(test)]
@@ -61,13 +56,7 @@ mod tests {
     #[test]
     fn all_clip() {
         let samples = (0..10)
-            .map(|i| {
-                if i % 2 == 0 {
-                    -1.0
-                } else {
-                    1.0
-                }
-            })
+            .map(|i| if i % 2 == 0 { -1.0 } else { 1.0 })
             .collect();
         let res = ClippingSamples::process(&samples);
 

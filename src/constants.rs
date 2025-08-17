@@ -1,5 +1,7 @@
 pub const TARGET_SAMPLE_RATE: f64 = 192_000.0;
 
+pub const CLIP_EPSILON: f64 = 1e-12;
+
 pub const MAX_8_BIT: f64 = 127.0;
 pub const MAX_16_BIT: f64 = 32767.0;
 pub const MAX_24_BIT: f64 = 8_388_607.0;

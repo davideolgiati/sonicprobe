@@ -16,8 +16,7 @@ impl super::ClippingSamples {
 
 #[inline]
 pub fn is_clipping(sample: f64) -> bool {
-    sample.abs() > 1.0 + crate::constants::CLIP_EPSILON
-        || (sample.abs() - 1.0).abs() <= crate::constants::CLIP_EPSILON
+    sample.abs() >= 1.0// - crate::constants::CLIP_EPSILON
 }
 
 #[cfg(test)]

@@ -22,8 +22,8 @@ pub fn upsample_chain(source: &Signal, source_sample_rate: Frequency) -> Result<
                 clipping_samples += 1;
             }
 
-            if value > peak {
-                peak = value;
+            if value.abs() > peak {
+                peak = value.abs();
             }
         }
     }

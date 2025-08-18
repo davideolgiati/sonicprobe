@@ -1,5 +1,5 @@
 use crate::{
-    audio_file::types::Frequency, constants::TARGET_SAMPLE_RATE, dsp::LowPassFilter,
+    audio_file::types::Frequency, constants::TARGET_SAMPLE_RATE, dsp::{dot_product::dot_product, LowPassFilter},
     sonicprobe_error::SonicProbeError,
 };
 
@@ -50,36 +50,11 @@ impl LowPassFilter {
     pub fn submit(&self, window: &[f64]) -> impl Iterator<Item = f64> {
         self.coeffs
             .iter()
-            .map(|coeffs| dot_product_scalar(coeffs, window))
+            .map(|coeffs| dot_product(coeffs, window))
     }
 }
 
-#[inline]
-pub fn dot_product_scalar(a: &[f64], b: &[f64]) -> f64 {
-    assert_eq!(a.len(), 12);
-    assert_eq!(b.len(), 12);
 
-    let mut sum = [0.0f64; 4];
-    let pa = a.as_ptr();
-    let pb = b.as_ptr();
-
-    unsafe {
-        sum[0] += *pa * *pb;
-        sum[1] += *pa.add(1) * *pb.add(1);
-        sum[2] += *pa.add(2) * *pb.add(2);
-        sum[3] += *pa.add(3) * *pb.add(3);
-        sum[0] += *pa.add(4) * *pb.add(4);
-        sum[1] += *pa.add(5) * *pb.add(5);
-        sum[2] += *pa.add(6) * *pb.add(6);
-        sum[3] += *pa.add(7) * *pb.add(7);
-        sum[0] += *pa.add(8) * *pb.add(8);
-        sum[1] += *pa.add(9) * *pb.add(9);
-        sum[2] += *pa.add(10) * *pb.add(10);
-        sum[3] += *pa.add(11) * *pb.add(11);
-    }
-
-    sum[0] + sum[1] + sum[2] + sum[3]
-}
 
 fn hz_to_radian(cutoff: f64) -> f64 {
     (cutoff / TARGET_SAMPLE_RATE) * 2.0 * f64::consts::PI

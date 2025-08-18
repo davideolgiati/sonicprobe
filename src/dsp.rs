@@ -5,6 +5,7 @@ use crate::{
 };
 
 mod low_pass_filter;
+mod dot_product;
 
 pub struct LowPassFilter {
     coeffs: Arc<[[f64; 12]]>,

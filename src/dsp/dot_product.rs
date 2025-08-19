@@ -96,7 +96,8 @@ unsafe fn dot_product_avx(a: &[f64], b: &[f64]) -> f64 {
 
            "vextractf128 xmm1, ymm0, 1",
            "vaddpd xmm0, xmm0, xmm1",
-           "vhaddpd xmm0, xmm0, xmm0",
+           "movhlps xmm1, xmm0",
+           "addsd xmm0, xmm1", 
 
             out("xmm0") result,
             a = in(reg) a.as_ptr(),

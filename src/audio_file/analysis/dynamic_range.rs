@@ -52,7 +52,7 @@ const fn get_chunk_size(sample_rate: Frequency) -> usize {
 fn sort_array<T: Fn(f64, f64) -> bool>(array: &mut [f64], cmp_fn: T) {
     let mut current = array.len() - 1;
     while current >= 1 && cmp_fn(array[current], array[current - 1]) {
-        (array[current], array[current - 1]) = (array[current - 1], array[current]);
+        array.swap(current, current - 1);
         current -= 1;
     }
 }

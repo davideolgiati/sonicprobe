@@ -29,9 +29,9 @@ impl StereoSignal {
 
         let sample_rate = Frequency::new(infos.sample_rate)?;
         let depth = BitDepth::new(infos.bits_per_sample)?;
-        let samples_per_channel = infos.total_samples as usize;
+        let samples_per_channel: usize = infos.total_samples.try_into()?;
 
-        let (left, right) = read_audio_signal(stream, depth);
+        let (left, right) = read_audio_signal(stream, depth)?;
 
         Ok(Self {
             left,
@@ -46,8 +46,8 @@ impl StereoSignal {
 fn read_audio_signal(
     mut stream: Stream<ReadStream<File>>,
     depth: BitDepth,
-) -> (Signal, Signal) {
-    let size = (stream.info().total_samples) as usize;
+) -> Result<(Signal, Signal), SonicProbeError> {
+    let size: usize = stream.info().total_samples.try_into()?;
     let mut left: Vec<f64> = vec![0.0; size];
     let mut right: Vec<f64> = vec![0.0; size];
     let multiplier = match depth {
@@ -66,5 +66,5 @@ fn read_audio_signal(
         }
     }
 
-    (Arc::from(right), Arc::from(left))
+    Ok((Arc::from(right), Arc::from(left)))
 }

@@ -53,10 +53,8 @@ unsafe fn dot_product_sse3(a: &[f64], b: &[f64]) -> f64 {
             "xor rcx, rcx",
 
             "2:",
-            "movupd xmm1, [{a} + rcx]",
-            "movupd xmm2, [{b} + rcx]",
-            "mulpd xmm1, xmm2",
-            "addpd xmm0, xmm1",
+            "vmovupd xmm1, [{a} + rcx]",
+            "vfmadd231pd xmm0, xmm1, [{b} + rcx]",
             "add rcx, 16",
             "cmp rcx, 96",
             "jb 2b",
@@ -87,9 +85,7 @@ unsafe fn dot_product_avx(a: &[f64], b: &[f64]) -> f64 {
            
            "2:",
            "vmovupd ymm1, [{a} + rcx]",
-           "vmovupd ymm2, [{b} + rcx]",
-           "vmulpd  ymm1, ymm1, ymm2",
-           "vaddpd  ymm0, ymm0, ymm1",
+           "vfmadd231pd ymm0, ymm1, [{b} + rcx]",
            "add rcx, 32",
            "cmp rcx, 96",
            "jb 2b",

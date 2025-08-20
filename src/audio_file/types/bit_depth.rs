@@ -12,7 +12,7 @@ impl Serialize for BitDepth {
 }
 
 impl BitDepth {
-    pub fn new(value: u8) -> Result<Self, SonicProbeError> {
+    pub fn new(value: u32) -> Result<Self, SonicProbeError> {
         match value {
             8 => Ok(Self::Legacy),
             16 => Ok(Self::CdStandard),

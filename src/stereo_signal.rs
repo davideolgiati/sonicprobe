@@ -1,6 +1,6 @@
 use std::{fs::File, sync::Arc};
 
-use flac::{ReadStream, Stream};
+use claxon::FlacReader;
 
 use crate::{
     audio_file::types::{BitDepth, Frequency, Signal},
@@ -17,8 +17,8 @@ pub struct StereoSignal {
 }
 
 impl StereoSignal {
-    pub fn from_flac(stream: Stream<ReadStream<File>>) -> Result<Self, SonicProbeError> {
-        let infos = stream.info();
+    pub fn from_flac(stream: FlacReader<File>) -> Result<Self, SonicProbeError> {
+        let infos = stream.streaminfo();
 
         if infos.channels != 2 {
             return Err(SonicProbeError {
@@ -29,10 +29,10 @@ impl StereoSignal {
 
         let sample_rate = Frequency::new(infos.sample_rate)?;
         let depth = BitDepth::new(infos.bits_per_sample)?;
-        let samples_per_channel: usize = infos.total_samples.try_into()?;
-
+        
         let (left, right) = read_audio_signal(stream, depth)?;
-
+        let samples_per_channel: usize = left.len();
+        
         Ok(Self {
             left,
             right,
@@ -44,12 +44,11 @@ impl StereoSignal {
 }
 
 fn read_audio_signal(
-    mut stream: Stream<ReadStream<File>>,
+    mut stream: FlacReader<File>,
     depth: BitDepth,
 ) -> Result<(Signal, Signal), SonicProbeError> {
-    let size: usize = stream.info().total_samples.try_into()?;
-    let mut left: Vec<f64> = vec![0.0; size];
-    let mut right: Vec<f64> = vec![0.0; size];
+    let mut left: Vec<f64> = Vec::new();
+    let mut right: Vec<f64> = Vec::new();
     let multiplier = match depth {
         BitDepth::Legacy => MAX_8_BIT,
         BitDepth::CdStandard => MAX_16_BIT,
@@ -58,11 +57,11 @@ fn read_audio_signal(
     };
 
 
-    for (index, sample) in stream.iter::<i32>().enumerate() {
+    for (index, sample) in stream.samples().enumerate() {
         if index % 2 == 1 {
-            right[(index -1) / 2] = f64::from(sample) / multiplier;
+            right.push(f64::from(sample?) / multiplier);
         } else {
-            left[index / 2] = f64::from(sample) / multiplier;
+            left.push(f64::from(sample?) / multiplier);
         }
     }
 

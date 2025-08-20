@@ -6,7 +6,7 @@ use std::fs::File;
 use std::sync::Arc;
 use std::thread;
 
-use flac::{ReadStream, Stream};
+use claxon::FlacReader;
 use serde::Serialize;
 
 use crate::audio_file::analysis::ActualBitDepth;
@@ -34,7 +34,7 @@ pub struct AudioFile {
 }
 
 impl AudioFile {
-    pub fn new(stream: Stream<ReadStream<File>>) -> Result<Self, SonicProbeError> {
+    pub fn new(stream: FlacReader<File>) -> Result<Self, SonicProbeError> {
         let source = StereoSignal::from_flac(stream)?;
 
         let left_handle = thread::spawn({

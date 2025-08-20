@@ -8,8 +8,7 @@ mod ui;
 mod stereo_signal;
 mod sonicprobe_error;
 
-use flac::StreamReader;
-use std::fs::File;
+use claxon::FlacReader;
 use std::{env, process};
 
 use crate::audio_file::AudioFile;
@@ -21,7 +20,7 @@ fn main() {
     let cli_input: Vec<String> = env::args().collect();
     let args: CliArgs = CliArgs::new(&cli_input);
 
-    let flac_details = match StreamReader::<File>::from_file(args.file_path()) {
+    let flac_details = match FlacReader::open(args.file_path()) {
         Ok(stream) => AudioFile::new(stream),
         Err(error) => {
             println!("error while opening {} : {:?}", args.file_path(), error);

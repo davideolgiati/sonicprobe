@@ -51,3 +51,13 @@ impl From<TryFromIntError> for SonicProbeError {
         }
     }
 }
+
+// Implement From for claxon::Error
+impl From<claxon::Error> for SonicProbeError {
+    fn from(error: claxon::Error) -> Self {
+        Self {
+            message: format!("Claxon error: {error}"),
+            location: "claxon::Error".to_owned(),
+        }
+    }
+}

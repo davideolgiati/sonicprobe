@@ -1,4 +1,4 @@
-use crate::audio_file::Signal;
+use crate::model::Signal;
 
 impl super::ClippingSamples {
     #[inline]

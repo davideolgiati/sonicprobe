@@ -1,18 +1,16 @@
 mod audio_file;
 mod audio_utils;
 mod cli_args;
-mod constants;
 mod dsp;
 mod output_format;
 mod ui;
-mod stereo_signal;
-mod sonicprobe_error;
+mod model;
 
 use claxon::FlacReader;
 use std::{env, process};
 
-use crate::audio_file::AudioFile;
 use crate::cli_args::CliArgs;
+use crate::model::audio_file::AudioFile;
 use crate::output_format::OutputFormat;
 use crate::ui::print_file_details;
 
@@ -41,6 +39,4 @@ fn main() {
             process::exit(1);
         }
     }
-
-
 }

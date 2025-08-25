@@ -1,6 +1,14 @@
 use serde::{Serialize, Serializer};
 
-use crate::{audio_file::types::BitDepth, sonicprobe_error::SonicProbeError};
+use crate::model::sonicprobe_error::SonicProbeError;
+
+#[derive(Clone, Copy)]
+pub enum BitDepth {
+    Legacy,
+    CdStandard,
+    Professional,
+    StudioMaster,
+}
 
 impl Serialize for BitDepth {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

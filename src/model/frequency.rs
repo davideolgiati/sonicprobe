@@ -1,6 +1,16 @@
 use serde::{Serialize, Serializer};
 
-use crate::{audio_file::types::Frequency, sonicprobe_error::SonicProbeError};
+use crate::model::sonicprobe_error::SonicProbeError;
+
+#[derive(Clone, Copy)]
+pub enum Frequency {
+    CdQuality,
+    ProAudio,
+    HiResDouble,
+    DvdAudio,
+    UltraHiRes,
+    StudioMaster,
+}
 
 impl Serialize for Frequency {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>

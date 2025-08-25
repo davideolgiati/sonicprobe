@@ -2,22 +2,15 @@ use std::{fs::File, sync::Arc};
 
 use claxon::FlacReader;
 
-use crate::{
-    audio_file::types::{BitDepth, Frequency, Signal},
-    constants::{MAX_8_BIT, MAX_16_BIT, MAX_24_BIT, MAX_32_BIT},
-    sonicprobe_error::SonicProbeError,
+use crate::model::{
+    MAX_8_BIT, MAX_16_BIT, MAX_24_BIT, MAX_32_BIT, Signal, bit_depth::BitDepth,
+    frequency::Frequency, sonicprobe_error::SonicProbeError, stereo_signal::StereoSignal,
 };
 
-pub struct StereoSignal {
-    pub left: Signal,
-    pub right: Signal,
-    pub samples_per_channel: usize,
-    pub sample_rate: Frequency,
-    pub depth: BitDepth,
-}
+pub struct StereoSignalBuilder;
 
-impl StereoSignal {
-    pub fn from_flac(stream: FlacReader<File>) -> Result<Self, SonicProbeError> {
+impl StereoSignalBuilder {
+    pub fn from_flac(stream: FlacReader<File>) -> Result<StereoSignal, SonicProbeError> {
         let infos = stream.streaminfo();
 
         if infos.channels != 2 {
@@ -36,7 +29,7 @@ impl StereoSignal {
 
         let (left, right) = read_audio_signal(stream, depth)?;
 
-        Ok(Self {
+        Ok(StereoSignal {
             left,
             right,
             samples_per_channel,

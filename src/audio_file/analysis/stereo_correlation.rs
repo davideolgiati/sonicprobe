@@ -1,8 +1,6 @@
-
 // norm_corr_ab = sum(a*b) / sqrt(sum(a^2)*sum(b^2))
 
-use crate::audio_file::Signal;
-
+use crate::model::Signal;
 
 impl super::StereoCorrelation {
     #[inline]

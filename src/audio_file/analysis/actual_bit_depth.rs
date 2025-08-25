@@ -1,7 +1,7 @@
 use crate::{
-    audio_file::{Signal, types::BitDepth},
-    constants::{MAX_8_BIT, MAX_16_BIT, MAX_24_BIT, MAX_32_BIT},
-    sonicprobe_error::SonicProbeError,
+    model::{MAX_8_BIT, MAX_16_BIT, MAX_24_BIT, MAX_32_BIT},
+    model::{Signal, bit_depth::BitDepth},
+    model::sonicprobe_error::SonicProbeError,
 };
 
 impl super::ActualBitDepth {
@@ -62,8 +62,8 @@ impl super::ActualBitDepth {
 #[allow(clippy::unwrap_used)]
 mod tests {
     use crate::{
-        audio_file::{analysis::ActualBitDepth, types::BitDepth},
-        constants::{MAX_8_BIT, MAX_16_BIT},
+        audio_file::analysis::ActualBitDepth,
+        model::{MAX_16_BIT, MAX_8_BIT}, model::bit_depth::BitDepth,
     };
 
     #[test]

@@ -1,6 +1,6 @@
 use crate::{
     audio_file::analysis::floating_point_utils::map_sum_lossless,
-    sonicprobe_error::SonicProbeError,
+    model::sonicprobe_error::SonicProbeError,
 };
 
 impl super::RootMeanSquare {

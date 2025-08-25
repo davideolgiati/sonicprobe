@@ -4,7 +4,7 @@ mod filesystem;
 mod table;
 
 use crate::{
-    audio_file::AudioFile, ui::{
+    model::audio_file::AudioFile, ui::{
         entry::Entry,
         filesystem::{filename_from_path, get_formatted_file_size},
         table::Table,

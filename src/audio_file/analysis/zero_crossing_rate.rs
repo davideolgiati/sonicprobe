@@ -1,4 +1,4 @@
-use crate::audio_file::types::{Frequency, Signal};
+use crate::model::{frequency::Frequency, Signal};
 
 impl super::ZeroCrossingRate {
     #[inline]

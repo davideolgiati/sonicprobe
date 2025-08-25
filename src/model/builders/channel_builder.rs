@@ -1,67 +1,10 @@
-use serde::Serialize;
 use std::sync::Arc;
 
 use crate::{
-    audio_file::{
-        analysis::{
+    audio_file::analysis::{
             ClippingSamples, DCOffset, DynamicRange, Peak, RootMeanSquare, ZeroCrossingRate,
-        }, Frequency, Signal
-    }, audio_utils::to_dbfs, dsp::upsample_chain, sonicprobe_error::SonicProbeError
+        }, audio_utils::to_dbfs, dsp::upsample_chain, model::{channel::Channel, frequency::Frequency, Signal}, model::sonicprobe_error::SonicProbeError
 };
-
-#[derive(Clone, Copy, Serialize)]
-pub struct Channel {
-    samples_count: u64,
-    dc_offset: f64,
-    true_peak: f64,
-    peak: f64,
-    rms: f64,
-    dr: f64,
-    true_clipping_samples_count: u64,
-    clipping_samples_count: u64,
-    zero_crossing_rate: u64,
-}
-
-impl Channel {
-    #[inline]
-    pub const fn dc_offset(&self) -> f64 {
-        self.dc_offset
-    }
-    #[inline]
-    pub const fn true_peak(&self) -> f64 {
-        self.true_peak
-    }
-    #[inline]
-    pub const fn peak(&self) -> f64 {
-        self.peak
-    }
-    #[inline]
-    pub const fn rms(&self) -> f64 {
-        self.rms
-    }
-    #[inline]
-    pub const fn dr(&self) -> f64 {
-        self.dr
-    }
-    #[inline]
-    pub const fn zero_crossing_rate(&self) -> u64 {
-        self.zero_crossing_rate
-    }
-
-    #[allow(clippy::cast_precision_loss)]
-    pub fn clipping_samples_ratio(&self) -> f64 {
-        self.clipping_samples_count as f64 / self.samples_count as f64
-    }
-
-    #[allow(clippy::cast_precision_loss)]
-    pub fn true_clipping_samples_ratio(&self) -> f64 {
-        self.true_clipping_samples_count as f64 / self.samples_count as f64
-    }
-
-    pub fn crest_factor(&self) -> f64 {
-        self.peak - self.rms
-    }
-}
 
 #[repr(C)]
 #[allow(clippy::module_name_repetitions)]

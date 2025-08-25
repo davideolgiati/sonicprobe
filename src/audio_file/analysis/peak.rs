@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use crate::{audio_file::Signal, audio_utils::to_dbfs};
+use crate::{audio_utils::to_dbfs, model::Signal};
 
 impl super::Peak {
     #[inline]

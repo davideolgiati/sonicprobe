@@ -1,4 +1,4 @@
-use crate::{audio_file::channel::Channel, ui::entry::Entry};
+use crate::{model::channel::Channel, ui::entry::Entry};
 
 #[derive(Clone)]
 pub struct Table {

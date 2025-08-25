@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use crate::constants::UNITS;
+use crate::model::UNITS;
 
 fn format_file_size(bytes: u64) -> Result<String, String> {
     let unit_index = {

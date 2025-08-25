@@ -1,41 +1,22 @@
 pub mod analysis;
-pub mod channel;
-pub mod types;
 
 use std::fs::File;
 use std::sync::Arc;
 use std::thread;
 
 use claxon::FlacReader;
-use serde::Serialize;
 
 use crate::audio_file::analysis::ActualBitDepth;
 use crate::audio_file::analysis::StereoCorrelation;
-use crate::audio_file::channel::Channel;
-use crate::audio_file::channel::ChannelBuilder;
-use crate::audio_file::types::BitDepth;
-use crate::audio_file::types::Frequency;
-use crate::audio_file::types::Milliseconds;
-use crate::audio_file::types::Signal;
-use crate::sonicprobe_error::SonicProbeError;
-use crate::stereo_signal::StereoSignal;
+use crate::model::audio_file::AudioFile;
+use crate::model::builders::channel_builder::ChannelBuilder;
+use crate::model::builders::stereo_signal_builder::StereoSignalBuilder;
+use crate::model::sonicprobe_error::SonicProbeError;
 
-#[derive(Serialize)]
-pub struct AudioFile {
-    pub left: Channel,
-    pub right: Channel,
-    pub samples_per_channel: usize,
-    pub sample_rate: Frequency,
-    pub duration: Milliseconds,
-    pub stereo_correlation: f64,
-    pub channels: u8,
-    pub depth: BitDepth,
-    pub true_depth: u8,
-}
-
+// TODO: questo e' un builder
 impl AudioFile {
     pub fn new(stream: FlacReader<File>) -> Result<Self, SonicProbeError> {
-        let source = StereoSignal::from_flac(stream)?;
+        let source = StereoSignalBuilder::from_flac(stream)?;
 
         let left_handle = thread::spawn({
             let left_data = Arc::clone(&source.left);
@@ -74,16 +55,5 @@ impl AudioFile {
             samples_per_channel: source.samples_per_channel,
             duration: signed_sample_count / i64::from(source.sample_rate.to_hz()),
         })
-    }
-
-    pub fn rms_balance(&self) -> f64 {
-        self.left.rms() - self.right.rms()
-    }
-
-    pub fn to_json(&self) -> String {
-        match serde_json::to_string_pretty(&self) {
-            Ok(value) => value,
-            Err(e) => format!("Error while serializing: {e:?}"),
-        }
     }
 }

@@ -1,6 +1,5 @@
 use crate::{
-    audio_file::types::Frequency, constants::TARGET_SAMPLE_RATE, dsp::{dot_product::dot_product, LowPassFilter},
-    sonicprobe_error::SonicProbeError,
+    model::TARGET_SAMPLE_RATE, dsp::{dot_product::dot_product, LowPassFilter}, model::frequency::Frequency, model::sonicprobe_error::SonicProbeError
 };
 
 use std::{f64, sync::Arc};

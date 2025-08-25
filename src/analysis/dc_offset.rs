@@ -1,5 +1,5 @@
 use crate::{
-    audio_file::analysis::floating_point_utils::map_sum_lossless, model::sonicprobe_error::SonicProbeError,
+    analysis::floating_point_utils::map_sum_lossless, model::sonicprobe_error::SonicProbeError,
 };
 
 impl super::DCOffset {
@@ -30,7 +30,7 @@ impl super::DCOffset {
 mod tests {
     use std::sync::Arc;
 
-    use crate::audio_file::analysis::DCOffset;
+    use crate::analysis::DCOffset;
 
 
     #[test]

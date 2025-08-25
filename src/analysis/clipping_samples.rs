@@ -24,7 +24,7 @@ pub fn is_clipping(sample: f64) -> bool {
 mod tests {
     use rand::Rng;
 
-    use crate::audio_file::analysis::ClippingSamples;
+    use crate::analysis::ClippingSamples;
 
     #[test]
     fn no_clip() {

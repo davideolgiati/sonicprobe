@@ -1,21 +1,20 @@
-pub mod analysis;
-
 use std::fs::File;
 use std::sync::Arc;
 use std::thread;
 
 use claxon::FlacReader;
 
-use crate::audio_file::analysis::ActualBitDepth;
-use crate::audio_file::analysis::StereoCorrelation;
+use crate::analysis::ActualBitDepth;
+use crate::analysis::StereoCorrelation;
 use crate::model::audio_file::AudioFile;
 use crate::model::builders::channel_builder::ChannelBuilder;
 use crate::model::builders::stereo_signal_builder::StereoSignalBuilder;
 use crate::model::sonicprobe_error::SonicProbeError;
 
-// TODO: questo e' un builder
-impl AudioFile {
-    pub fn new(stream: FlacReader<File>) -> Result<Self, SonicProbeError> {
+pub struct AudioFileBuilder;
+
+impl AudioFileBuilder {
+    pub fn form_stream(stream: FlacReader<File>) -> Result<AudioFile, SonicProbeError> {
         let source = StereoSignalBuilder::from_flac(stream)?;
 
         let left_handle = thread::spawn({
@@ -44,7 +43,7 @@ impl AudioFile {
             right.dc_offset(),
         );
 
-        Ok(Self {
+        Ok(AudioFile {
             left,
             right,
             channels: 2,

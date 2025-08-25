@@ -1,5 +1,5 @@
 use crate::{
-    audio_file::analysis::floating_point_utils::map_sum_lossless,
+    analysis::floating_point_utils::map_sum_lossless,
     model::sonicprobe_error::SonicProbeError,
 };
 

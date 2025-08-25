@@ -62,7 +62,7 @@ impl super::ActualBitDepth {
 #[allow(clippy::unwrap_used)]
 mod tests {
     use crate::{
-        audio_file::analysis::ActualBitDepth,
+        analysis::ActualBitDepth,
         model::{MAX_16_BIT, MAX_8_BIT}, model::bit_depth::BitDepth,
     };
 

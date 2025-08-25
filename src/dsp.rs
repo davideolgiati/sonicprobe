@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
-    audio_file::analysis::clipping_samples::is_clipping,
+    analysis::clipping_samples::is_clipping,
     audio_utils::to_dbfs,
     model::sonicprobe_error::SonicProbeError,
     model::{Signal, frequency::Frequency},

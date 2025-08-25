@@ -1,6 +1,6 @@
 use core::f64;
 
-use crate::{audio_file::analysis::floating_point_utils::map_sum_lossless, model::{frequency::Frequency, Signal}};
+use crate::{analysis::floating_point_utils::map_sum_lossless, model::{frequency::Frequency, Signal}};
 
 impl super::DynamicRange {
     #[inline]

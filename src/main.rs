@@ -1,4 +1,4 @@
-mod audio_file;
+mod analysis;
 mod audio_utils;
 mod cli_args;
 mod dsp;
@@ -10,7 +10,7 @@ use claxon::FlacReader;
 use std::{env, process};
 
 use crate::cli_args::CliArgs;
-use crate::model::audio_file::AudioFile;
+use crate::model::builders::audio_file_builder::AudioFileBuilder;
 use crate::output_format::OutputFormat;
 use crate::ui::print_file_details;
 
@@ -19,7 +19,7 @@ fn main() {
     let args: CliArgs = CliArgs::new(&cli_input);
 
     let flac_details = match FlacReader::open(args.file_path()) {
-        Ok(stream) => AudioFile::new(stream),
+        Ok(stream) => AudioFileBuilder::form_stream(stream),
         Err(error) => {
             println!("error while opening {} : {:?}", args.file_path(), error);
             process::exit(1);

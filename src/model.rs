@@ -7,6 +7,8 @@ pub mod channel;
 pub mod frequency;
 pub mod sonicprobe_error;
 pub mod stereo_signal;
+pub mod output_format;
+pub mod cli_args;
 
 pub type Samples = f64;
 pub type Signal = Arc<[Samples]>;

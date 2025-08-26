@@ -7,36 +7,32 @@ use crate::model::{
     frequency::Frequency, sonicprobe_error::SonicProbeError, stereo_signal::StereoSignal,
 };
 
-pub struct StereoSignalBuilder;
+pub fn stereo_signal_from_flac(stream: FlacReader<File>) -> Result<StereoSignal, SonicProbeError> {
+    let infos = stream.streaminfo();
 
-impl StereoSignalBuilder {
-    pub fn from_flac(stream: FlacReader<File>) -> Result<StereoSignal, SonicProbeError> {
-        let infos = stream.streaminfo();
-
-        if infos.channels != 2 {
-            return Err(SonicProbeError {
-                location: format!("{}:{}", file!(), line!()),
-                message: "Currently only stereo signal is supported".to_owned(),
-            });
-        }
-
-        let sample_rate = Frequency::new(infos.sample_rate)?;
-        let depth = BitDepth::new(infos.bits_per_sample)?;
-        let samples_per_channel: usize = match infos.samples {
-            Some(count) => count.try_into()?,
-            None => 0,
-        };
-
-        let (left, right) = read_audio_signal(stream, depth)?;
-
-        Ok(StereoSignal {
-            left,
-            right,
-            samples_per_channel,
-            sample_rate,
-            depth,
-        })
+    if infos.channels != 2 {
+        return Err(SonicProbeError {
+            location: format!("{}:{}", file!(), line!()),
+            message: "Currently only stereo signal is supported".to_owned(),
+        });
     }
+
+    let sample_rate = Frequency::new(infos.sample_rate)?;
+    let depth = BitDepth::new(infos.bits_per_sample)?;
+    let samples_per_channel: usize = match infos.samples {
+        Some(count) => count.try_into()?,
+        None => 0,
+    };
+
+    let (left, right) = read_audio_signal(stream, depth)?;
+
+    Ok(StereoSignal {
+        left,
+        right,
+        samples_per_channel,
+        sample_rate,
+        depth,
+    })
 }
 
 fn read_audio_signal(

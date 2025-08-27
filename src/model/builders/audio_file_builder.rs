@@ -4,8 +4,8 @@ use std::thread;
 
 use claxon::FlacReader;
 
-use crate::analysis::ActualBitDepth;
-use crate::analysis::StereoCorrelation;
+use crate::dsp::analysis::StereoCorrelation;
+use crate::dsp::analysis::bit_depth::calculate_actual_depth;
 use crate::model::audio_file::AudioFile;
 use crate::model::builders::channel_builder::ChannelBuilder;
 use crate::model::builders::stereo_signal_builder::stereo_signal_from_flac;
@@ -26,7 +26,7 @@ pub fn audio_file_form_stream(stream: FlacReader<File>) -> Result<AudioFile, Son
         move || ChannelBuilder::new(&right_data, sample_rate).build()
     });
 
-    let true_bit_depth = ActualBitDepth::process(&source.left, &source.right, source.depth)?;
+    let true_bit_depth = calculate_actual_depth(&source)?;
 
     let signed_sample_count: i64 = source.samples_per_channel.try_into()?;
 

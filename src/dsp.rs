@@ -1,14 +1,13 @@
+pub mod analysis;
+mod low_pass_filter;
+
 use std::sync::Arc;
 
 use crate::{
-    analysis::clipping_samples::is_clipping,
     audio_utils::to_dbfs,
-    model::sonicprobe_error::SonicProbeError,
-    model::{Signal, frequency::Frequency},
+    dsp::analysis::clipping::is_distorted,
+    model::{Signal, frequency::Frequency, sonicprobe_error::SonicProbeError},
 };
-
-mod dot_product;
-mod low_pass_filter;
 
 pub struct LowPassFilter {
     coeffs: Arc<[[f64; 12]]>,
@@ -25,7 +24,7 @@ pub fn upsample_chain(
 
     for i in 0..source.len() - 12 {
         for value in low_pass.submit(&source[i..i + 12]) {
-            if is_clipping(value) {
+            if is_distorted(value) {
                 clipping_samples += 1;
             }
 

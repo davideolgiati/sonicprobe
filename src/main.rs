@@ -1,8 +1,8 @@
-mod analysis;
 mod audio_utils;
 mod dsp;
 mod ui;
 mod model;
+mod floating_point_math;
 
 use claxon::FlacReader;
 use std::{env, process};

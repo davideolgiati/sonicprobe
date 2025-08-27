@@ -1,5 +1,5 @@
 use crate::{
-    analysis::floating_point_utils::map_sum_lossless,
+    floating_point_math::floating_point_utils::map_sum_lossless,
     model::sonicprobe_error::SonicProbeError,
 };
 

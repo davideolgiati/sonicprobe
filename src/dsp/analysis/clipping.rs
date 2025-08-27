@@ -1,22 +1,20 @@
 use crate::model::Signal;
 
-impl super::ClippingSamples {
-    #[inline]
-    pub fn process(samples: &Signal) -> u64 {
-        let mut count = 0u64;
-        for &sample in samples.iter() {
-            if is_clipping(sample) {
-                count += 1;
-            }
+#[inline]
+pub fn count_clipping_samples(samples: &Signal) -> u64 {
+    let mut count = 0u64;
+    for &sample in samples.iter() {
+        if is_distorted(sample) {
+            count += 1;
         }
-
-        count
     }
+
+    count
 }
 
 #[inline]
-pub fn is_clipping(sample: f64) -> bool {
-    sample.abs() >= 1.0// - crate::constants::CLIP_EPSILON
+pub fn is_distorted(sample: f64) -> bool {
+    sample.abs() >= 1.0
 }
 
 #[cfg(test)]
@@ -24,13 +22,13 @@ pub fn is_clipping(sample: f64) -> bool {
 mod tests {
     use rand::Rng;
 
-    use crate::analysis::ClippingSamples;
+    use crate::dsp::analysis::clipping::count_clipping_samples;
 
     #[test]
     fn no_clip() {
         let mut rng = rand::rng();
         let samples = (0..10).map(|_| rng.random_range(-0.99..0.99)).collect();
-        let res = ClippingSamples::process(&samples);
+        let res = count_clipping_samples(&samples);
 
         assert_eq!(res, 0u64);
     }
@@ -47,7 +45,7 @@ mod tests {
                 }
             })
             .collect();
-        let res = ClippingSamples::process(&samples);
+        let res = count_clipping_samples(&samples);
 
         assert_eq!(res, 4u64);
     }
@@ -57,7 +55,7 @@ mod tests {
         let samples = (0..10)
             .map(|i| if i % 2 == 0 { -1.0 } else { 1.0 })
             .collect();
-        let res = ClippingSamples::process(&samples);
+        let res = count_clipping_samples(&samples);
 
         assert_eq!(res, 10u64);
     }

@@ -1,5 +1,7 @@
 use crate::{
-    model::TARGET_SAMPLE_RATE, dsp::{dot_product::dot_product, LowPassFilter}, model::frequency::Frequency, model::sonicprobe_error::SonicProbeError
+    dsp::LowPassFilter,
+    floating_point_math::dot_product::dot_product,
+    model::{TARGET_SAMPLE_RATE, frequency::Frequency, sonicprobe_error::SonicProbeError},
 };
 
 use std::{f64, sync::Arc};
@@ -47,13 +49,9 @@ impl LowPassFilter {
 
     #[inline]
     pub fn submit(&self, window: &[f64]) -> impl Iterator<Item = f64> {
-        self.coeffs
-            .iter()
-            .map(|coeffs| dot_product(coeffs, window))
+        self.coeffs.iter().map(|coeffs| dot_product(coeffs, window))
     }
 }
-
-
 
 fn hz_to_radian(cutoff: f64) -> f64 {
     (cutoff / TARGET_SAMPLE_RATE) * 2.0 * f64::consts::PI

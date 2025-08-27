@@ -1,6 +1,9 @@
 use core::f64;
 
-use crate::{analysis::floating_point_utils::map_sum_lossless, model::{frequency::Frequency, Signal}};
+use crate::{
+    floating_point_math::floating_point_utils::map_sum_lossless,
+    model::{Signal, frequency::Frequency},
+};
 
 impl super::DynamicRange {
     #[inline]
@@ -16,8 +19,9 @@ impl super::DynamicRange {
         let mut count = 0usize;
 
         for current_chunk in samples.chunks(chunk_size) {
-            let current_rms = (map_sum_lossless(current_chunk, |x| x.powi(2)) / chunk_size as f64).sqrt();
-            
+            let current_rms =
+                (map_sum_lossless(current_chunk, |x| x.powi(2)) / chunk_size as f64).sqrt();
+
             if count < target_population {
                 loudest[target_population - 1] = current_rms;
                 sort_array(&mut loudest, |a, b| a > b);

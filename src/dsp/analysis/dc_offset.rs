@@ -1,5 +1,6 @@
 use crate::{
-    analysis::floating_point_utils::map_sum_lossless, model::sonicprobe_error::SonicProbeError,
+    floating_point_math::floating_point_utils::map_sum_lossless,
+    model::sonicprobe_error::SonicProbeError,
 };
 
 impl super::DCOffset {
@@ -30,19 +31,19 @@ impl super::DCOffset {
 mod tests {
     use std::sync::Arc;
 
-    use crate::analysis::DCOffset;
-
+    use crate::dsp::analysis::DCOffset;
 
     #[test]
     fn zero() {
-        let samples: Arc<[f64]> = (1..11).map(|i| {
-            if i % 2 == 0 {
-                f64::from(-(i / 2))
-            } else {
-                f64::from((i + 1) / 2)
-            }
-        })
-        .collect();
+        let samples: Arc<[f64]> = (1..11)
+            .map(|i| {
+                if i % 2 == 0 {
+                    f64::from(-(i / 2))
+                } else {
+                    f64::from((i + 1) / 2)
+                }
+            })
+            .collect();
         let res = DCOffset::process(&samples).unwrap();
 
         assert!((res - 0.0).abs() < f64::EPSILON);
@@ -50,15 +51,16 @@ mod tests {
 
     #[test]
     fn positive() {
-        let samples: Arc<[f64]> = (1..11).map(|i| {
-            if i % 2 == 0 {
-                f64::from(-(i / 2))
-            } else {
-                f64::from((i + 1) / 2)
-            }
-        })
-        .map(|val| val + 0.002)
-        .collect();
+        let samples: Arc<[f64]> = (1..11)
+            .map(|i| {
+                if i % 2 == 0 {
+                    f64::from(-(i / 2))
+                } else {
+                    f64::from((i + 1) / 2)
+                }
+            })
+            .map(|val| val + 0.002)
+            .collect();
         let res = DCOffset::process(&samples).unwrap();
 
         assert!((res - 0.002).abs() < f64::EPSILON);
@@ -66,15 +68,16 @@ mod tests {
 
     #[test]
     fn negative() {
-                let samples: Arc<[f64]> = (1..11).map(|i| {
-            if i % 2 == 0 {
-                f64::from(-(i / 2))
-            } else {
-                f64::from((i + 1) / 2)
-            }
-        })
-        .map(|val| val - 0.002)
-        .collect();
+        let samples: Arc<[f64]> = (1..11)
+            .map(|i| {
+                if i % 2 == 0 {
+                    f64::from(-(i / 2))
+                } else {
+                    f64::from((i + 1) / 2)
+                }
+            })
+            .map(|val| val - 0.002)
+            .collect();
         let res = DCOffset::process(&samples).unwrap();
 
         assert!((res + 0.002).abs() < f64::EPSILON);

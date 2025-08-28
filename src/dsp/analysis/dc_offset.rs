@@ -3,27 +3,26 @@ use crate::{
     model::sonicprobe_error::SonicProbeError,
 };
 
-impl super::DCOffset {
-    #[inline]
-    #[allow(clippy::cast_sign_loss)]
-    #[allow(clippy::cast_precision_loss)]
-    #[allow(clippy::cast_possible_truncation)]
-    pub fn process(values: &[f64]) -> Result<f64, SonicProbeError> {
-        let sum = map_sum_lossless(values, |x| x);
 
-        let size = values.len() as f64;
-        if (size as usize) != values.len() {
-            return Err(SonicProbeError {
-                location: format!("{}:{}", file!(), line!()),
-                message: format!(
-                    "cannot represent usize value {} exactly in f64",
-                    values.len()
-                ),
-            });
-        }
+#[inline]
+#[allow(clippy::cast_sign_loss)]
+#[allow(clippy::cast_precision_loss)]
+#[allow(clippy::cast_possible_truncation)]
+pub fn calculate_dc_offset(values: &[f64]) -> Result<f64, SonicProbeError> {
+    let sum = map_sum_lossless(values, |x| x);
 
-        Ok(sum / size)
+    let size = values.len() as f64;
+    if (size as usize) != values.len() {
+        return Err(SonicProbeError {
+            location: format!("{}:{}", file!(), line!()),
+            message: format!(
+                "cannot represent usize value {} exactly in f64",
+                values.len()
+            ),
+        });
     }
+
+    Ok(sum / size)
 }
 
 #[cfg(test)]
@@ -31,7 +30,7 @@ impl super::DCOffset {
 mod tests {
     use std::sync::Arc;
 
-    use crate::dsp::analysis::DCOffset;
+    use crate::dsp::analysis::dc_offset::calculate_dc_offset;
 
     #[test]
     fn zero() {
@@ -44,7 +43,7 @@ mod tests {
                 }
             })
             .collect();
-        let res = DCOffset::process(&samples).unwrap();
+        let res = calculate_dc_offset(&samples).unwrap();
 
         assert!((res - 0.0).abs() < f64::EPSILON);
     }
@@ -61,7 +60,7 @@ mod tests {
             })
             .map(|val| val + 0.002)
             .collect();
-        let res = DCOffset::process(&samples).unwrap();
+        let res = calculate_dc_offset(&samples).unwrap();
 
         assert!((res - 0.002).abs() < f64::EPSILON);
     }
@@ -78,7 +77,7 @@ mod tests {
             })
             .map(|val| val - 0.002)
             .collect();
-        let res = DCOffset::process(&samples).unwrap();
+        let res = calculate_dc_offset(&samples).unwrap();
 
         assert!((res + 0.002).abs() < f64::EPSILON);
     }

@@ -114,7 +114,7 @@ large_enum_variant = "warn"
 # missing_safety_doc = "warn"
 
 # Naming and structure
-module_name_repetitions = "warn"
+# module_name_repetitions = "warn"
 similar_names = "warn"
 struct_excessive_bools = "warn"
 fn_params_excessive_bools = "warn"

@@ -4,8 +4,8 @@ use std::thread;
 
 use claxon::FlacReader;
 
-use crate::dsp::analysis::StereoCorrelation;
 use crate::dsp::analysis::bit_depth::calculate_actual_depth;
+use crate::dsp::analysis::stereo_correlation::calculate_stereo_correlation;
 use crate::model::audio_file::AudioFile;
 use crate::model::builders::channel_builder::ChannelBuilder;
 use crate::model::builders::stereo_signal_builder::stereo_signal_from_flac;
@@ -33,7 +33,7 @@ pub fn audio_file_form_stream(stream: FlacReader<File>) -> Result<AudioFile, Son
     let left = left_handle.join()??;
     let right = right_handle.join()??;
 
-    let stereo_correlation = StereoCorrelation::process(
+    let stereo_correlation = calculate_stereo_correlation(
         &source.left,
         &source.right,
         left.dc_offset(),

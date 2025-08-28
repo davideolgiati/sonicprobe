@@ -5,48 +5,46 @@ use crate::{
     model::{Signal, frequency::Frequency},
 };
 
-impl super::DynamicRange {
-    #[inline]
-    #[allow(clippy::cast_sign_loss)]
-    #[allow(clippy::cast_precision_loss)]
-    #[allow(clippy::cast_possible_truncation)]
-    pub fn process(samples: &Signal, sample_rate: Frequency) -> f64 {
-        let chunk_size = get_chunk_size(sample_rate);
-        let target_population = ((samples.len() / chunk_size) * 20) / 100;
+#[inline]
+#[allow(clippy::cast_sign_loss)]
+#[allow(clippy::cast_precision_loss)]
+#[allow(clippy::cast_possible_truncation)]
+pub fn calculate_dynamic_range(samples: &Signal, sample_rate: Frequency) -> f64 {
+    let chunk_size = get_chunk_size(sample_rate);
+    let target_population = ((samples.len() / chunk_size) * 20) / 100;
 
-        let mut quietest: Vec<f64> = vec![f64::MAX; target_population];
-        let mut loudest: Vec<f64> = vec![f64::MIN; target_population];
-        let mut count = 0usize;
+    let mut quietest: Vec<f64> = vec![f64::MAX; target_population];
+    let mut loudest: Vec<f64> = vec![f64::MIN; target_population];
+    let mut count = 0usize;
 
-        for current_chunk in samples.chunks(chunk_size) {
-            let current_rms =
-                (map_sum_lossless(current_chunk, |x| x.powi(2)) / chunk_size as f64).sqrt();
+    for current_chunk in samples.chunks(chunk_size) {
+        let current_rms =
+            (map_sum_lossless(current_chunk, |x| x.powi(2)) / chunk_size as f64).sqrt();
 
-            if count < target_population {
-                loudest[target_population - 1] = current_rms;
-                sort_array(&mut loudest, |a, b| a > b);
-                quietest[target_population - 1] = current_rms;
-                sort_array(&mut quietest, |a, b| a < b);
-                count += 1;
-                continue;
-            }
-
-            if quietest[target_population - 1] > current_rms {
-                quietest[target_population - 1] = current_rms;
-                sort_array(&mut quietest, |a, b| a < b);
-            }
-
-            if loudest[target_population - 1] < current_rms {
-                loudest[target_population - 1] = current_rms;
-                sort_array(&mut loudest, |a, b| a > b);
-            }
+        if count < target_population {
+            loudest[target_population - 1] = current_rms;
+            sort_array(&mut loudest, |a, b| a > b);
+            quietest[target_population - 1] = current_rms;
+            sort_array(&mut quietest, |a, b| a < b);
+            count += 1;
+            continue;
         }
 
-        let loudest_avg = loudest.iter().sum::<f64>() / target_population as f64;
-        let quietest_avg = quietest.iter().sum::<f64>() / target_population as f64;
+        if quietest[target_population - 1] > current_rms {
+            quietest[target_population - 1] = current_rms;
+            sort_array(&mut quietest, |a, b| a < b);
+        }
 
-        loudest_avg / quietest_avg
+        if loudest[target_population - 1] < current_rms {
+            loudest[target_population - 1] = current_rms;
+            sort_array(&mut loudest, |a, b| a > b);
+        }
     }
+
+    let loudest_avg = loudest.iter().sum::<f64>() / target_population as f64;
+    let quietest_avg = quietest.iter().sum::<f64>() / target_population as f64;
+
+    loudest_avg / quietest_avg
 }
 
 const fn get_chunk_size(sample_rate: Frequency) -> usize {

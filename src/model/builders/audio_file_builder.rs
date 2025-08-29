@@ -33,12 +33,7 @@ pub fn audio_file_form_stream(stream: FlacReader<File>) -> Result<AudioFile, Son
     let left = left_handle.join()??;
     let right = right_handle.join()??;
 
-    let stereo_correlation = calculate_stereo_correlation(
-        &source.left,
-        &source.right,
-        left.dc_offset(),
-        right.dc_offset(),
-    );
+    let stereo_correlation = calculate_stereo_correlation(&source.left, &source.right);
 
     Ok(AudioFile {
         left,

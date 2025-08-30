@@ -28,7 +28,7 @@ pub fn audio_file_form_stream(stream: FlacReader<File>) -> Result<AudioFile, Son
 
     let true_bit_depth = calculate_actual_depth(&source)?;
 
-    let signed_sample_count: i64 = source.samples_per_channel.try_into()?;
+    let signed_sample_count: i64 = source.samples_per_channel().try_into()?;
 
     let left = left_handle.join()??;
     let right = right_handle.join()??;
@@ -43,7 +43,7 @@ pub fn audio_file_form_stream(stream: FlacReader<File>) -> Result<AudioFile, Son
         true_depth: true_bit_depth,
         depth: source.depth,
         sample_rate: source.sample_rate,
-        samples_per_channel: source.samples_per_channel,
+        samples_per_channel: source.samples_per_channel(),
         duration: signed_sample_count / i64::from(source.sample_rate.to_hz()),
     })
 }

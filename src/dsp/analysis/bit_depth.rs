@@ -77,7 +77,6 @@ mod tests {
         let stereo = StereoSignal {
             left,
             right,
-            samples_per_channel: 4,
             sample_rate: Frequency::CdQuality,
             depth
         };
@@ -100,7 +99,6 @@ mod tests {
         let stereo = StereoSignal {
             left,
             right,
-            samples_per_channel: 4,
             sample_rate: Frequency::CdQuality,
             depth
         };
@@ -123,7 +121,6 @@ mod tests {
         let stereo = StereoSignal {
             left,
             right,
-            samples_per_channel: 4,
             sample_rate: Frequency::CdQuality,
             depth
         };

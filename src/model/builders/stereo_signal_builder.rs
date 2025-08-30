@@ -19,17 +19,12 @@ pub fn stereo_signal_from_flac(stream: FlacReader<File>) -> Result<StereoSignal,
 
     let sample_rate = Frequency::new(infos.sample_rate)?;
     let depth = BitDepth::new(infos.bits_per_sample)?;
-    let samples_per_channel: usize = match infos.samples {
-        Some(count) => count.try_into()?,
-        None => 0,
-    };
 
     let (left, right) = read_audio_signal(stream, depth)?;
 
     Ok(StereoSignal {
         left,
         right,
-        samples_per_channel,
         sample_rate,
         depth,
     })

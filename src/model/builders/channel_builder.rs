@@ -4,11 +4,14 @@ use crate::{
     audio_utils::to_dbfs,
     dsp::{
         analysis::{
-            clipping::count_clipping_samples, dc_offset::calculate_dc_offset, dynamic_range::calculate_dynamic_range, peak::find_signal_peak, root_mean_square::compute_root_mean_square, zero_crossing_rate::calculate_zero_crossing_rate
+            clipping::count_clipping_samples, dc_offset::calculate_dc_offset,
+            dynamic_range::calculate_dynamic_range, peak::find_signal_peak,
+            root_mean_square::compute_root_mean_square,
+            zero_crossing_rate::calculate_zero_crossing_rate,
         },
         upsample_chain,
     },
-    model::{channel::Channel, frequency::Frequency, sonicprobe_error::SonicProbeError, Signal},
+    model::{Signal, channel::Channel, frequency::Frequency, sonicprobe_error::SonicProbeError},
 };
 
 #[repr(C)]

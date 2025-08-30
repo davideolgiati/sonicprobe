@@ -15,20 +15,11 @@ pub fn calculate_dynamic_range(samples: &Signal, sample_rate: Frequency) -> f64 
 
     let mut quietest: Vec<f64> = vec![f64::MAX; target_population];
     let mut loudest: Vec<f64> = vec![f64::MIN; target_population];
-    let mut count = 0usize;
+
+    let rms_closure = get_rms_fn(chunk_size);
 
     for current_chunk in samples.chunks(chunk_size) {
-        let current_rms =
-            (map_sum_lossless(current_chunk, |x| x.powi(2)) / chunk_size as f64).sqrt();
-
-        if count < target_population {
-            loudest[target_population - 1] = current_rms;
-            sort_array(&mut loudest, |a, b| a > b);
-            quietest[target_population - 1] = current_rms;
-            sort_array(&mut quietest, |a, b| a < b);
-            count += 1;
-            continue;
-        }
+        let current_rms = rms_closure(current_chunk);
 
         if quietest[target_population - 1] > current_rms {
             quietest[target_population - 1] = current_rms;
@@ -45,6 +36,11 @@ pub fn calculate_dynamic_range(samples: &Signal, sample_rate: Frequency) -> f64 
     let quietest_avg = quietest.iter().sum::<f64>() / target_population as f64;
 
     loudest_avg / quietest_avg
+}
+
+#[allow(clippy::cast_precision_loss)]
+fn get_rms_fn(chunk_size: usize) -> impl Fn(&[f64]) -> f64 {
+    move |chunk: &[f64]| (map_sum_lossless(chunk, |x: f64| x.powi(2)) / chunk_size as f64).sqrt()
 }
 
 const fn get_chunk_size(sample_rate: Frequency) -> usize {

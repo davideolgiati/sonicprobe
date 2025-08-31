@@ -1,17 +1,11 @@
 pub mod analysis;
 mod low_pass_filter;
 
-use std::sync::Arc;
-
 use crate::{
     audio_utils::to_dbfs,
-    dsp::analysis::clipping::is_distorted,
-    model::{Signal, frequency::Frequency, sonicprobe_error::SonicProbeError},
+    dsp::{analysis::clipping::is_distorted, low_pass_filter::LowPassFilter},
+    model::{frequency::Frequency, sonicprobe_error::SonicProbeError, Signal},
 };
-
-pub struct LowPassFilter {
-    coeffs: Arc<[[f64; 12]]>,
-}
 
 pub fn upsample_chain(
     source: &Signal,

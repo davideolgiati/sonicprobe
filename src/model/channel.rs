@@ -49,7 +49,7 @@ impl Channel {
         self.true_clipping_samples_count as f64 / self.samples_count as f64
     }
 
-    pub fn crest_factor(&self) -> f64 {
+    pub const fn crest_factor(&self) -> f64 {
         self.peak - self.rms
     }
 }

@@ -1,18 +1,34 @@
 use crate::{
     floating_point_math::dot_product::dot_product,
-    model::{frequency::Frequency, sonicprobe_error::SonicProbeError, HD_COEFFS, SD_COEFFS},
+    model::{HD_COEFFS, SD_COEFFS, frequency::Frequency, sonicprobe_error::SonicProbeError},
 };
 
 use std::f64;
 
+enum Phases {
+    Two,
+    Four,
+}
+
 pub struct LowPassFilter<'a> {
-    coeffs: &'a [[f64; 12]],
+    phase_matrix: &'a [[f64; 12]],
+    phases: Phases
 }
 
 impl LowPassFilter<'_> {
-    #[allow(clippy::unreadable_literal)]
     pub fn new(source_sample_rate: Frequency) -> Result<Self, SonicProbeError> {
-        let coeffs: &[[f64; 12]] = match source_sample_rate {
+        let phases: Phases = match source_sample_rate {
+            Frequency::CdQuality | Frequency::ProAudio => Phases::Four,
+            Frequency::HiResDouble | Frequency::DvdAudio => Phases::Two,
+            Frequency::StudioMaster | Frequency::UltraHiRes => {
+                return Err(SonicProbeError {
+                    location: format!("{}:{}", file!(), line!()),
+                    message: "upscaling for 176,400Hz and 192,000Hz not implemented".to_owned(),
+                });
+            }
+        };
+
+        let phase_matrix: &[[f64; 12]] = match source_sample_rate {
             Frequency::CdQuality | Frequency::ProAudio => &SD_COEFFS,
             Frequency::HiResDouble | Frequency::DvdAudio => &HD_COEFFS,
             Frequency::StudioMaster | Frequency::UltraHiRes => {
@@ -23,14 +39,17 @@ impl LowPassFilter<'_> {
             }
         };
 
-        Ok(Self {
-            coeffs,
-        })
+        Ok(Self { phase_matrix, phases })
     }
 
     #[inline]
     pub fn submit(&self, window: &[f64]) -> impl Iterator<Item = f64> {
-        (0..self.coeffs.len()).map(|index| dot_product(&self.coeffs[index], window))
+        let range: std::ops::Range<usize> = match self.phases {
+            Phases::Two => 0..2,
+            Phases::Four => 0..4
+        };
+
+        range.map(|index| dot_product(&self.phase_matrix[index], window))
     }
 }
 

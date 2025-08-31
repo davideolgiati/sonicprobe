@@ -13,7 +13,8 @@ pub fn upsample_chain(
 ) -> Result<(f64, u64), SonicProbeError> {
     let low_pass = LowPassFilter::new(source_sample_rate)?;
 
-    let mut peak = f64::MIN;
+    let mut peak_h = f64::MIN;
+    let mut peak_l = f64::MAX;
     let mut clipping_samples = 0u64;
 
     for i in 0..source.len() - 12 {
@@ -22,11 +23,21 @@ pub fn upsample_chain(
                 clipping_samples += 1;
             }
 
-            if value.abs() > peak {
-                peak = value.abs();
-            }
+            if value > peak_h {
+                peak_h = value;
+            } else if value < peak_l {
+                peak_l = value;
+            } 
         }
     }
+
+    let peak = {
+        if peak_l.abs() > peak_h {
+            peak_l
+        } else {
+            peak_h
+        }
+    };
 
     Ok((to_dbfs(peak), clipping_samples))
 }

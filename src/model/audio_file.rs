@@ -16,7 +16,7 @@ pub struct AudioFile {
 }
 
 impl AudioFile {
-    pub fn rms_balance(&self) -> f64 {
+    pub const fn rms_balance(&self) -> f64 {
         self.left.rms() - self.right.rms()
     }
 

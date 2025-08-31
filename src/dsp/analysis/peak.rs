@@ -1,12 +1,21 @@
-use std::cmp::Ordering;
-
 use crate::{audio_utils::to_dbfs, model::Signal};
 
 #[inline]
 pub fn find_signal_peak(samples: &Signal) -> f64 {
-    samples
-        .iter()
-        .map(|x| x.abs())
-        .max_by(|&item1, &item2| item1.partial_cmp(&item2).unwrap_or(Ordering::Equal))
-        .map_or_else(|| to_dbfs(0.0), to_dbfs)
+    let mut peak_h = f64::MIN;
+    let mut peak_l = f64::MAX;
+
+    for &value in samples.iter() {
+        if value > peak_h {
+            peak_h = value;
+        } else if value < peak_l {
+            peak_l = value;
+        }
+    }
+
+    if peak_l.abs() > peak_h {
+        to_dbfs(peak_l)
+    } else {
+        to_dbfs(peak_h)
+    }
 }

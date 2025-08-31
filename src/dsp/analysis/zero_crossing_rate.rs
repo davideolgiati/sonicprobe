@@ -28,7 +28,7 @@ pub fn calculate_zero_crossing_rate(samples: &Signal, sample_rate: Frequency) ->
     crossing_rate / (1 + (main_section_size / sample_rate.to_hz() as usize) as u64)
 }
 
-fn get_value_sign(value: f64) -> i8 {
+const fn get_value_sign(value: f64) -> i8 {
     if value < 0.0 {
         return -1;
     }

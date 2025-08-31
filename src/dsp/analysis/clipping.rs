@@ -13,8 +13,8 @@ pub fn count_clipping_samples(samples: &Signal) -> u64 {
 }
 
 #[inline]
-pub fn is_distorted(sample: f64) -> bool {
-    sample.abs() >= 1.0
+pub const fn is_distorted(sample: f64) -> bool {
+    sample >= 1.0 || sample <= -1.0
 }
 
 #[cfg(test)]

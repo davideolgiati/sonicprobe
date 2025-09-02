@@ -2,23 +2,16 @@ mod audio;
 mod entry;
 mod filesystem;
 mod table;
+mod section;
 
 use crate::{
-    model::audio_file::AudioFile, ui::{
-        entry::Entry,
-        filesystem::{filename_from_path, get_formatted_file_size},
-        table::Table,
-    }
+    model::audio_file::AudioFile,
+    ui::{
+        entry::Entry, filesystem::{filename_from_path, get_formatted_file_size}, section::Section, table::Table
+    },
 };
 
-fn section_header(title: &str) -> String {
-    let separator_len = 70 - title.len() - 4;
-    format!(
-        "── {} {}\n",
-        title.to_ascii_uppercase(),
-        "─".repeat(separator_len)
-    )
-}
+
 
 fn seconds_to_minute_mark(duration: i64) -> String {
     let seconds = duration % 60;
@@ -37,44 +30,21 @@ pub fn print_file_details(filepath: &str, file: &AudioFile) {
     println!("{:^70}", "SONICPROBE - AUDIO ANALYSIS REPORT");
     println!("{}\n", "=".repeat(70));
 
-    println!("{}", section_header("FILE DETAILS"));
-    println!("   {:<18} : {}", "Filename", filename);
-    println!("   {:<18} : {}", "Size", formatted_size);
-    println!("   {:<18} : {}", "Sample Count", file.samples_per_channel * usize::from(file.channels));
-    println!(
-        "   {:<18} : {}",
-        "Duration",
-        seconds_to_minute_mark(file.duration)
-    );
-    println!(
-        "   {:<18} : {}",
-        "Sample Rate",
-        file.sample_rate.description()
-    );
-    println!(
-        "   {:<18} : {} ",
-        "Bit Depth",
-        file.depth.description()
-    );
-    println!(
-        "   {:<18} : {}",
-        "Bit depth usage",
-        Entry::from_bit(file.true_depth).formatted()
-        
-    );
+    let file_details = Section::new("FILE DETAILS")
+        .add("Filename", Entry::from_str(filename))
+        .add("Size", Entry::from_str(formatted_size))
+        .add("Sample Count", Entry::from_usize(file.samples_per_channel * usize::from(file.channels)))
+        .add("Duration", Entry::from_str(seconds_to_minute_mark(file.duration)))
+        .add("Sample Rate", Entry::from_str(file.sample_rate.description().to_owned()))
+        .add("Bit Depth", Entry::from_str(file.depth.description().to_owned()))
+        .add("Bit depth usage", Entry::from_bit(file.true_depth))
+        .build();
 
-    println!("\n\n{}", section_header("STEREO FIELD ANALYSIS"));
-    println!("   {:<18} :  {}", "Channels", file.channels);
-    println!(
-        "   {:<18} : {}",
-        "RMS Balance (L/R)",
-        Entry::from_db(file.rms_balance()).formatted()
-    );
-    println!(
-        "   {:<18} :  {:.2}",
-        "Stereo Correlation",
-        file.stereo_correlation
-    );
+    let stereo_field_analisys = Section::new("STEREO FIELD ANALYSIS")
+        .add("Channels", Entry::from_usize(file.channels as usize))
+        .add("RMS Balance (L/R)",Entry::from_db(file.rms_balance()))
+        .add("Stereo Correlation", Entry::from_percent(file.stereo_correlation * 100.0))
+        .build();
 
     let channels_details_table = Table::new(left, right)
         .set_headers("CHANNEL ANALYSIS", "LEFT", "RIGHT")
@@ -97,5 +67,7 @@ pub fn print_file_details(filepath: &str, file: &AudioFile) {
         })
         .build();
 
+    println!("{file_details}");
+    println!("{stereo_field_analisys}");
     println!("\n\n{channels_details_table}");
 }

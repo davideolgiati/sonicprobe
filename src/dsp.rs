@@ -33,7 +33,7 @@ pub fn upsample_chain(
 
     let peak = {
         if peak_l.abs() > peak_h {
-            peak_l
+            peak_l.abs()
         } else {
             peak_h
         }

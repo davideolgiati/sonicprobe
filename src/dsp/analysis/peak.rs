@@ -14,7 +14,7 @@ pub fn find_signal_peak(samples: &Signal) -> f64 {
     }
 
     if peak_l.abs() > peak_h {
-        to_dbfs(peak_l)
+        to_dbfs(peak_l.abs())
     } else {
         to_dbfs(peak_h)
     }

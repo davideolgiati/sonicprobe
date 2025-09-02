@@ -2,25 +2,43 @@ use crate::ui::audio::{format_db, format_dr, format_hz, format_volt};
 
 pub struct Entry {
     value: String,
-    unit: String,
+    unit: Option<String>,
 }
 
 impl Entry {
     pub fn formatted(self) -> String {
-        format!("{} {:>4}", self.value, self.unit)
+        match self.unit {
+            Some(unit) => format!("{} {:>4}", self.value, unit),
+            None => self.value
+        }
+        
+    }
+
+    pub const fn from_str(value: String) -> Self {
+        Self {
+            value,
+            unit: None,
+        }
+    }
+
+    pub fn from_usize(value: usize) -> Self {
+        Self {
+            value: format!("{value}"),
+            unit: None,
+        }
     }
 
     pub fn from_db(value: f64) -> Self {
         Self {
             value: format_db(value),
-            unit: String::from("dB"),
+            unit: Some(String::from("dB")),
         }
     }
 
     pub fn from_volt(value: f64) -> Self {
         Self {
             value: format_volt(value),
-            unit: String::from("V"),
+            unit: Some(String::from("V")),
         }
     }
 
@@ -28,14 +46,14 @@ impl Entry {
     pub fn from_hz(value: u64) -> Self {
         Self {
             value: format_hz(value),
-            unit: String::from("Hz"),
+            unit: Some(String::from("Hz")),
         }
     }
 
     pub fn from_percent(value: f64) -> Self {
         Self {
             value: format_percent(value),
-            unit: String::from("%"),
+            unit: Some(String::from("%"))
         }
     }
 
@@ -44,14 +62,14 @@ impl Entry {
         let new_value = value.round().abs() as i64;
         Self {
             value: format_dr(new_value),
-            unit: String::from("DR"),
+            unit: Some(String::from("DR")),
         }
     }
 
     pub fn from_bit(value: u8) -> Self {
         Self {
             value: format!("{value}"),
-            unit: String::from("bit"),
+            unit: Some(String::from("bit")),
         }
     }
 }

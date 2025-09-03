@@ -2,14 +2,14 @@ use core::f64;
 
 use crate::{
     floating_point_math::floating_point_utils::map_sum_lossless,
-    model::{Signal, frequency::Frequency},
+    model::{decibel::Decibel, frequency::Frequency, Signal},
 };
 
 #[inline]
 #[allow(clippy::cast_sign_loss)]
 #[allow(clippy::cast_precision_loss)]
 #[allow(clippy::cast_possible_truncation)]
-pub fn calculate_dynamic_range(samples: &Signal, sample_rate: Frequency) -> f64 {
+pub fn calculate_dynamic_range(samples: &Signal, sample_rate: Frequency) -> Decibel {
     let chunk_size = get_chunk_size(sample_rate);
     let target_population = ((samples.len() / chunk_size) * 20) / 100;
 
@@ -35,7 +35,7 @@ pub fn calculate_dynamic_range(samples: &Signal, sample_rate: Frequency) -> f64 
     let loudest_avg = loudest.iter().sum::<f64>() / target_population as f64;
     let quietest_avg = quietest.iter().sum::<f64>() / target_population as f64;
 
-    loudest_avg / quietest_avg
+    Decibel::new(loudest_avg / quietest_avg)
 }
 
 #[allow(clippy::cast_precision_loss)]

@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use crate::{
-    audio_utils::to_dbfs,
     dsp::{
         analysis::{
             clipping::count_clipping_samples, dc_offset::calculate_dc_offset,
@@ -11,7 +10,7 @@ use crate::{
         },
         upsample_chain,
     },
-    model::{Signal, channel::Channel, frequency::Frequency, sonicprobe_error::SonicProbeError},
+    model::{channel::Channel, decibel::Decibel, dynamic_range::DynamicRange, frequency::Frequency, sonicprobe_error::SonicProbeError, Signal},
 };
 
 #[repr(C)]
@@ -44,13 +43,13 @@ pub fn from_samples(builder: &ChannelBuilder) -> Result<Channel, SonicProbeError
 
     let peak = find_signal_peak(samples);
     let dc_offset = calculate_dc_offset(samples)?;
-    let rms = to_dbfs(compute_root_mean_square(samples)?);
+    let rms = Decibel::new(compute_root_mean_square(samples)?);
     let zcr = calculate_zero_crossing_rate(samples, builder.sample_rate);
     let clipping_samples_count = count_clipping_samples(samples);
 
     let (true_peak, true_clipping_samples_count) = upsample_chain(samples, builder.sample_rate)?;
 
-    let dr = to_dbfs(calculate_dynamic_range(samples, builder.sample_rate));
+    let dr = DynamicRange::from(calculate_dynamic_range(samples, builder.sample_rate));
 
     Ok(Channel {
         rms,

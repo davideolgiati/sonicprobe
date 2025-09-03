@@ -2,15 +2,14 @@ pub mod analysis;
 mod low_pass_filter;
 
 use crate::{
-    audio_utils::to_dbfs,
     dsp::{analysis::clipping::is_distorted, low_pass_filter::LowPassFilter},
-    model::{frequency::Frequency, sonicprobe_error::SonicProbeError, Signal},
+    model::{decibel::Decibel, frequency::Frequency, sonicprobe_error::SonicProbeError, Signal},
 };
 
 pub fn upsample_chain(
     source: &Signal,
     source_sample_rate: Frequency,
-) -> Result<(f64, u64), SonicProbeError> {
+) -> Result<(Decibel, u64), SonicProbeError> {
     let low_pass = LowPassFilter::new(source_sample_rate)?;
 
     let mut peak_h = f64::MIN;
@@ -39,5 +38,5 @@ pub fn upsample_chain(
         }
     };
 
-    Ok((to_dbfs(peak), clipping_samples))
+    Ok((Decibel::new(peak), clipping_samples))
 }

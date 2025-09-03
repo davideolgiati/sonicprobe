@@ -1,13 +1,15 @@
 use serde::Serialize;
 
+use crate::model::{decibel::Decibel, dynamic_range::DynamicRange};
+
 #[derive(Clone, Copy, Serialize)]
 pub struct Channel {
     pub(super) samples_count: u64,
     pub(super) dc_offset: f64,
-    pub(super) true_peak: f64,
-    pub(super) peak: f64,
-    pub(super) rms: f64,
-    pub(super) dr: f64,
+    pub(super) true_peak: Decibel,
+    pub(super) peak: Decibel,
+    pub(super) rms: Decibel,
+    pub(super) dr: DynamicRange,
     pub(super) true_clipping_samples_count: u64,
     pub(super) clipping_samples_count: u64,
     pub(super) zero_crossing_rate: u64,
@@ -19,19 +21,19 @@ impl Channel {
         self.dc_offset
     }
     #[inline]
-    pub const fn true_peak(&self) -> f64 {
+    pub const fn true_peak(&self) -> Decibel {
         self.true_peak
     }
     #[inline]
-    pub const fn peak(&self) -> f64 {
+    pub const fn peak(&self) -> Decibel {
         self.peak
     }
     #[inline]
-    pub const fn rms(&self) -> f64 {
+    pub const fn rms(&self) -> Decibel {
         self.rms
     }
     #[inline]
-    pub const fn dr(&self) -> f64 {
+    pub const fn dr(&self) -> DynamicRange {
         self.dr
     }
     #[inline]
@@ -49,7 +51,7 @@ impl Channel {
         self.true_clipping_samples_count as f64 / self.samples_count as f64
     }
 
-    pub const fn crest_factor(&self) -> f64 {
+    pub fn crest_factor(&self) -> Decibel {
         self.peak - self.rms
     }
 }

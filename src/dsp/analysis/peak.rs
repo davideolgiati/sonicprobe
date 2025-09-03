@@ -1,7 +1,7 @@
-use crate::{audio_utils::to_dbfs, model::Signal};
+use crate::{model::{decibel::Decibel, Signal}};
 
 #[inline]
-pub fn find_signal_peak(samples: &Signal) -> f64 {
+pub fn find_signal_peak(samples: &Signal) -> Decibel {
     let mut peak_h = f64::MIN;
     let mut peak_l = f64::MAX;
 
@@ -14,8 +14,8 @@ pub fn find_signal_peak(samples: &Signal) -> f64 {
     }
 
     if peak_l.abs() > peak_h {
-        to_dbfs(peak_l.abs())
+        Decibel::new(peak_l.abs())
     } else {
-        to_dbfs(peak_h)
+        Decibel::new(peak_h)
     }
 }

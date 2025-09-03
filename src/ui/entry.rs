@@ -1,8 +1,44 @@
-use crate::ui::audio::{format_db, format_dr, format_hz, format_volt};
+use crate::{model::{decibel::Decibel, dynamic_range::DynamicRange}, ui::audio::{format_hz, format_volt}};
 
 pub struct Entry {
     value: String,
     unit: Option<String>,
+}
+
+impl From<String> for Entry {
+    fn from(value: String) -> Self {
+        Self {
+            value,
+            unit: None,
+        }
+    }
+}
+
+impl From<usize> for Entry {
+    fn from(value: usize) -> Self {
+        Self {
+            value: format!("{value}"),
+            unit: None,
+        }
+    }
+}
+
+impl From<Decibel> for Entry {
+    fn from(obj: Decibel) -> Self {
+        Self {
+            value: obj.get_string_value(),
+            unit: Some(Decibel::get_unit()),
+        }
+    }
+}
+
+impl From<DynamicRange> for Entry {
+    fn from(obj: DynamicRange) -> Self {
+        Self {
+            value: obj.get_string_value(),
+            unit: Some(DynamicRange::get_unit()),
+        }
+    }
 }
 
 impl Entry {
@@ -10,28 +46,6 @@ impl Entry {
         match self.unit {
             Some(unit) => format!("{} {:>4}", self.value, unit),
             None => self.value
-        }
-        
-    }
-
-    pub const fn from_str(value: String) -> Self {
-        Self {
-            value,
-            unit: None,
-        }
-    }
-
-    pub fn from_usize(value: usize) -> Self {
-        Self {
-            value: format!("{value}"),
-            unit: None,
-        }
-    }
-
-    pub fn from_db(value: f64) -> Self {
-        Self {
-            value: format_db(value),
-            unit: Some(String::from("dB")),
         }
     }
 
@@ -42,7 +56,6 @@ impl Entry {
         }
     }
 
-    #[allow(clippy::cast_possible_truncation)]
     pub fn from_hz(value: u64) -> Self {
         Self {
             value: format_hz(value),
@@ -54,15 +67,6 @@ impl Entry {
         Self {
             value: format_percent(value),
             unit: Some(String::from("%"))
-        }
-    }
-
-    #[allow(clippy::cast_possible_truncation)]
-    pub fn from_dr(value: f64) -> Self {
-        let new_value = value.round().abs() as i64;
-        Self {
-            value: format_dr(new_value),
-            unit: Some(String::from("DR")),
         }
     }
 

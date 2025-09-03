@@ -31,33 +31,33 @@ pub fn print_file_details(filepath: &str, file: &AudioFile) {
     println!("{}\n", "=".repeat(70));
 
     let file_details = Section::new("FILE DETAILS")
-        .add("Filename", Entry::from_str(filename))
-        .add("Size", Entry::from_str(formatted_size))
-        .add("Sample Count", Entry::from_usize(file.samples_per_channel * usize::from(file.channels)))
-        .add("Duration", Entry::from_str(seconds_to_minute_mark(file.duration)))
-        .add("Sample Rate", Entry::from_str(file.sample_rate.description().to_owned()))
-        .add("Bit Depth", Entry::from_str(file.depth.description().to_owned()))
+        .add("Filename", Entry::from(filename))
+        .add("Size", Entry::from(formatted_size))
+        .add("Sample Count", Entry::from(file.samples_per_channel * usize::from(file.channels)))
+        .add("Duration", Entry::from(seconds_to_minute_mark(file.duration)))
+        .add("Sample Rate", Entry::from(file.sample_rate.description().to_owned()))
+        .add("Bit Depth", Entry::from(file.depth.description().to_owned()))
         .add("Bit depth usage", Entry::from_bit(file.true_depth))
         .build();
 
     let stereo_field_analisys = Section::new("STEREO FIELD ANALYSIS")
-        .add("Channels", Entry::from_usize(file.channels as usize))
-        .add("RMS Balance (L/R)",Entry::from_db(file.rms_balance()))
+        .add("Channels", Entry::from(file.channels as usize))
+        .add("RMS Balance (L/R)",Entry::from(file.rms_balance()))
         .add("Stereo Correlation", Entry::from_percent(file.stereo_correlation * 100.0))
         .build();
 
     let channels_details_table = Table::new(left, right)
         .set_headers("CHANNEL ANALYSIS", "LEFT", "RIGHT")
         .add_section()
-        .add("RMS Level", |c| Entry::from_db(c.rms()))
-        .add("Peak Level", |c| Entry::from_db(c.peak()))
-        .add("True Peak", |c| Entry::from_db(c.true_peak()))
-        .add("Crest Factor", |c| Entry::from_db(c.crest_factor()))
+        .add("RMS Level", |c| Entry::from(c.rms()))
+        .add("Peak Level", |c| Entry::from(c.peak()))
+        .add("True Peak", |c| Entry::from(c.true_peak()))
+        .add("Crest Factor", |c| Entry::from(c.crest_factor()))
         .add("DC Offset", |c| Entry::from_volt(c.dc_offset()))
         .add("Zero Crossing Rate", |c| {
             Entry::from_hz(c.zero_crossing_rate())
         })
-        .add("Dynamic Range", |c| Entry::from_dr(c.dr()))
+        .add("Dynamic Range", |c| Entry::from(c.dr()))
         .add_section()
         .add("Clipping", |c| {
             Entry::from_percent(c.clipping_samples_ratio() * 100.0)
@@ -69,5 +69,5 @@ pub fn print_file_details(filepath: &str, file: &AudioFile) {
 
     println!("{file_details}");
     println!("{stereo_field_analisys}");
-    println!("\n\n{channels_details_table}");
+    println!("{channels_details_table}");
 }

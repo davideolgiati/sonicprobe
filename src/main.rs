@@ -1,4 +1,3 @@
-mod audio_utils;
 mod dsp;
 mod ui;
 mod model;

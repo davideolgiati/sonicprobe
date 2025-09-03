@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use crate::model::{Milliseconds, bit_depth::BitDepth, channel::Channel, frequency::Frequency};
+use crate::model::{bit_depth::BitDepth, channel::Channel, decibel::Decibel, frequency::Frequency, Milliseconds};
 
 #[derive(Serialize)]
 pub struct AudioFile {
@@ -16,7 +16,7 @@ pub struct AudioFile {
 }
 
 impl AudioFile {
-    pub const fn rms_balance(&self) -> f64 {
+    pub fn rms_balance(&self) -> Decibel {
         self.left.rms() - self.right.rms()
     }
 

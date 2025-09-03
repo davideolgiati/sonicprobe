@@ -9,6 +9,8 @@ pub mod frequency;
 pub mod output_format;
 pub mod sonicprobe_error;
 pub mod stereo_signal;
+pub mod decibel;
+pub mod dynamic_range;
 
 pub type Samples = f64;
 pub type Signal = Arc<[Samples]>;

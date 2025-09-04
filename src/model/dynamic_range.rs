@@ -1,5 +1,3 @@
-use std::ops::Sub;
-
 use serde::Serialize;
 
 use crate::model::decibel::Decibel;
@@ -25,10 +23,54 @@ impl DynamicRange {
         }
 }
 
-impl Sub for DynamicRange {
-    type Output = Self;
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use super::*;
 
-    fn sub(self, other: Self) -> Self {
-        Self(self.0 - other.0)
+    #[test]
+    fn from_positive_decibel() {
+        let db = Decibel::new(2.0);
+        let dr: DynamicRange = db.into();
+        assert_eq!(dr.get_string_value(), "6");
+    }
+
+    #[test]
+    fn from_zero_decibel() {
+        let db = Decibel::new(1.0);
+        let dr: DynamicRange = db.into();
+        assert_eq!(dr.get_string_value(), "0");
+    }
+
+    #[test]
+    fn from_negative_decibel() {
+        let db = Decibel::new(0.1);
+        let dr: DynamicRange = db.into();
+        assert_eq!(dr.get_string_value(), "20");
+    }
+
+    #[test]
+    fn from_decibel_rounds() {
+        let db = Decibel::new(0.316_227_766_016_837_94);
+        let dr: DynamicRange = db.into();
+        assert_eq!(dr.get_string_value(), "10");
+    }
+
+    #[test]
+    fn get_string_value() {
+        let dr = DynamicRange(42);
+        assert_eq!(dr.get_string_value(), "42");
+    }
+
+    #[test]
+    fn get_unit() {
+        assert_eq!(DynamicRange::get_unit(), "DR");
+    }
+
+    #[test]
+    fn serialize() {
+        let dr = DynamicRange(15);
+        let json = serde_json::to_string(&dr).unwrap();
+        assert_eq!(json, "15");
     }
 }

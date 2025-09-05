@@ -1,6 +1,6 @@
 use crate::{
     floating_point_math::floating_point_utils::map_sum_lossless,
-    model::sonicprobe_error::SonicProbeError,
+    model::{sonicprobe_error::SonicProbeError, Signal},
 };
 
 
@@ -8,7 +8,7 @@ use crate::{
 #[allow(clippy::cast_sign_loss)]
 #[allow(clippy::cast_precision_loss)]
 #[allow(clippy::cast_possible_truncation)]
-pub fn calculate_dc_offset(values: &[f64]) -> Result<f64, SonicProbeError> {
+pub fn calculate_dc_offset(values: &Signal) -> Result<f64, SonicProbeError> {
     let sum = map_sum_lossless(values, |x| x);
 
     let size = values.len() as f64;

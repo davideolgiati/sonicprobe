@@ -44,7 +44,7 @@ fn get_rms_fn(chunk_size: usize) -> impl Fn(&[f64]) -> f64 {
 }
 
 const fn get_chunk_size(sample_rate: Frequency) -> usize {
-    sample_rate.to_hz() as usize * 3
+    sample_rate.to_hz() * 3
 }
 
 fn sort_array<T: Fn(f64, f64) -> bool>(array: &mut [f64], cmp_fn: T) {

@@ -5,21 +5,21 @@ use crate::{
 
 use std::f64;
 
-enum Phases {
+enum PhaseCount {
     Two,
     Four,
 }
 
 pub struct LowPassFilter<'a> {
     phase_matrix: &'a [[f64; 12]],
-    phases: Phases
+    phases: PhaseCount
 }
 
 impl LowPassFilter<'_> {
     pub fn new(source_sample_rate: Frequency) -> Result<Self, SonicProbeError> {
-        let phases: Phases = match source_sample_rate {
-            Frequency::CdQuality | Frequency::ProAudio => Phases::Four,
-            Frequency::HiResDouble | Frequency::DvdAudio => Phases::Two,
+        let phases: PhaseCount = match source_sample_rate {
+            Frequency::CdQuality | Frequency::ProAudio => PhaseCount::Four,
+            Frequency::HiResDouble | Frequency::DvdAudio => PhaseCount::Two,
             Frequency::StudioMaster | Frequency::UltraHiRes => {
                 return Err(SonicProbeError {
                     location: format!("{}:{}", file!(), line!()),
@@ -45,8 +45,8 @@ impl LowPassFilter<'_> {
     #[inline]
     pub fn submit(&self, window: &[f64]) -> impl Iterator<Item = f64> {
         let range: std::ops::Range<usize> = match self.phases {
-            Phases::Two => 0..2,
-            Phases::Four => 0..4
+            PhaseCount::Two => 0..2,
+            PhaseCount::Four => 0..4
         };
 
         range.map(|index| dot_product(&self.phase_matrix[index], window))

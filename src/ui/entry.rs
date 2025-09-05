@@ -56,7 +56,7 @@ impl Entry {
         }
     }
 
-    pub fn from_hz(value: u64) -> Self {
+    pub fn from_hz(value: usize) -> Self {
         Self {
             value: format_hz(value),
             unit: Some(String::from("Hz")),

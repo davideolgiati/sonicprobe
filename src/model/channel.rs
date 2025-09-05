@@ -12,7 +12,7 @@ pub struct Channel {
     pub(super) dr: DynamicRange,
     pub(super) true_clipping_samples_count: u64,
     pub(super) clipping_samples_count: u64,
-    pub(super) zero_crossing_rate: u64,
+    pub(super) zero_crossing_rate: usize,
 }
 
 impl Channel {
@@ -37,7 +37,7 @@ impl Channel {
         self.dr
     }
     #[inline]
-    pub const fn zero_crossing_rate(&self) -> u64 {
+    pub const fn zero_crossing_rate(&self) -> usize {
         self.zero_crossing_rate
     }
 

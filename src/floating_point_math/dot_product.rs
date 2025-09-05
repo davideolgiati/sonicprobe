@@ -1,43 +1,43 @@
 use std::arch::asm;
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-pub fn dot_product(a: &[f64], b: &[f64]) -> f64 {
+pub fn dot_product(left: &[f64], right: &[f64]) -> f64 {
     if std::is_x86_feature_detected!("avx") {
-        unsafe { dot_product_avx(a, b) }
+        unsafe { dot_product_avx(left, right) }
     } else if std::is_x86_feature_detected!("sse3") {
-        unsafe { dot_product_sse3(a, b) }
+        unsafe { dot_product_sse3(left, right) }
     } else {
-        dot_product_scalar(a, b)
+        dot_product_scalar(left, right)
     }
 }
 
 #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
-pub fn dot_product(a: &[f64], b: &[f64]) -> f64 {
-    dot_product_scalar(a, b)
+pub fn dot_product(left: &[f64], right: &[f64]) -> f64 {
+    dot_product_scalar(left, right)
 }
 
 #[inline]
-fn dot_product_scalar(a: &[f64], b: &[f64]) -> f64 {
-    assert_eq!(a.len(), 12);
-    assert_eq!(b.len(), 12);
+fn dot_product_scalar(left: &[f64], right: &[f64]) -> f64 {
+    assert_eq!(left.len(), 12);
+    assert_eq!(right.len(), 12);
 
     let mut sum = [0.0f64; 4];
-    let pa = a.as_ptr();
-    let pb = b.as_ptr();
+    let letf_ptr = left.as_ptr();
+    let right_ptr = right.as_ptr();
 
     unsafe {
-        sum[0] += *pa * *pb;
-        sum[1] += *pa.add(1) * *pb.add(1);
-        sum[2] += *pa.add(2) * *pb.add(2);
-        sum[3] += *pa.add(3) * *pb.add(3);
-        sum[0] += *pa.add(4) * *pb.add(4);
-        sum[1] += *pa.add(5) * *pb.add(5);
-        sum[2] += *pa.add(6) * *pb.add(6);
-        sum[3] += *pa.add(7) * *pb.add(7);
-        sum[0] += *pa.add(8) * *pb.add(8);
-        sum[1] += *pa.add(9) * *pb.add(9);
-        sum[2] += *pa.add(10) * *pb.add(10);
-        sum[3] += *pa.add(11) * *pb.add(11);
+        sum[0] += *letf_ptr * *right_ptr;
+        sum[1] += *letf_ptr.add(1) * *right_ptr.add(1);
+        sum[2] += *letf_ptr.add(2) * *right_ptr.add(2);
+        sum[3] += *letf_ptr.add(3) * *right_ptr.add(3);
+        sum[0] += *letf_ptr.add(4) * *right_ptr.add(4);
+        sum[1] += *letf_ptr.add(5) * *right_ptr.add(5);
+        sum[2] += *letf_ptr.add(6) * *right_ptr.add(6);
+        sum[3] += *letf_ptr.add(7) * *right_ptr.add(7);
+        sum[0] += *letf_ptr.add(8) * *right_ptr.add(8);
+        sum[1] += *letf_ptr.add(9) * *right_ptr.add(9);
+        sum[2] += *letf_ptr.add(10) * *right_ptr.add(10);
+        sum[3] += *letf_ptr.add(11) * *right_ptr.add(11);
     }
 
     sum[0] + sum[1] + sum[2] + sum[3]
@@ -45,7 +45,7 @@ fn dot_product_scalar(a: &[f64], b: &[f64]) -> f64 {
 
 #[inline]
 #[target_feature(enable = "sse3")]
-unsafe fn dot_product_sse3(a: &[f64], b: &[f64]) -> f64 {
+unsafe fn dot_product_sse3(left: &[f64], right: &[f64]) -> f64 {
     let mut result: f64;
     unsafe {
         asm!(
@@ -53,8 +53,8 @@ unsafe fn dot_product_sse3(a: &[f64], b: &[f64]) -> f64 {
             "xor rcx, rcx",
 
             "2:",
-            "vmovupd xmm1, [{a} + rcx]",
-            "vfmadd231pd xmm0, xmm1, [{b} + rcx]",
+            "vmovupd xmm1, [{left_ptr} + rcx]",
+            "vfmadd231pd xmm0, xmm1, [{right_ptr} + rcx]",
             "add rcx, 16",
             "cmp rcx, 96",
             "jb 2b",
@@ -62,8 +62,8 @@ unsafe fn dot_product_sse3(a: &[f64], b: &[f64]) -> f64 {
             "haddpd xmm0, xmm0", // somma orizzontale
 
             out("xmm0") result,
-            a = in(reg) a.as_ptr(),
-            b = in(reg) b.as_ptr(),
+            left_ptr = in(reg) left.as_ptr(),
+            right_ptr = in(reg) right.as_ptr(),
 
             out("xmm1") _,
             out("xmm2") _,
@@ -76,7 +76,7 @@ unsafe fn dot_product_sse3(a: &[f64], b: &[f64]) -> f64 {
 
 #[inline]
 #[target_feature(enable = "avx")]
-unsafe fn dot_product_avx(a: &[f64], b: &[f64]) -> f64 {
+unsafe fn dot_product_avx(left: &[f64], right: &[f64]) -> f64 {
     let mut result: f64;
     unsafe {
         asm!(
@@ -84,8 +84,8 @@ unsafe fn dot_product_avx(a: &[f64], b: &[f64]) -> f64 {
            "xor rcx, rcx",
            
            "2:",
-           "vmovupd ymm1, [{a} + rcx]",
-           "vfmadd231pd ymm0, ymm1, [{b} + rcx]",
+           "vmovupd ymm1, [{left_ptr} + rcx]",
+           "vfmadd231pd ymm0, ymm1, [{right_ptr} + rcx]",
            "add rcx, 32",
            "cmp rcx, 96",
            "jb 2b",
@@ -96,8 +96,8 @@ unsafe fn dot_product_avx(a: &[f64], b: &[f64]) -> f64 {
            "addsd xmm0, xmm1", 
 
             out("xmm0") result,
-            a = in(reg) a.as_ptr(),
-            b = in(reg) b.as_ptr(),
+            left_ptr = in(reg) left.as_ptr(),
+            right_ptr = in(reg) right.as_ptr(),
 
             out("ymm1") _,
             out("ymm2") _,

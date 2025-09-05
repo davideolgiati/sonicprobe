@@ -17,13 +17,20 @@ impl Serialize for Frequency {
     where
         S: Serializer,
     {
-        serializer.serialize_u32(self.to_hz())
+        serializer.serialize_u64(self.to_hz() as u64)
     }
 }
 
 impl From<Frequency> for f64 {
     fn from(frequency: Frequency) -> Self {
-        Self::from(frequency.to_hz())
+        match frequency {
+            Frequency::CdQuality => 44100.0,
+            Frequency::ProAudio => 48000.0,
+            Frequency::HiResDouble => 88200.0,
+            Frequency::DvdAudio => 96000.0,
+            Frequency::UltraHiRes => 176_400.0,
+            Frequency::StudioMaster => 192_000.0,
+        }
     }
 }
 
@@ -43,7 +50,7 @@ impl Frequency {
         }
     }
 
-    pub const fn to_hz(self) -> u32 {
+    pub const fn to_hz(self) -> usize {
         match self {
             Self::CdQuality => 44100,
             Self::ProAudio => 48000,

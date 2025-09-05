@@ -14,7 +14,7 @@ pub mod dynamic_range;
 
 pub type Samples = f64;
 pub type Signal = Arc<[Samples]>;
-pub type Milliseconds = i64;
+pub type Milliseconds = usize;
 
 pub const MAX_8_BIT: f64 = 127.0;
 pub const MAX_16_BIT: f64 = 32767.0;

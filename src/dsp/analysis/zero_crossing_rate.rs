@@ -4,11 +4,11 @@ use crate::model::{Signal, frequency::Frequency};
 #[allow(clippy::cast_sign_loss)]
 #[allow(clippy::cast_precision_loss)]
 #[allow(clippy::cast_possible_truncation)]
-pub fn calculate_zero_crossing_rate(samples: &Signal, sample_rate: Frequency) -> u64 {
-    let main_section_size = samples.len() - (samples.len() % sample_rate.to_hz() as usize);
-    let adjusted_reminder_crossing_rate = (samples.len() - main_section_size) as f64 / f64::from(sample_rate.to_hz());
+pub fn calculate_zero_crossing_rate(samples: &Signal, sample_rate: Frequency) -> usize {
+    let main_section_size = samples.len() - (samples.len() % sample_rate.to_hz());
+    let adjusted_reminder_crossing_rate = (samples.len() - main_section_size) as f64 / f64::from(sample_rate);
 
-    let mut crossing_rate = 0u64;
+    let mut crossing_rate = 0usize;
     let mut reminder_crossing_rate = 0.0f64;
 
     for window in samples[0..main_section_size].windows(2) {
@@ -23,9 +23,9 @@ pub fn calculate_zero_crossing_rate(samples: &Signal, sample_rate: Frequency) ->
         }
     }
 
-    crossing_rate += reminder_crossing_rate as u64;
+    crossing_rate += reminder_crossing_rate as usize;
 
-    crossing_rate / (1 + (main_section_size / sample_rate.to_hz() as usize) as u64)
+    crossing_rate / (1 + (main_section_size / sample_rate.to_hz()))
 }
 
 const fn get_value_sign(value: f64) -> i8 {

@@ -4,7 +4,7 @@ use crate::model::{
 };
 
 #[inline]
-pub fn calculate_actual_depth(source: &StereoSignal) -> Result<u8, SonicProbeError> {
+pub fn calculate_true_depth(source: &StereoSignal) -> Result<u8, SonicProbeError> {
     let factor = match source.depth {
         BitDepth::Legacy => MAX_8_BIT,
         BitDepth::CdStandard => MAX_16_BIT,
@@ -59,7 +59,7 @@ pub fn calculate_actual_depth(source: &StereoSignal) -> Result<u8, SonicProbeErr
 #[allow(clippy::unwrap_used)]
 mod tests {
     use crate::{
-        dsp::analysis::bit_depth::calculate_actual_depth,
+        dsp::analysis::bit_depth::calculate_true_depth,
         model::{bit_depth::BitDepth, frequency::Frequency, stereo_signal::StereoSignal, MAX_16_BIT, MAX_8_BIT},
     };
 
@@ -80,7 +80,7 @@ mod tests {
             sample_rate: Frequency::CdQuality,
             depth
         };
-        let res = calculate_actual_depth(&stereo).unwrap();
+        let res = calculate_true_depth(&stereo).unwrap();
 
         assert_eq!(res, 8u8);
     }
@@ -102,7 +102,7 @@ mod tests {
             sample_rate: Frequency::CdQuality,
             depth
         };
-        let res = calculate_actual_depth(&stereo).unwrap();
+        let res = calculate_true_depth(&stereo).unwrap();
 
         assert_eq!(res, 8u8);
     }
@@ -124,7 +124,7 @@ mod tests {
             sample_rate: Frequency::CdQuality,
             depth
         };
-        let res = calculate_actual_depth(&stereo).unwrap();
+        let res = calculate_true_depth(&stereo).unwrap();
 
         assert_eq!(res, 15u8);
     }

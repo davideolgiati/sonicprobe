@@ -13,7 +13,7 @@ use crate::{
 
 
 
-fn seconds_to_minute_mark(duration: i64) -> String {
+fn seconds_to_minute_mark(duration: usize) -> String {
     let seconds = duration % 60;
     let minutes = (duration - seconds) / 60;
 

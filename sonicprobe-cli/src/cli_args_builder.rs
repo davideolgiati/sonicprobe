@@ -1,6 +1,6 @@
 use crate::{
     OutputFormat,
-    model::{cli_args::CliArgs, sonicprobe_error::SonicProbeError},
+    
 };
 
 pub fn cli_args_from_args_array(args: &[String]) -> Result<CliArgs, SonicProbeError> {

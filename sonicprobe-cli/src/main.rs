@@ -1,15 +1,15 @@
-mod dsp;
 mod ui;
-mod model;
-mod floating_point_math;
+mod cli_args;
+mod cli_args_builder;
+mod output_format;
 
 use claxon::FlacReader;
 use std::{env, process};
 
-use crate::model::builders::audio_file_builder::audio_file_form_stream;
-use crate::model::builders::cli_args_builder::cli_args_from_args_array;
-use crate::model::cli_args::CliArgs;
-use crate::model::output_format::OutputFormat;
+use sonicprobe_core::builders::audio_file_builder::audio_file_form_stream;
+use crate::cli_args_builder::cli_args_from_args_array;
+use crate::cli_args::CliArgs;
+use crate::output_format::OutputFormat;
 use crate::ui::print_file_details;
 
 fn main() {

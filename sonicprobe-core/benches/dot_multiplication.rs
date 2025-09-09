@@ -1,9 +1,8 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use rand::prelude::*;
-use std::{hint::black_box, sync::Arc};
-
+use std::hint::black_box;
 pub struct LowPassFilter {
-    coeffs: *const f64,
+    coeffs: Vec<f64>,
 }
 
 fn low_pass_filter() -> Vec<f64> {
@@ -25,35 +24,41 @@ impl LowPassFilter {
         let coeffs: Vec<f64> = low_pass_filter();
 
         Self {
-            coeffs: coeffs.as_ptr(),
+            coeffs,
         }
     }
 
     #[inline]
     pub fn submit(&self, window: &[f64]) -> f64 {
-        dot_product_scalar(self.coeffs, window)
+        dot_product_scalar(&self.coeffs, window)
     }
 }
 
 #[inline]
-pub fn dot_product_scalar(pa: *const f64, b: &[f64]) -> f64 {
-    let mut sum = 0.0f64;
-    let pb = b.as_ptr();
+pub fn dot_product_scalar(left: &[f64], right: &[f64]) -> f64 {
+    assert_eq!(left.len(), 12);
+    assert_eq!(right.len(), 12);
 
-    for i in [7, 15, 23, 31, 39, 47] {
-        unsafe {
-            sum += (*pa.add(i) * *pb.add(i)) +
-            (*pa.add(i - 1) * *pb.add(i - 1)) +
-            (*pa.add(i - 2) * *pb.add(i - 2)) +
-            (*pa.add(i - 3) * *pb.add(i - 3)) +
-            (*pa.add(i - 4) * *pb.add(i - 4)) +
-            (*pa.add(i - 5) * *pb.add(i - 5)) +
-            (*pa.add(i - 6) * *pb.add(i - 6)) +
-            (*pa.add(i - 7) * *pb.add(i - 7));
-        }
+    let mut sum = [0.0f64; 4];
+    let letf_ptr = left.as_ptr();
+    let right_ptr = right.as_ptr();
+
+    unsafe {
+        sum[0] += *letf_ptr * *right_ptr;
+        sum[1] += *letf_ptr.add(1) * *right_ptr.add(1);
+        sum[2] += *letf_ptr.add(2) * *right_ptr.add(2);
+        sum[3] += *letf_ptr.add(3) * *right_ptr.add(3);
+        sum[0] += *letf_ptr.add(4) * *right_ptr.add(4);
+        sum[1] += *letf_ptr.add(5) * *right_ptr.add(5);
+        sum[2] += *letf_ptr.add(6) * *right_ptr.add(6);
+        sum[3] += *letf_ptr.add(7) * *right_ptr.add(7);
+        sum[0] += *letf_ptr.add(8) * *right_ptr.add(8);
+        sum[1] += *letf_ptr.add(9) * *right_ptr.add(9);
+        sum[2] += *letf_ptr.add(10) * *right_ptr.add(10);
+        sum[3] += *letf_ptr.add(11) * *right_ptr.add(11);
     }
 
-    sum
+    sum[0] + sum[1] + sum[2] + sum[3]
 }
 
 fn criterion_benchmark(c: &mut Criterion) {

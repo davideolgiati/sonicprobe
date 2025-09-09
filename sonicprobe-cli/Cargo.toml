@@ -1,0 +1,11 @@
+[package]
+name = "sonicprobe-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sonicprobe-core = { path = "../sonicprobe-core" }
+
+[[bin]]
+name = "sonicprobe"
+path = "src/main.rs"

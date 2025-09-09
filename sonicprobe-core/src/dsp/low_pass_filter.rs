@@ -43,13 +43,19 @@ impl LowPassFilter<'_> {
     }
 
     #[inline]
-    pub fn submit(&self, window: &[f64]) -> impl Iterator<Item = f64> {
-        let range: std::ops::Range<usize> = match self.phases {
-            PhaseCount::Two => 0..2,
-            PhaseCount::Four => 0..4
-        };
-
-        range.map(|index| dot_product(&self.phase_matrix[index], window))
+    pub fn submit(&self, window: &[f64]) -> Vec<f64> {
+        match self.phases {
+            PhaseCount::Two => vec![
+                dot_product(&self.phase_matrix[0], window),
+                dot_product(&self.phase_matrix[1], window)
+            ],
+            PhaseCount::Four => vec![
+                dot_product(&self.phase_matrix[0], window),
+                dot_product(&self.phase_matrix[1], window),
+                dot_product(&self.phase_matrix[2], window),
+                dot_product(&self.phase_matrix[3], window)
+            ]
+        }
     }
 }
 

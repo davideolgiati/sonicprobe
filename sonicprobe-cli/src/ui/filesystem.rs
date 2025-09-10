@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use crate::model::UNITS;
+const UNITS: &[&str] = &["B", "KB", "MB", "GB", "TB"];
 
 fn format_file_size(bytes: u64) -> Result<String, String> {
     let unit_index = {

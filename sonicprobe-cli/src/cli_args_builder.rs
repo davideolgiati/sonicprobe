@@ -1,5 +1,7 @@
+use sonicprobe_core::sonicprobe_error::SonicProbeError;
+
 use crate::{
-    OutputFormat,
+    cli_args::CliArgs, OutputFormat
     
 };
 

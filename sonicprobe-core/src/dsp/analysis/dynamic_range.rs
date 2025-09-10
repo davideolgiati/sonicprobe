@@ -9,7 +9,7 @@ use crate::{
 #[allow(clippy::cast_sign_loss)]
 #[allow(clippy::cast_precision_loss)]
 #[allow(clippy::cast_possible_truncation)]
-pub fn calculate_dynamic_range(samples: &Signal, sample_rate: Frequency) -> Decibel {
+#[must_use] pub fn calculate_dynamic_range(samples: &Signal, sample_rate: Frequency) -> Decibel {
     let chunk_size = get_chunk_size(sample_rate);
     let target_population = ((samples.len() / chunk_size) * 20) / 100;
 

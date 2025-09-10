@@ -17,6 +17,12 @@ fn low_pass_filter() -> Vec<f64> {
     coeffs
 }
 
+impl Default for LowPassFilter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LowPassFilter {
     #[must_use] 
     pub fn new() -> Self {
@@ -29,13 +35,13 @@ impl LowPassFilter {
     }
 
     #[inline]
-    pub fn submit(&self, window: &[f64]) -> f64 {
+    #[must_use] pub fn submit(&self, window: &[f64]) -> f64 {
         dot_product_scalar(&self.coeffs, window)
     }
 }
 
 #[inline]
-pub fn dot_product_scalar(left: &[f64], right: &[f64]) -> f64 {
+#[must_use] pub fn dot_product_scalar(left: &[f64], right: &[f64]) -> f64 {
     assert_eq!(left.len(), 12);
     assert_eq!(right.len(), 12);
 
@@ -64,10 +70,10 @@ pub fn dot_product_scalar(left: &[f64], right: &[f64]) -> f64 {
 fn criterion_benchmark(c: &mut Criterion) {
     let mut rng = rand::rng();
 
-    let mut data: Vec<f64> = vec![0.0f64; 4410000]; // 200s @ 192k
+    let mut data: Vec<f64> = vec![0.0f64; 4_410_000]; // 200s @ 192k
 
     // Fill the array with random values
-    for i in 0..4410000 {
+    for i in 0..4_410_000 {
         data[i] = rng.random::<f64>();
     }
 

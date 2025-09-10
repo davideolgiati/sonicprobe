@@ -1,7 +1,7 @@
 use crate::model::Signal;
 
 #[inline]
-pub fn count_clipping_samples(samples: &Signal) -> u64 {
+#[must_use] pub fn count_clipping_samples(samples: &Signal) -> u64 {
     let mut count = 0u64;
     for &sample in samples.iter() {
         if is_distorted(sample) {
@@ -13,7 +13,7 @@ pub fn count_clipping_samples(samples: &Signal) -> u64 {
 }
 
 #[inline]
-pub const fn is_distorted(sample: f64) -> bool {
+#[must_use] pub const fn is_distorted(sample: f64) -> bool {
     sample >= 1.0 || sample <= -1.0
 }
 

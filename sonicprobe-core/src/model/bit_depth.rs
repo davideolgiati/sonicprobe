@@ -33,7 +33,7 @@ impl BitDepth {
         }
     }
 
-    pub const fn to_bits(self) -> u8 {
+    #[must_use] pub const fn to_bits(self) -> u8 {
         match self {
             Self::Legacy => 8,
             Self::CdStandard => 16,
@@ -42,7 +42,7 @@ impl BitDepth {
         }
     }
 
-    pub const fn description(self) -> &'static str {
+    #[must_use] pub const fn description(self) -> &'static str {
         match self {
             Self::Legacy => " 8  bit - Legacy format",
             Self::CdStandard => "16  bit - CD standard",

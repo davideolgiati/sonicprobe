@@ -3,7 +3,7 @@
 use crate::model::Signal;
 
 #[inline]
-pub fn calculate_stereo_correlation(
+#[must_use] pub fn calculate_stereo_correlation(
     left: &Signal,
     right: &Signal
 ) -> f64 {

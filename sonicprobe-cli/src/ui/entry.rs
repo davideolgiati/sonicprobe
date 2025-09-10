@@ -1,4 +1,6 @@
-use crate::{model::{decibel::Decibel, dynamic_range::DynamicRange}, ui::audio::{format_hz, format_volt}};
+use sonicprobe_core::{decibel::Decibel, dynamic_range::DynamicRange};
+
+use crate::ui::audio::{format_hz, format_volt};
 
 pub struct Entry {
     value: String,

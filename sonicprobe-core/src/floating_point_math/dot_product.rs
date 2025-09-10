@@ -1,7 +1,7 @@
 use std::arch::asm;
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-pub fn dot_product(left: &[f64], right: &[f64]) -> f64 {
+#[must_use] pub fn dot_product(left: &[f64], right: &[f64]) -> f64 {
     if std::is_x86_feature_detected!("avx") {
         unsafe { dot_product_avx(left, right) }
     } else if std::is_x86_feature_detected!("sse3") {

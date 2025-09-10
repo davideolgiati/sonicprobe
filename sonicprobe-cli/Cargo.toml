@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 sonicprobe-core = { path = "../sonicprobe-core" }
+claxon = "0.4.3"
 
 [[bin]]
 name = "sonicprobe"

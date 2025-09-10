@@ -1,4 +1,6 @@
-use crate::{model::channel::Channel, ui::entry::Entry};
+use sonicprobe_core::channel::Channel;
+
+use crate::ui::entry::Entry;
 
 #[derive(Clone)]
 pub struct Table {

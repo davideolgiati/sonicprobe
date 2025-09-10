@@ -16,11 +16,11 @@ pub struct AudioFile {
 }
 
 impl AudioFile {
-    pub fn rms_balance(&self) -> Decibel {
+    #[must_use] pub fn rms_balance(&self) -> Decibel {
         self.left.rms() - self.right.rms()
     }
 
-    pub fn to_json(&self) -> String {
+    #[must_use] pub fn to_json(&self) -> String {
         match serde_json::to_string_pretty(&self) {
             Ok(value) => value,
             Err(e) => format!("Error while serializing: {e:?}"),

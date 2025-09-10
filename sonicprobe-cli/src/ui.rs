@@ -4,8 +4,9 @@ mod filesystem;
 mod table;
 mod section;
 
+use sonicprobe_core::audio_file::AudioFile;
+
 use crate::{
-    model::audio_file::AudioFile,
     ui::{
         entry::Entry, filesystem::{filename_from_path, get_formatted_file_size}, section::Section, table::Table
     },

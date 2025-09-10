@@ -6,19 +6,19 @@ use serde::Serialize;
 pub struct Decibel(f64);
 
 impl Decibel {
-        pub fn new(value: f64) -> Self {
+        #[must_use] pub fn new(value: f64) -> Self {
                 Self(to_dbfs(value))
         }
 
-        pub const fn get_value(self) -> f64 {
+        #[must_use] pub const fn get_value(self) -> f64 {
                 self.0
         }
 
-        pub fn get_string_value(self) -> String {
+        #[must_use] pub fn get_string_value(self) -> String {
                 format(self.0)
         }
 
-        pub fn get_unit() -> String {
+        #[must_use] pub fn get_unit() -> String {
                 "dB".to_owned()
         }
 }

@@ -12,6 +12,7 @@ enum PhaseCount {
 
 pub struct LowPassFilter<'a> {
     phase_matrix: &'a [[f64; 12]],
+    buffer: Vec<f64>,
     phases: PhaseCount
 }
 
@@ -39,23 +40,36 @@ impl LowPassFilter<'_> {
             }
         };
 
-        Ok(Self { phase_matrix, phases })
+        let buffer = match phases {
+            PhaseCount::Two => vec![0.0, 0.0],
+            PhaseCount::Four => vec![0.0, 0.0, 0.0, 0.0]
+        };
+
+        Ok(Self { 
+            phase_matrix, 
+            buffer,
+            phases 
+        })
     }
 
     #[inline]
-    pub fn submit(&self, window: &[f64]) -> Vec<f64> {
+    pub fn submit(&mut self, window: &[f64]) {
         match self.phases {
-            PhaseCount::Two => vec![
-                dot_product(&self.phase_matrix[0], window),
-                dot_product(&self.phase_matrix[1], window)
-            ],
-            PhaseCount::Four => vec![
-                dot_product(&self.phase_matrix[0], window),
-                dot_product(&self.phase_matrix[1], window),
-                dot_product(&self.phase_matrix[2], window),
-                dot_product(&self.phase_matrix[3], window)
-            ]
+            PhaseCount::Two =>{
+                dot_product(&self.phase_matrix[0], window, &mut self.buffer[0]);
+                dot_product(&self.phase_matrix[1], window, &mut self.buffer[1]);
+            },
+            PhaseCount::Four => {
+                dot_product(&self.phase_matrix[0], window, &mut self.buffer[0]);
+                dot_product(&self.phase_matrix[1], window, &mut self.buffer[1]);
+                dot_product(&self.phase_matrix[2], window, &mut self.buffer[2]);
+                dot_product(&self.phase_matrix[3], window, &mut self.buffer[3]);
+            }
         }
+    }
+
+    pub fn get_buffer(&self) -> &[f64] {
+        &self.buffer
     }
 }
 

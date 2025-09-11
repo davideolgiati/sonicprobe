@@ -1,19 +1,19 @@
 use std::arch::asm;
 
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-#[must_use] pub fn dot_product(left: &[f64], right: &[f64]) -> f64 {
+pub fn dot_product(left: &[f64], right: &[f64], output: &mut f64) {
     if std::is_x86_feature_detected!("avx") {
-        unsafe { dot_product_avx(left, right) }
+        unsafe { dot_product_avx(left, right, output) }
     } else if std::is_x86_feature_detected!("sse3") {
-        unsafe { dot_product_sse3(left, right) }
+        unsafe { dot_product_sse3(left, right, output) }
     } else {
-        dot_product_scalar(left, right)
+        *output = dot_product_scalar(left, right);
     }
 }
 
 #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
-pub fn dot_product(left: &[f64], right: &[f64]) -> f64 {
-    dot_product_scalar(left, right)
+pub fn dot_product(left: &[f64], right: &[f64], output: &f64) {
+    output = &dot_product_scalar(left, right)
 }
 
 #[inline]
@@ -45,8 +45,7 @@ fn dot_product_scalar(left: &[f64], right: &[f64]) -> f64 {
 
 #[inline]
 #[target_feature(enable = "sse3")]
-unsafe fn dot_product_sse3(left: &[f64], right: &[f64]) -> f64 {
-    let mut result: f64;
+unsafe fn dot_product_sse3(left: &[f64], right: &[f64], output: &mut f64) {
     unsafe {
         asm!(
             "xorpd xmm0, xmm0",
@@ -61,7 +60,7 @@ unsafe fn dot_product_sse3(left: &[f64], right: &[f64]) -> f64 {
 
             "haddpd xmm0, xmm0", // somma orizzontale
 
-            out("xmm0") result,
+            out("xmm0") *output,
             left_ptr = in(reg) left.as_ptr(),
             right_ptr = in(reg) right.as_ptr(),
 
@@ -71,13 +70,11 @@ unsafe fn dot_product_sse3(left: &[f64], right: &[f64]) -> f64 {
             options(nostack, preserves_flags),
         );
     }
-    result
 }
 
 #[inline]
 #[target_feature(enable = "avx")]
-unsafe fn dot_product_avx(left: &[f64], right: &[f64]) -> f64 {
-    let mut result: f64;
+unsafe fn dot_product_avx(left: &[f64], right: &[f64], output: &mut f64) {
     unsafe {
         asm!(
            "vxorpd ymm0, ymm0, ymm0",
@@ -95,7 +92,7 @@ unsafe fn dot_product_avx(left: &[f64], right: &[f64]) -> f64 {
            "movhlps xmm1, xmm0",
            "addsd xmm0, xmm1", 
 
-            out("xmm0") result,
+            out("xmm0") *output,
             left_ptr = in(reg) left.as_ptr(),
             right_ptr = in(reg) right.as_ptr(),
 
@@ -105,5 +102,4 @@ unsafe fn dot_product_avx(left: &[f64], right: &[f64]) -> f64 {
             options(nostack, preserves_flags),
         );
     }
-    result
 }

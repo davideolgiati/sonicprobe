@@ -10,14 +10,16 @@ pub fn upsample_chain(
     source: &Signal,
     source_sample_rate: Frequency,
 ) -> Result<(Decibel, u64), SonicProbeError> {
-    let low_pass = LowPassFilter::new(source_sample_rate)?;
+    let mut low_pass = LowPassFilter::new(source_sample_rate)?;
 
     let mut peak_h = f64::MIN;
     let mut peak_l = f64::MAX;
     let mut clipping_samples = 0u64;
 
     for i in 0..source.len() - 12 {
-        for value in low_pass.submit(&source[i..i + 12]) {
+        low_pass.submit(&source[i..i + 12]);
+
+        for &value in low_pass.get_buffer() {
             if is_distorted(value) {
                 clipping_samples += 1;
             }

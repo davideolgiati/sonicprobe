@@ -3,18 +3,57 @@ use crate::model::{
     sonicprobe_error::SonicProbeError, stereo_signal::StereoSignal,
 };
 
+/// Given a `stereo_signal`, loops over each sample and looks for the one with
+/// the least amount of 0s to the left.
+/// 
+/// If the reported bit depth is `reported_bit_depth` and the actual bit depth,
+/// calculated using the method stated before, is `actual_bit_depth`
+/// 
+/// Returns `Ok(min(reported_bit_depth, actual_bit_depth))` on success, 
+/// otherwise returns an error.
+/// 
+/// This function has no side effects.
+/// This function is declared as `#[inline]`
+///
+/// # Errors
+/// 
+/// Returns [`SonicProbeError`](crate::model::sonicprobe_error::SonicProbeError) 
+/// if casting from u32 to u8 fails after calling the method 
+/// `i32::trailing_zeros()` on the reconstructed sample
+///
+/// # Examples
+/// 
+/// ```
+/// let left = [10, 20, 30, 111]
+///     .iter()
+///     .map(|val: &u8| f64::from(*val) / MAX_8_BIT)
+///     .collect();
+/// let right = [10, 20, 30, 111]
+///     .iter()
+///     .map(|val: &u8| f64::from(*val) / MAX_8_BIT)
+///     .collect();
+/// let depth = BitDepth::new(8).unwrap();
+/// let stereo = StereoSignal {
+///     left,
+///     right,
+///     sample_rate: Frequency::CdQuality,
+///     depth
+/// };
+/// let res = calculate_true_depth(&stereo).unwrap();
+/// ```
+///
 #[inline]
-pub fn calculate_true_depth(source: &StereoSignal) -> Result<u8, SonicProbeError> {
-    let factor = match source.depth {
+pub fn calculate_true_depth(stereo_signal: &StereoSignal) -> Result<u8, SonicProbeError> {
+    let factor = match stereo_signal.depth {
         BitDepth::Legacy => MAX_8_BIT,
         BitDepth::CdStandard => MAX_16_BIT,
         BitDepth::Professional => MAX_24_BIT,
         BitDepth::StudioMaster => MAX_32_BIT,
     };
 
-    let mut actual_depth = 0u8;
+    let mut actual_bit_depth = 0u8;
 
-    for &sample in source.left.iter() {
+    for &sample in stereo_signal.left.iter() {
         if sample == 0.0 {
             continue;
         }
@@ -22,18 +61,18 @@ pub fn calculate_true_depth(source: &StereoSignal) -> Result<u8, SonicProbeError
         let reconstructed_value: i32 = unsafe { (sample * factor).trunc().to_int_unchecked() };
 
         let sample_depth: u8 =
-            source.depth.to_bits() - u8::try_from(reconstructed_value.trailing_zeros())?;
+            stereo_signal.depth.to_bits() - u8::try_from(reconstructed_value.trailing_zeros())?;
 
-        if sample_depth > actual_depth {
-            actual_depth = sample_depth;
+        if sample_depth > actual_bit_depth {
+            actual_bit_depth = sample_depth;
         }
 
-        if actual_depth == source.depth.to_bits() {
+        if actual_bit_depth == stereo_signal.depth.to_bits() {
             break;
         }
     }
 
-    for &sample in source.right.iter() {
+    for &sample in stereo_signal.right.iter() {
         if sample == 0.0 {
             continue;
         }
@@ -41,18 +80,18 @@ pub fn calculate_true_depth(source: &StereoSignal) -> Result<u8, SonicProbeError
         let reconstructed_value: i32 = unsafe { (sample * factor).trunc().to_int_unchecked() };
 
         let sample_depth: u8 =
-            source.depth.to_bits() - u8::try_from(reconstructed_value.trailing_zeros())?;
+            stereo_signal.depth.to_bits() - u8::try_from(reconstructed_value.trailing_zeros())?;
 
-        if sample_depth > actual_depth {
-            actual_depth = sample_depth;
+        if sample_depth > actual_bit_depth {
+            actual_bit_depth = sample_depth;
         }
 
-        if actual_depth == source.depth.to_bits() {
+        if actual_bit_depth == stereo_signal.depth.to_bits() {
             break;
         }
     }
 
-    Ok(actual_depth)
+    Ok(actual_bit_depth)
 }
 
 #[cfg(test)]

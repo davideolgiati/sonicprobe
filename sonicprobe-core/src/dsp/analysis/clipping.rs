@@ -1,17 +1,48 @@
 use crate::model::Signal;
 
+/// Given a `mono_signal`, loops over each sample and looks for the ones greater
+/// or equal to 1.0 or lower or equal to -1.0.
+/// 
+/// Returns `total_clipping_samples` an u64 varaible containing all distorted 
+/// samples found while looping throught the signal.
+/// 
+/// This function has no side effects.
+/// This function is declared as `#[inline]`
+///
+/// # Examples
+/// 
+/// ```
+///     let mut rng = rand::rng();
+///     let samples = (0..10).map(|_| rng.random_range(-0.99..0.99)).collect();
+///     let res = count_clipping_samples(&samples)
+/// ```
+///
 #[inline]
-#[must_use] pub fn count_clipping_samples(samples: &Signal) -> u64 {
-    let mut count = 0u64;
-    for &sample in samples.iter() {
+#[must_use] pub fn count_clipping_samples(mono_signal: &Signal) -> u64 {
+    let mut total_clipping_samples = 0u64;
+    for &sample in mono_signal.iter() {
         if is_distorted(sample) {
-            count += 1;
+            total_clipping_samples += 1;
         }
     }
 
-    count
+    total_clipping_samples
 }
 
+/// Given a `sample` returns true if his value is greater or equal to 1.0 or 
+/// lower or equal to -1.0.
+/// 
+/// This function has no side effects.
+/// This function is declared as `#[inline]`
+///
+/// # Examples
+/// 
+/// ```
+///     let sample: f64 = 1.0;
+///     let res = is_distorted(sample)
+///     assert_eq!(res, true)
+/// ```
+///
 #[inline]
 #[must_use] pub const fn is_distorted(sample: f64) -> bool {
     sample >= 1.0 || sample <= -1.0

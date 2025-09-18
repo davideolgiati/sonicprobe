@@ -13,8 +13,8 @@ use crate::model::Signal;
 /// 
 /// ```
 ///     let mut rng = rand::rng();
-///     let samples = (0..10).map(|_| rng.random_range(-0.99..0.99)).collect();
-///     let res = count_clipping_samples(&samples)
+///     let mono_signal = (0..10).map(|_| rng.random_range(-0.99..0.99)).collect();
+///     let res = count_clipping_samples(&mono_signal)
 /// ```
 ///
 #[inline]

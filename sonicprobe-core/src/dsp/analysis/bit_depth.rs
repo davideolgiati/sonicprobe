@@ -61,7 +61,7 @@ pub fn calculate_true_depth(stereo_signal: &StereoSignal) -> Result<u8, SonicPro
         let reconstructed_value: i32 = unsafe { (sample * factor).trunc().to_int_unchecked() };
 
         let sample_depth: u8 =
-            stereo_signal.depth.to_bits() - u8::try_from(reconstructed_value.trailing_zeros())?;
+            stereo_signal.depth.to_bits() - u8::try_from(reconstructed_value.trailing_zeros())?; // TODO: capire se si puo' fare meglio
 
         if sample_depth > actual_bit_depth {
             actual_bit_depth = sample_depth;

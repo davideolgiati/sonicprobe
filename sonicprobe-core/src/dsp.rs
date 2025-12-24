@@ -1,8 +1,8 @@
 pub mod analysis;
-mod low_pass_filter;
+mod upscaler;
 
 use crate::{
-    dsp::{analysis::clipping::is_distorted, low_pass_filter::LowPassFilter},
+    dsp::{analysis::clipping::is_distorted, upscaler::Upscaler},
     model::{decibel::Decibel, frequency::Frequency, sonicprobe_error::SonicProbeError, Signal},
 };
 
@@ -10,15 +10,13 @@ pub fn upsample_chain(
     source: &Signal,
     source_sample_rate: Frequency,
 ) -> Result<(Decibel, u64), SonicProbeError> {
-    let mut low_pass = LowPassFilter::new(source_sample_rate)?;
+    let mut upscaler = Upscaler::new(source_sample_rate)?;
 
     let mut peak = f64::MIN;
     let mut clipping_samples_count = 0u64;
 
     for i in 0..source.len() - 12 {
-        low_pass.submit(&source[i..i + 12]);
-
-        for sample in low_pass.get_buffer() {
+        for sample in upscaler.upscale(&source[i..i + 12]) {
             (peak, clipping_samples_count) = process_upsampled_sample(
                 sample, &peak, &clipping_samples_count
             ) 

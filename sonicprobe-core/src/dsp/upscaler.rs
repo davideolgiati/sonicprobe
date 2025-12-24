@@ -10,13 +10,13 @@ enum PhaseCount {
     Four,
 }
 
-pub struct LowPassFilter<'a> {
+pub struct Upscaler<'a> {
     phase_matrix: &'a [[f64; 12]],
     buffer: Vec<f64>,
     phases: PhaseCount
 }
 
-impl LowPassFilter<'_> {
+impl Upscaler<'_> {
     pub fn new(source_sample_rate: Frequency) -> Result<Self, SonicProbeError> {
         let phases: PhaseCount = match source_sample_rate {
             Frequency::CdQuality | Frequency::ProAudio => PhaseCount::Four,
@@ -53,7 +53,7 @@ impl LowPassFilter<'_> {
     }
 
     #[inline]
-    pub fn submit(&mut self, window: &[f64]) {
+    pub fn upscale(&mut self, window: &[f64]) -> &[f64] {
         match self.phases {
             PhaseCount::Two =>{
                 dot_product(&self.phase_matrix[0], window, &mut self.buffer[0]);
@@ -66,9 +66,7 @@ impl LowPassFilter<'_> {
                 dot_product(&self.phase_matrix[3], window, &mut self.buffer[3]);
             }
         }
-    }
 
-    pub fn get_buffer(&self) -> &[f64] {
         &self.buffer
     }
 }

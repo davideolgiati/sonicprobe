@@ -5,7 +5,7 @@ use crate::{
 
 use std::f64;
 
-enum PhaseCount {
+enum FilterPhase {
     Two,
     Four,
 }
@@ -13,14 +13,16 @@ enum PhaseCount {
 pub struct Upscaler<'a> {
     phase_matrix: &'a [[f64; 12]],
     buffer: Vec<f64>,
-    phases: PhaseCount
+    phases: FilterPhase,
+    index: usize,
+    samples: &'a [f64]
 }
 
-impl Upscaler<'_> {
-    pub fn new(source_sample_rate: Frequency) -> Result<Self, SonicProbeError> {
-        let phases: PhaseCount = match source_sample_rate {
-            Frequency::CdQuality | Frequency::ProAudio => PhaseCount::Four,
-            Frequency::HiResDouble | Frequency::DvdAudio => PhaseCount::Two,
+impl<'a> Upscaler<'a> {
+    pub fn new(source: &'a[f64], source_sample_rate: Frequency) -> Result<Self, SonicProbeError> {
+        let phases: FilterPhase = match source_sample_rate {
+            Frequency::CdQuality | Frequency::ProAudio => FilterPhase::Four,
+            Frequency::HiResDouble | Frequency::DvdAudio => FilterPhase::Two,
             Frequency::StudioMaster | Frequency::UltraHiRes => {
                 return Err(SonicProbeError {
                     location: format!("{}:{}", file!(), line!()),
@@ -41,25 +43,36 @@ impl Upscaler<'_> {
         };
 
         let buffer = match phases {
-            PhaseCount::Two => vec![0.0, 0.0],
-            PhaseCount::Four => vec![0.0, 0.0, 0.0, 0.0]
+            FilterPhase::Two => vec![0.0, 0.0],
+            FilterPhase::Four => vec![0.0, 0.0, 0.0, 0.0]
         };
 
         Ok(Self { 
             phase_matrix, 
             buffer,
-            phases 
+            phases,
+            index: 0,
+            samples: source
         })
     }
 
     #[inline]
-    pub fn upscale(&mut self, window: &[f64]) -> &[f64] {
+    pub fn next(&mut self) -> Option<&[f64]> {
+        
+        if self.index + 1 >= self.samples.len() - 12 {
+            return None
+        }
+
+        self.index = self.index + 1; 
+
+        let window = &self.samples[self.index..self.index+12];
+
         match self.phases {
-            PhaseCount::Two =>{
+            FilterPhase::Two =>{
                 dot_product(&self.phase_matrix[0], window, &mut self.buffer[0]);
                 dot_product(&self.phase_matrix[1], window, &mut self.buffer[1]);
             },
-            PhaseCount::Four => {
+            FilterPhase::Four => {
                 dot_product(&self.phase_matrix[0], window, &mut self.buffer[0]);
                 dot_product(&self.phase_matrix[1], window, &mut self.buffer[1]);
                 dot_product(&self.phase_matrix[2], window, &mut self.buffer[2]);
@@ -67,7 +80,7 @@ impl Upscaler<'_> {
             }
         }
 
-        &self.buffer
+        Some(&self.buffer)
     }
 }
 

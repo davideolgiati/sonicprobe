@@ -10,13 +10,13 @@ pub fn upsample_chain(
     source: &Signal,
     source_sample_rate: Frequency,
 ) -> Result<(Decibel, u64), SonicProbeError> {
-    let mut upscaler = Upscaler::new(source_sample_rate)?;
+    let mut upscaler = Upscaler::new(source, source_sample_rate)?;
 
     let mut peak = f64::MIN;
     let mut clipping_samples_count = 0u64;
 
-    for i in 0..source.len() - 12 {
-        for sample in upscaler.upscale(&source[i..i + 12]) {
+    while let Some(batch) = upscaler.next() {
+        for sample in batch {
             (peak, clipping_samples_count) = process_upsampled_sample(
                 sample, &peak, &clipping_samples_count
             ) 

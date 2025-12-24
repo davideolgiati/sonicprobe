@@ -48,47 +48,56 @@ impl<'a> Upscaler<'a> {
             FilterPhase::Four => vec![0.0, 0.0, 0.0, 0.0]
         };
 
+        let buffer_index= match phases {
+            FilterPhase::Two => 2,
+            FilterPhase::Four => 4
+        };
+
         Ok(Self { 
             phase_matrix, 
             buffer,
             phases,
             original_samples_index: 0,
-            buffer_index: 0,
+            buffer_index,
             samples: source
         })
     }
 
     #[inline]
     pub fn next_sample(&mut self) -> Option<&f64> {
-        
-        if self.original_samples_index + 1 >= self.samples.len() - 12 {
-            return None
+        if self.buffer_index + 1 < self.buffer.len() {
+            self.buffer_index = self.buffer_index + 1;
+            return Some(&self.buffer[self.buffer_index])
         }
 
-        if self.buffer_index + 1 > self.buffer.len() || self.buffer_index == 0 {
-            self.original_samples_index = self.original_samples_index + 1; 
+        if self.original_samples_index + 1 < self.samples.len() - 12 {
+            self.update_buffer();
+            self.buffer_index = 0;
 
-            let window = &self.samples[self.original_samples_index..self.original_samples_index+12];
+            return Some(&self.buffer[0])
+        }
 
-            match self.phases {
-                FilterPhase::Two =>{
-                    dot_product(&self.phase_matrix[0], window, &mut self.buffer[0]);
-                    dot_product(&self.phase_matrix[1], window, &mut self.buffer[1]);
-                },
-                FilterPhase::Four => {
-                    dot_product(&self.phase_matrix[0], window, &mut self.buffer[0]);
-                    dot_product(&self.phase_matrix[1], window, &mut self.buffer[1]);
-                    dot_product(&self.phase_matrix[2], window, &mut self.buffer[2]);
-                    dot_product(&self.phase_matrix[3], window, &mut self.buffer[3]);
-                }
+        None
+    }
+
+    fn update_buffer(&mut self) {
+        let current_index = self.original_samples_index;
+        let window = &self.samples[current_index..current_index+12];
+    
+        match self.phases {
+            FilterPhase::Two =>{
+                dot_product(&self.phase_matrix[0], window, &mut self.buffer[0]);
+                dot_product(&self.phase_matrix[1], window, &mut self.buffer[1]);
+            },
+            FilterPhase::Four => {
+                dot_product(&self.phase_matrix[0], window, &mut self.buffer[0]);
+                dot_product(&self.phase_matrix[1], window, &mut self.buffer[1]);
+                dot_product(&self.phase_matrix[2], window, &mut self.buffer[2]);
+                dot_product(&self.phase_matrix[3], window, &mut self.buffer[3]);
             }
-
-            self.buffer_index = 0
         }
 
-        let data = Some(&self.buffer[self.buffer_index]);
-        self.buffer_index = self.buffer_index + 1;
-        data
+        self.original_samples_index = self.original_samples_index + 1;
     }
 }
 

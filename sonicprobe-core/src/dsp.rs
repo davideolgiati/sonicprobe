@@ -15,12 +15,10 @@ pub fn upsample_chain(
     let mut peak = f64::MIN;
     let mut clipping_samples_count = 0u64;
 
-    while let Some(batch) = upscaler.next() {
-        for sample in batch {
-            (peak, clipping_samples_count) = process_upsampled_sample(
-                sample, &peak, &clipping_samples_count
-            ) 
-        }
+    while let Some(sample) = upscaler.next_sample() {
+        (peak, clipping_samples_count) = process_upsampled_sample(
+            sample, &peak, &clipping_samples_count
+        ) 
     }
 
     Ok((Decibel::new(peak), clipping_samples_count))

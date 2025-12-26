@@ -16,32 +16,18 @@ pub fn upsample_chain(
     let mut clipping_samples_count = 0u64;
 
     while let Some(sample) = upscaler.next_sample() {
-        (peak, clipping_samples_count) = process_upsampled_sample(
-            sample, &peak, &clipping_samples_count
-        ) 
+        match update_clipping_count(&clipping_samples_count, sample) {
+            Some(result) => clipping_samples_count = result,
+            None => {}
+        }
+
+        match update_peak_value(&peak, &sample.abs()) {
+            Some(result) => peak = result,
+            None => {}
+        }
     }
 
     Ok((Decibel::new(peak), clipping_samples_count))
-}
-
-fn process_upsampled_sample(
-    sample: &f64, peak: &f64, clipping_samples_count: &u64
-) -> (f64, u64) {
-    let abs_value = sample.abs();
-
-    let new_clipping_count = match update_clipping_count(
-        clipping_samples_count, &abs_value
-    ) {
-        Some(result) => result,
-        None => *clipping_samples_count
-    };
-
-    let new_peak = match update_peak_value(peak, &abs_value){
-        Some(result) => result,
-        None => *peak
-    };
-
-    return (new_peak, new_clipping_count)
 }
 
 fn update_clipping_count(current_count: &u64, sample: &f64) -> Option<u64> {

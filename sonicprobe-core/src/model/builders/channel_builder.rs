@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::{
     dsp::{
         analysis::{
-            clipping::count_clipping_samples, dc_offset::calculate_dc_offset,
+            clipping::update_clipping_count, dc_offset::calculate_dc_offset,
             dynamic_range::calculate_dynamic_range, peak::find_signal_peak,
             root_mean_square::compute_root_mean_square,
             zero_crossing_rate::calculate_zero_crossing_rate,
@@ -62,4 +62,17 @@ pub fn from_samples(builder: &ChannelBuilder) -> Result<Channel, SonicProbeError
         true_clipping_samples_count,
         dr,
     })
+}
+
+fn count_clipping_samples(samples: &Signal) -> u64 {
+    let mut clipping_samples_count = 0u64;
+
+    for sample in samples.iter() {
+        match update_clipping_count(&clipping_samples_count, sample) {
+            Some(result) => clipping_samples_count = result,
+            None => {}
+        }
+    }
+
+    clipping_samples_count
 }

@@ -2,7 +2,7 @@ pub mod analysis;
 mod upscaler;
 
 use crate::{
-    dsp::{analysis::clipping::is_distorted, upscaler::Upscaler},
+    dsp::{analysis::clipping::update_clipping_count, upscaler::Upscaler},
     model::{decibel::Decibel, frequency::Frequency, sonicprobe_error::SonicProbeError, Signal},
 };
 
@@ -30,14 +30,6 @@ pub fn upsample_chain(
     Ok((Decibel::new(peak), clipping_samples_count))
 }
 
-fn update_clipping_count(current_count: &u64, sample: &f64) -> Option<u64> {
-    if is_distorted(*sample) {
-        return Some(*current_count + 1)
-    }
-
-    None
-}
-
 fn update_peak_value(current_peak: &f64, sample: &f64) -> Option<f64> {
     if *sample > *current_peak {
         return Some(*sample)
@@ -50,87 +42,6 @@ fn update_peak_value(current_peak: &f64, sample: &f64) -> Option<f64> {
 mod tests {
     use super::*;
     use rand::Rng;
-
-    #[test]
-    fn update_clipping_count_increase() {
-        let mut rng = rand::rng();
-        let clipping_sample: f64 = rng.random_range(1.0..2.0);
-        let current_clipping_sample_count = 0;
-
-        let result = update_clipping_count(
-            &current_clipping_sample_count, 
-            &clipping_sample
-        ); 
-
-        assert_eq!(result, Some(1));
-    }
-
-    #[test]
-    fn update_clipping_count_no_increase() {
-        let mut rng = rand::rng();
-        let sample: f64 = rng.random_range(-0.9..0.9);
-        let current_clipping_sample_count = 0;
-
-        let result = update_clipping_count(
-            &current_clipping_sample_count, 
-            &sample
-        ); 
-
-        assert_eq!(result, None);
-    }
-
-    #[test]
-    fn update_clipping_count_edge_cases() {
-        let mut sample: f64 = 1.0;
-        let current_clipping_sample_count = 0;
-
-        let mut result = update_clipping_count(
-            &current_clipping_sample_count, 
-            &sample
-        ); 
-
-        assert_eq!(result, Some(1));
-
-        sample = -1.0;
-        result = update_clipping_count(
-            &current_clipping_sample_count, 
-            &sample
-        ); 
-
-        assert_eq!(result, Some(1));
-
-        sample = 0.9999999;
-        result = update_clipping_count(
-            &current_clipping_sample_count, 
-            &sample
-        ); 
-
-        assert_eq!(result, None);
-
-        sample = -0.9999999;
-        result = update_clipping_count(
-            &current_clipping_sample_count, 
-            &sample
-        ); 
-
-        assert_eq!(result, None);
-
-        sample = 1.0000001;
-        result = update_clipping_count(
-            &current_clipping_sample_count, 
-            &sample
-        ); 
-
-        assert_eq!(result, Some(1));
-
-        sample = -1.0000001;
-        result = update_clipping_count(
-            &current_clipping_sample_count, 
-            &sample
-        ); 
-
-        assert_eq!(result, Some(1));
-    }
 
     #[test]
     fn update_peak_value_change() {

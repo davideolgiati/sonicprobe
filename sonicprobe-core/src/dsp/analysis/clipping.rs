@@ -1,19 +1,12 @@
-use crate::model::Signal;
-
-#[inline]
-#[must_use] pub fn count_clipping_samples(samples: &Signal) -> u64 {
-    let mut count = 0u64;
-    for &sample in samples.iter() {
-        if is_distorted(sample) {
-            count += 1;
-        }
+pub fn update_clipping_count(current_count: &u64, sample: &f64) -> Option<u64> {
+    if is_distorted(*sample) {
+        return Some(*current_count + 1)
     }
 
-    count
+    None
 }
 
-#[inline]
-#[must_use] pub const fn is_distorted(sample: f64) -> bool {
+const fn is_distorted(sample: f64) -> bool {
     sample >= 1.0 || sample <= -1.0
 }
 
@@ -21,42 +14,127 @@ use crate::model::Signal;
 #[allow(clippy::unwrap_used)]
 mod tests {
     use rand::Rng;
-
-    use crate::dsp::analysis::clipping::count_clipping_samples;
+    use super::*;
 
     #[test]
-    fn no_clip() {
+    fn update_clipping_count_increase() {
         let mut rng = rand::rng();
-        let samples = (0..10).map(|_| rng.random_range(-0.99..0.99)).collect();
-        let res = count_clipping_samples(&samples);
+        let clipping_sample: f64 = rng.random_range(1.0..2.0);
+        let current_clipping_sample_count = 0;
 
-        assert_eq!(res, 0u64);
+        let result = update_clipping_count(
+            &current_clipping_sample_count, 
+            &clipping_sample
+        ); 
+
+        assert_eq!(result, Some(1));
     }
 
     #[test]
-    fn some_clip() {
+    fn update_clipping_count_no_increase() {
         let mut rng = rand::rng();
-        let samples = (0..10)
-            .map(|i| {
-                if i % 3 != 0 {
-                    rng.random_range(-0.99..0.99)
-                } else {
-                    1.0
-                }
-            })
-            .collect();
-        let res = count_clipping_samples(&samples);
+        let sample: f64 = rng.random_range(-0.9..0.9);
+        let current_clipping_sample_count = 0;
 
-        assert_eq!(res, 4u64);
+        let result = update_clipping_count(
+            &current_clipping_sample_count, 
+            &sample
+        ); 
+
+        assert_eq!(result, None);
     }
 
     #[test]
-    fn all_clip() {
-        let samples = (0..10)
-            .map(|i| if i % 2 == 0 { -1.0 } else { 1.0 })
-            .collect();
-        let res = count_clipping_samples(&samples);
+    fn update_clipping_count_edge_cases() {
+        let mut sample: f64 = 1.0;
+        let current_clipping_sample_count = 0;
 
-        assert_eq!(res, 10u64);
+        let mut result = update_clipping_count(
+            &current_clipping_sample_count, 
+            &sample
+        ); 
+
+        assert_eq!(result, Some(1));
+
+        sample = -1.0;
+        result = update_clipping_count(
+            &current_clipping_sample_count, 
+            &sample
+        ); 
+
+        assert_eq!(result, Some(1));
+
+        sample = 0.9999999;
+        result = update_clipping_count(
+            &current_clipping_sample_count, 
+            &sample
+        ); 
+
+        assert_eq!(result, None);
+
+        sample = -0.9999999;
+        result = update_clipping_count(
+            &current_clipping_sample_count, 
+            &sample
+        ); 
+
+        assert_eq!(result, None);
+
+        sample = 1.0000001;
+        result = update_clipping_count(
+            &current_clipping_sample_count, 
+            &sample
+        ); 
+
+        assert_eq!(result, Some(1));
+
+        sample = -1.0000001;
+        result = update_clipping_count(
+            &current_clipping_sample_count, 
+            &sample
+        ); 
+
+        assert_eq!(result, Some(1));
     }
+
+    #[test]
+    fn is_distorted_truthy() {
+        let mut rng = rand::rng();
+        
+        let result_positive = {
+            let clipping_sample: f64 = rng.random_range(1.0..2.0);
+            is_distorted(clipping_sample)
+        };
+
+        assert_eq!(result_positive, true);
+
+        let result_negative = {
+            let clipping_sample: f64 = rng.random_range(-2.0..-1.0);
+            is_distorted(clipping_sample)
+        };
+
+        assert_eq!(result_negative, true)
+    }
+
+        #[test]
+    fn is_distorted_falsy() {
+        let mut rng = rand::rng();
+        let clipping_sample: f64 = rng.random_range(-0.9999999..0.9999999);
+
+        let result = is_distorted(clipping_sample); 
+
+        assert_eq!(result, false);
+    }
+
+        #[test]
+    fn is_distorted_edges() {
+        let result_upper = is_distorted(1.0); 
+
+        assert_eq!(result_upper, true);
+
+        let result_lower = is_distorted(-1.0); 
+
+        assert_eq!(result_lower, true);
+    }
+
 }

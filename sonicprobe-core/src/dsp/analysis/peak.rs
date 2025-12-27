@@ -1,21 +1,35 @@
-use crate::{model::{decibel::Decibel, Signal}};
-
-#[inline]
-#[must_use] pub fn find_signal_peak(samples: &Signal) -> Decibel {
-    let mut peak_h = f64::MIN;
-    let mut peak_l = f64::MAX;
-
-    for &value in samples.iter() {
-        if value > peak_h {
-            peak_h = value;
-        } else if value < peak_l {
-            peak_l = value;
-        }
+pub fn update_peak_value(current_peak: &f64, sample: &f64) -> Option<f64> {
+    if *sample > *current_peak {
+        return Some(*sample)
     }
 
-    if peak_l.abs() > peak_h {
-        Decibel::new(peak_l.abs())
-    } else {
-        Decibel::new(peak_h)
+    None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::Rng;
+
+    #[test]
+    fn update_peak_value_change() {
+        let mut rng = rand::rng();
+        let current_peak = rng.random_range(0.0..0.5);
+        let sample = rng.random_range(0.50000001..1.0);
+
+        let result = update_peak_value(&current_peak, &sample);
+
+        assert_eq!(result, Some(sample))
+    }
+
+    #[test]
+    fn update_peak_value_no_change() {
+        let mut rng = rand::rng();
+        let current_peak = rng.random_range(0.0..0.5);
+        let sample = rng.random_range(-1.0..current_peak);
+
+        let result = update_peak_value(&current_peak, &sample);
+
+        assert_eq!(result, None)
     }
 }

@@ -1,16 +1,15 @@
 use std::sync::Arc;
 
 use crate::{
-    dsp::{
+    analysis::peak::update_peak_value, dsp::{
         analysis::{
             clipping::update_clipping_count, dc_offset::calculate_dc_offset,
-            dynamic_range::calculate_dynamic_range, peak::find_signal_peak,
+            dynamic_range::calculate_dynamic_range,
             root_mean_square::compute_root_mean_square,
             zero_crossing_rate::calculate_zero_crossing_rate,
         },
         upsample_chain,
-    },
-    model::{channel::Channel, decibel::Decibel, dynamic_range::DynamicRange, frequency::Frequency, sonicprobe_error::SonicProbeError, Signal},
+    }, model::{Signal, channel::Channel, decibel::Decibel, dynamic_range::DynamicRange, frequency::Frequency, sonicprobe_error::SonicProbeError}
 };
 
 #[repr(C)]
@@ -75,4 +74,17 @@ fn count_clipping_samples(samples: &Signal) -> u64 {
     }
 
     clipping_samples_count
+}
+
+fn find_signal_peak(samples: &Signal) -> Decibel {
+    let mut peak = f64::MIN;
+
+    for &sample in samples.iter() {
+        match update_peak_value(&peak, &sample.abs()) {
+            Some(result) => peak = result,
+            None => {}
+        }
+    }
+
+    Decibel::new(peak)
 }

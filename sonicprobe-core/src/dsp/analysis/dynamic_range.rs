@@ -2,22 +2,23 @@ use core::f64;
 use std::mem;
 
 use crate::{
-    floating_point_math::floating_point_utils::map_sum_lossless,
-    model::{decibel::Decibel, frequency::Frequency, Signal},
+    analysis::root_mean_square::compute_root_mean_square, model::{Signal, decibel::Decibel, frequency::Frequency}, sonicprobe_error::SonicProbeError
 };
 
-#[inline]
-pub fn calculate_dynamic_range(samples: &Signal, sample_rate: Frequency) -> Decibel {
-    let chunk_size = get_chunk_size(sample_rate);
-    let target_population = ((samples.len() / chunk_size) * 20) / 100;
+const TARGET_SAMPLE_POPULATION_SHARE: usize = 20;
+
+// TODO: inizia ad aver senso di creare una classe apposta come per l'upsampler
+
+pub fn calculate_dynamic_range(samples: &Signal, sample_rate: Frequency) -> Result<Decibel, SonicProbeError> {
+    let chunks_size = get_chunk_size(sample_rate);
+    let samples_count = samples.len();
+    let target_population = get_target_population_count(&samples_count, &chunks_size);
 
     let mut quietest: Vec<f64> = vec![f64::MAX; target_population];
     let mut loudest: Vec<f64> = vec![f64::MIN; target_population];
 
-    let rms_closure = get_rms_fn(chunk_size);
-
-    for current_chunk in samples.chunks(chunk_size) {
-        let new_rms = rms_closure(current_chunk);
+    for current_chunk in samples.chunks(chunks_size) {
+        let new_rms = compute_root_mean_square(current_chunk)?;
 
         update_quiet_rms_population(&new_rms, &mut quietest);
         update_loud_rms_population(&new_rms, &mut loudest);
@@ -26,7 +27,14 @@ pub fn calculate_dynamic_range(samples: &Signal, sample_rate: Frequency) -> Deci
     let loudest_avg = loudest.iter().sum::<f64>() / target_population as f64;
     let quietest_avg = quietest.iter().sum::<f64>() / target_population as f64;
 
-    Decibel::new(loudest_avg / quietest_avg)
+    Ok(Decibel::new(loudest_avg / quietest_avg))
+}
+
+fn get_target_population_count(samples_count: &usize, chunks_size: &usize) -> usize {
+    let chunks_in_signal = samples_count / chunks_size;
+    let target_population_count = (chunks_in_signal * TARGET_SAMPLE_POPULATION_SHARE) / 100;
+
+    target_population_count
 }
 
 fn update_quiet_rms_population(new_rms: &f64, quiet_rms_population: &mut Vec<f64>) {
@@ -61,10 +69,6 @@ fn update_loud_rms_population(new_rms: &f64, loud_rms_population: &mut Vec<f64>)
             mem::swap(&mut loud_rms_population[index], &mut to_insert);
         }
     }
-}
-
-fn get_rms_fn(chunk_size: usize) -> impl Fn(&[f64]) -> f64 {
-    move |chunk: &[f64]| (map_sum_lossless(chunk, |x: f64| x.powi(2)) / chunk_size as f64).sqrt()
 }
 
 const fn get_chunk_size(sample_rate: Frequency) -> usize {

@@ -48,7 +48,7 @@ pub fn from_samples(builder: &ChannelBuilder) -> Result<Channel, SonicProbeError
 
     let (true_peak, true_clipping_samples_count) = upsample_chain(samples, builder.sample_rate)?;
 
-    let dr = DynamicRange::from(calculate_dynamic_range(samples, builder.sample_rate));
+    let dr = DynamicRange::from(calculate_dynamic_range(samples, builder.sample_rate)?);
 
     Ok(Channel {
         rms,

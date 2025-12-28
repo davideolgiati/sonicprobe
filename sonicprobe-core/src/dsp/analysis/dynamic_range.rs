@@ -6,9 +6,6 @@ use crate::{
 };
 
 #[inline]
-#[allow(clippy::cast_sign_loss)]
-#[allow(clippy::cast_precision_loss)]
-#[allow(clippy::cast_possible_truncation)]
 pub fn calculate_dynamic_range(samples: &Signal, sample_rate: Frequency) -> Decibel {
     let chunk_size = get_chunk_size(sample_rate);
     let target_population = ((samples.len() / chunk_size) * 20) / 100;
@@ -19,15 +16,12 @@ pub fn calculate_dynamic_range(samples: &Signal, sample_rate: Frequency) -> Deci
     let rms_closure = get_rms_fn(chunk_size);
 
     for current_chunk in samples.chunks(chunk_size) {
-        let current_rms = rms_closure(current_chunk);
+        let new_rms = rms_closure(current_chunk);
 
-        if quietest[target_population - 1] > current_rms {
-            quietest[target_population - 1] = current_rms;
-            sort_array(&mut quietest, |a, b| a < b);
-        }
+        insert_quiet_sample(&new_rms, &mut quietest);
 
-        if loudest[target_population - 1] < current_rms {
-            loudest[target_population - 1] = current_rms;
+        if loudest[target_population - 1] < new_rms {
+            loudest[target_population - 1] = new_rms;
             sort_array(&mut loudest, |a, b| a > b);
         }
     }
@@ -38,7 +32,25 @@ pub fn calculate_dynamic_range(samples: &Signal, sample_rate: Frequency) -> Deci
     Decibel::new(loudest_avg / quietest_avg)
 }
 
-#[allow(clippy::cast_precision_loss)]
+fn insert_quiet_sample(new_rms: &f64, quiet_array: &mut Vec<f64>) {
+    let array_size = quiet_array.len();
+    let last_element_index = array_size -1;
+    
+    if *new_rms > quiet_array[last_element_index] {
+        return
+    }
+
+    let mut to_insert = *new_rms;
+
+    for index in 0..array_size {
+        if to_insert < quiet_array[index] {
+            let tmp = quiet_array[index];
+            quiet_array[index] = to_insert;
+            to_insert = tmp
+        }
+    }
+}
+
 fn get_rms_fn(chunk_size: usize) -> impl Fn(&[f64]) -> f64 {
     move |chunk: &[f64]| (map_sum_lossless(chunk, |x: f64| x.powi(2)) / chunk_size as f64).sqrt()
 }
@@ -54,3 +66,103 @@ fn sort_array<T: Fn(f64, f64) -> bool>(array: &mut [f64], cmp_fn: T) {
         current -= 1;
     }
 }
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use rand::Rng;
+    use super::*;
+
+    #[test]
+    fn insert_quiet_sample_insert_empty_array() {
+        let mut rng = rand::rng();
+        let mut quiet_array = vec![f64::MAX; 10];
+
+        let new_rms: f64 = rng.random_range(0.0..0.9);
+        insert_quiet_sample(&new_rms, &mut quiet_array);
+
+        assert_eq!(new_rms, quiet_array[0]);
+        assert_eq!(quiet_array.len(), 10);
+        for index in 1..9 {
+            assert_eq!(quiet_array[index], f64::MAX)
+        }
+    }
+
+    #[test]
+    fn insert_quiet_sample_insert_start() {
+        let mut rng = rand::rng();
+        let mut quiet_array = {
+            let mut res: Vec<f64> = vec![];
+            for _ in 0..10 {
+                res.push(rng.random_range(1.0..2.0))
+            }
+
+            res.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+            res
+        };
+
+        let new_rms: f64 = rng.random_range(0.0..0.9);
+        let expected_new_lst = quiet_array[8];
+        insert_quiet_sample(&new_rms, &mut quiet_array);
+
+        assert_eq!(new_rms, quiet_array[0]);
+        assert_eq!(quiet_array.len(), 10);
+        assert_eq!(quiet_array[9], expected_new_lst)
+    }
+
+    #[test]
+    fn insert_quiet_sample_insert_end() {
+        let mut rng = rand::rng();
+        let mut quiet_array = {
+            let mut res: Vec<f64> = vec![];
+            for _ in 0..10 {
+                res.push(rng.random_range(1.0..2.0))
+            }
+
+            res.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+            res
+        };
+
+        let new_rms: f64 = rng.random_range(quiet_array[8]..quiet_array[9]);
+        let expected_unchanged: Vec<f64> = quiet_array.clone()[0..8].to_vec();
+        insert_quiet_sample(&new_rms, &mut quiet_array);
+
+        assert_eq!(new_rms, quiet_array[9]);
+        assert_eq!(quiet_array.len(), 10);
+        for index in 0..8 {
+            assert_eq!(quiet_array[index], expected_unchanged[index], "Position #{} has changed", index)
+        }
+    }
+
+    #[test]
+    fn insert_quiet_sample_insert_middle() {
+        let mut rng = rand::rng();
+        let mut quiet_array = {
+            let mut res: Vec<f64> = vec![];
+            for _ in 0..10 {
+                res.push(rng.random_range(1.0..2.0))
+            }
+
+            res.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+            res
+        };
+
+        let new_rms: f64 = rng.random_range(quiet_array[4]..quiet_array[5]);
+        let expected_unchanged_pre: Vec<f64> = quiet_array.clone()[0..4].to_vec();
+        let expected_unchanged_post: Vec<f64> = quiet_array.clone()[5..8].to_vec();
+        insert_quiet_sample(&new_rms, &mut quiet_array);
+
+        assert_eq!(new_rms, quiet_array[5]);
+        assert_eq!(quiet_array.len(), 10);
+        for index in 0..4 {
+            assert_eq!(quiet_array[index], expected_unchanged_pre[index], "Position #{} has changed", index)
+        }
+        for index in 6..9 {
+            assert_eq!(quiet_array[index], expected_unchanged_post[index - 6], "Position #{} has changed", index)
+        }
+    }
+}
+

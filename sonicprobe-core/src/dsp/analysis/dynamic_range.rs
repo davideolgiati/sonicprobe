@@ -1,4 +1,5 @@
 use core::f64;
+use std::mem;
 
 use crate::{
     floating_point_math::floating_point_utils::map_sum_lossless,
@@ -18,8 +19,8 @@ pub fn calculate_dynamic_range(samples: &Signal, sample_rate: Frequency) -> Deci
     for current_chunk in samples.chunks(chunk_size) {
         let new_rms = rms_closure(current_chunk);
 
-        insert_quiet_rms(&new_rms, &mut quietest);
-        insert_loud_rms(&new_rms, &mut loudest);
+        update_quiet_rms_population(&new_rms, &mut quietest);
+        update_loud_rms_population(&new_rms, &mut loudest);
     }
 
     let loudest_avg = loudest.iter().sum::<f64>() / target_population as f64;
@@ -28,40 +29,36 @@ pub fn calculate_dynamic_range(samples: &Signal, sample_rate: Frequency) -> Deci
     Decibel::new(loudest_avg / quietest_avg)
 }
 
-fn insert_quiet_rms(new_rms: &f64, quiet_array: &mut Vec<f64>) {
-    let array_size = quiet_array.len();
-    let last_element_index = array_size -1;
+fn update_quiet_rms_population(new_rms: &f64, quiet_rms_population: &mut Vec<f64>) {
+    let array_size = quiet_rms_population.len();
+    let loudest_element = quiet_rms_population[array_size - 1];
     
-    if *new_rms > quiet_array[last_element_index] {
+    if *new_rms > loudest_element {
         return
     }
 
     let mut to_insert = *new_rms;
 
     for index in 0..array_size {
-        if to_insert < quiet_array[index] {
-            let tmp = quiet_array[index];
-            quiet_array[index] = to_insert;
-            to_insert = tmp
-        }
+        if to_insert < quiet_rms_population[index] {
+            mem::swap(&mut quiet_rms_population[index], &mut to_insert);
+        }   
     }
 }
 
-fn insert_loud_rms(new_rms: &f64, loud_array: &mut Vec<f64>) {
-    let array_size = loud_array.len();
-    let last_element_index = array_size -1;
+fn update_loud_rms_population(new_rms: &f64, loud_rms_population: &mut Vec<f64>) {
+    let array_size = loud_rms_population.len();
+    let quietest_element = loud_rms_population[array_size - 1];
     
-    if *new_rms < loud_array[last_element_index] {
+    if *new_rms < quietest_element {
         return
     }
 
     let mut to_insert = *new_rms;
 
     for index in 0..array_size {
-        if to_insert > loud_array[index] {
-            let tmp = loud_array[index];
-            loud_array[index] = to_insert;
-            to_insert = tmp
+        if to_insert > loud_rms_population[index] {
+            mem::swap(&mut loud_rms_population[index], &mut to_insert);
         }
     }
 }
@@ -86,7 +83,7 @@ mod tests {
         let mut quiet_array = vec![f64::MAX; 10];
 
         let new_rms: f64 = rng.random_range(0.0..0.9);
-        insert_quiet_rms(&new_rms, &mut quiet_array);
+        update_quiet_rms_population(&new_rms, &mut quiet_array);
 
         assert_eq!(new_rms, quiet_array[0]);
         assert_eq!(quiet_array.len(), 10);
@@ -111,7 +108,7 @@ mod tests {
 
         let new_rms: f64 = rng.random_range(0.0..0.9);
         let expected_new_lst = quiet_array[8];
-        insert_quiet_rms(&new_rms, &mut quiet_array);
+        update_quiet_rms_population(&new_rms, &mut quiet_array);
 
         assert_eq!(new_rms, quiet_array[0]);
         assert_eq!(quiet_array.len(), 10);
@@ -134,7 +131,7 @@ mod tests {
 
         let new_rms: f64 = rng.random_range(quiet_array[8]..quiet_array[9]);
         let expected_unchanged: Vec<f64> = quiet_array.clone()[0..8].to_vec();
-        insert_quiet_rms(&new_rms, &mut quiet_array);
+        update_quiet_rms_population(&new_rms, &mut quiet_array);
 
         assert_eq!(new_rms, quiet_array[9]);
         assert_eq!(quiet_array.len(), 10);
@@ -160,7 +157,7 @@ mod tests {
         let new_rms: f64 = rng.random_range(quiet_array[4]..quiet_array[5]);
         let expected_unchanged_pre: Vec<f64> = quiet_array.clone()[0..4].to_vec();
         let expected_unchanged_post: Vec<f64> = quiet_array.clone()[5..8].to_vec();
-        insert_quiet_rms(&new_rms, &mut quiet_array);
+        update_quiet_rms_population(&new_rms, &mut quiet_array);
 
         assert_eq!(new_rms, quiet_array[5]);
         assert_eq!(quiet_array.len(), 10);
@@ -178,7 +175,7 @@ mod tests {
         let mut loud_array = vec![f64::MIN; 10];
 
         let new_rms: f64 = rng.random_range(0.0..0.9);
-        insert_loud_rms(&new_rms, &mut loud_array);
+        update_loud_rms_population(&new_rms, &mut loud_array);
 
         assert_eq!(new_rms, loud_array[0]);
         assert_eq!(loud_array.len(), 10);
@@ -203,7 +200,7 @@ mod tests {
 
         let new_rms: f64 = rng.random_range(2.0..3.0);
         let expected_new_lst = loud_array[8];
-        insert_loud_rms(&new_rms, &mut loud_array);
+        update_loud_rms_population(&new_rms, &mut loud_array);
 
         assert_eq!(new_rms, loud_array[0]);
         assert_eq!(loud_array.len(), 10);
@@ -226,7 +223,7 @@ mod tests {
 
         let new_rms: f64 = rng.random_range(loud_array[9]..loud_array[8]);
         let expected_unchanged: Vec<f64> = loud_array.clone()[0..8].to_vec();
-        insert_loud_rms(&new_rms, &mut loud_array);
+        update_loud_rms_population(&new_rms, &mut loud_array);
 
         assert_eq!(new_rms, loud_array[9]);
         assert_eq!(loud_array.len(), 10);
@@ -252,7 +249,7 @@ mod tests {
         let new_rms: f64 = rng.random_range(loud_array[5]..loud_array[4]);
         let expected_unchanged_pre: Vec<f64> = loud_array.clone()[0..4].to_vec();
         let expected_unchanged_post: Vec<f64> = loud_array.clone()[5..8].to_vec();
-        insert_loud_rms(&new_rms, &mut loud_array);
+        update_loud_rms_population(&new_rms, &mut loud_array);
 
         assert_eq!(new_rms, loud_array[5]);
         assert_eq!(loud_array.len(), 10);

@@ -8,7 +8,7 @@ pub struct StereoSignal {
 }
 
 impl StereoSignal {
-    #[must_use] pub fn samples_per_channel(&self) -> usize {
+    pub fn samples_per_channel(&self) -> usize {
         self.left.len()
     }
 }

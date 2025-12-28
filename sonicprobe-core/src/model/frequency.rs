@@ -50,7 +50,7 @@ impl Frequency {
         }
     }
 
-    #[must_use] pub const fn to_hz(self) -> usize {
+    pub const fn to_hz(self) -> usize {
         match self {
             Self::CdQuality => 44100,
             Self::ProAudio => 48000,
@@ -61,7 +61,7 @@ impl Frequency {
         }
     }
 
-    #[must_use] pub const fn description(self) -> &'static str {
+    pub const fn description(self) -> &'static str {
         match self {
             Self::CdQuality => "44.1 kHz - Standard for consumer audio",
             Self::ProAudio => "48 kHz - Industry standard for video/broadcast",

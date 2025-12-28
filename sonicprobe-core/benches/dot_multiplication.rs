@@ -24,7 +24,7 @@ impl Default for LowPassFilter {
 }
 
 impl LowPassFilter {
-    #[must_use] 
+    
     pub fn new() -> Self {
 
         let coeffs: Vec<f64> = low_pass_filter();
@@ -35,13 +35,13 @@ impl LowPassFilter {
     }
 
     #[inline]
-    #[must_use] pub fn submit(&self, window: &[f64]) -> f64 {
+    pub fn submit(&self, window: &[f64]) -> f64 {
         dot_product_scalar(&self.coeffs, window)
     }
 }
 
 #[inline]
-#[must_use] pub fn dot_product_scalar(left: &[f64], right: &[f64]) -> f64 {
+pub fn dot_product_scalar(left: &[f64], right: &[f64]) -> f64 {
     assert_eq!(left.len(), 12);
     assert_eq!(right.len(), 12);
 

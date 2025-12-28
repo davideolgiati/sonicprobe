@@ -14,11 +14,11 @@ impl From<Decibel> for DynamicRange {
 }
 
 impl DynamicRange {
-        #[must_use] pub fn get_string_value(self) -> String {
+        pub fn get_string_value(self) -> String {
                 format!("{}", self.0)
         }
 
-        #[must_use] pub fn get_unit() -> String {
+        pub fn get_unit() -> String {
                 "DR".to_owned()
         }
 }

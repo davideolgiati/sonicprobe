@@ -17,41 +17,41 @@ pub struct Channel {
 
 impl Channel {
     #[inline]
-    #[must_use] pub const fn dc_offset(&self) -> f64 {
+    pub const fn dc_offset(&self) -> f64 {
         self.dc_offset
     }
     #[inline]
-    #[must_use] pub const fn true_peak(&self) -> Decibel {
+    pub const fn true_peak(&self) -> Decibel {
         self.true_peak
     }
     #[inline]
-    #[must_use] pub const fn peak(&self) -> Decibel {
+    pub const fn peak(&self) -> Decibel {
         self.peak
     }
     #[inline]
-    #[must_use] pub const fn rms(&self) -> Decibel {
+    pub const fn rms(&self) -> Decibel {
         self.rms
     }
     #[inline]
-    #[must_use] pub const fn dr(&self) -> DynamicRange {
+    pub const fn dr(&self) -> DynamicRange {
         self.dr
     }
     #[inline]
-    #[must_use] pub const fn zero_crossing_rate(&self) -> usize {
+    pub const fn zero_crossing_rate(&self) -> usize {
         self.zero_crossing_rate
     }
 
     #[allow(clippy::cast_precision_loss)]
-    #[must_use] pub fn clipping_samples_ratio(&self) -> f64 {
+    pub fn clipping_samples_ratio(&self) -> f64 {
         self.clipping_samples_count as f64 / self.samples_count as f64
     }
 
     #[allow(clippy::cast_precision_loss)]
-    #[must_use] pub fn true_clipping_samples_ratio(&self) -> f64 {
+    pub fn true_clipping_samples_ratio(&self) -> f64 {
         self.true_clipping_samples_count as f64 / self.samples_count as f64
     }
 
-    #[must_use] pub fn crest_factor(&self) -> Decibel {
+    pub fn crest_factor(&self) -> Decibel {
         self.peak - self.rms
     }
 }

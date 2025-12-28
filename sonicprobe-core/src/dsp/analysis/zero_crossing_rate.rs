@@ -4,7 +4,7 @@ use crate::model::{Signal, frequency::Frequency};
 #[allow(clippy::cast_sign_loss)]
 #[allow(clippy::cast_precision_loss)]
 #[allow(clippy::cast_possible_truncation)]
-#[must_use] pub fn calculate_zero_crossing_rate(samples: &Signal, sample_rate: Frequency) -> usize {
+pub fn calculate_zero_crossing_rate(samples: &Signal, sample_rate: Frequency) -> usize {
     let main_section_size = samples.len() - (samples.len() % sample_rate.to_hz());
     let adjusted_reminder_crossing_rate = (samples.len() - main_section_size) as f64 / f64::from(sample_rate);
 

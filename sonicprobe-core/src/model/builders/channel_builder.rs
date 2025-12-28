@@ -22,7 +22,7 @@ pub struct ChannelBuilder {
 
 impl ChannelBuilder {
     #[allow(clippy::cast_precision_loss)]
-    #[must_use] pub fn new(signal: &Signal, sample_rate: Frequency) -> Self {
+    pub fn new(signal: &Signal, sample_rate: Frequency) -> Self {
         let duration = signal.len() as f64 / f64::from(sample_rate);
 
         Self {

@@ -2,32 +2,55 @@ use core::f64;
 use std::mem;
 
 use crate::{
-    analysis::root_mean_square::compute_root_mean_square, model::{Signal, decibel::Decibel, frequency::Frequency}, sonicprobe_error::SonicProbeError
+    analysis::root_mean_square::compute_root_mean_square, model::{decibel::Decibel, frequency::Frequency}, sonicprobe_error::SonicProbeError
 };
 
 const TARGET_SAMPLE_POPULATION_SHARE: usize = 20;
 
-// TODO: inizia ad aver senso di creare una classe apposta come per l'upsampler
+pub struct DynamicRangeMeter {
+    buffer: Vec<f64>,
+    buffer_size: usize,
+    next_insert_index: usize,
+    quiet_parts_rms: Vec<f64>,
+    loud_parts_rms: Vec<f64>
+}
 
-pub fn calculate_dynamic_range(samples: &Signal, sample_rate: Frequency) -> Result<Decibel, SonicProbeError> {
-    let chunks_size = get_chunk_size(sample_rate);
-    let samples_count = samples.len();
-    let target_population = get_target_population_count(&samples_count, &chunks_size);
+impl DynamicRangeMeter {
+    pub fn new(samples_count: &usize, sample_rate: &Frequency) -> DynamicRangeMeter {
+        let buffer_size = get_chunk_size(*sample_rate);
+        let target_population = get_target_population_count(samples_count, &buffer_size);
 
-    let mut quietest: Vec<f64> = vec![f64::MAX; target_population];
-    let mut loudest: Vec<f64> = vec![f64::MIN; target_population];
-
-    for current_chunk in samples.chunks(chunks_size) {
-        let new_rms = compute_root_mean_square(current_chunk)?;
-
-        update_quiet_rms_population(&new_rms, &mut quietest);
-        update_loud_rms_population(&new_rms, &mut loudest);
+        Self {
+            buffer: vec![0.0; buffer_size],
+            buffer_size,
+            next_insert_index: 0,
+            quiet_parts_rms: vec![f64::MAX; target_population],
+            loud_parts_rms: vec![f64::MIN; target_population]
+        }
     }
 
-    let loudest_avg = loudest.iter().sum::<f64>() / target_population as f64;
-    let quietest_avg = quietest.iter().sum::<f64>() / target_population as f64;
+    pub fn push_sample(&mut self, sample: &f64) -> Result<(), SonicProbeError>{
+        self.buffer[self.next_insert_index] = *sample;
+        self.next_insert_index += 1;
 
-    Ok(Decibel::new(loudest_avg / quietest_avg))
+        if self.next_insert_index == self.buffer_size {
+            let new_rms = compute_root_mean_square(&self.buffer)?;
+
+            update_quiet_rms_population(&new_rms, &mut self.quiet_parts_rms);
+            update_loud_rms_population(&new_rms, &mut self.loud_parts_rms);
+
+            self.next_insert_index = 0;
+        }
+
+        Ok(())
+    }
+
+    pub fn get_dr_value(&self) -> Decibel {
+        let loudest_avg = self.loud_parts_rms.iter().sum::<f64>() / self.loud_parts_rms.len() as f64;
+        let quietest_avg = self.quiet_parts_rms.iter().sum::<f64>() / self.quiet_parts_rms.len() as f64;
+
+        Decibel::new(loudest_avg / quietest_avg)
+    }
 }
 
 fn get_target_population_count(samples_count: &usize, chunks_size: &usize) -> usize {

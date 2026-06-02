@@ -16,6 +16,10 @@ rand = "0.9.2"
 name = "dot_multiplication"
 harness = false
 
+[[bench]]
+name = "rms_summation"
+harness = false
+
 [lints.rust]
 # Core Rust warnings
 unused = "warn"

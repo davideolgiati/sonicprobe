@@ -60,8 +60,13 @@ SonicProbe is a powerful standalone command line utility designed for audio engi
    ```bash
    git clone https://github.com/davideolgiati/sonicprobe.git
    cd sonicprobe
-   cargo install --path .
+   cargo install --path sonicprobe-cli
    ```
+
+   The repository root is a Cargo workspace, so the install target is the
+   `sonicprobe-cli` crate (not `.`). This builds the `sonicprobe` binary in
+   release mode and places it in `~/.cargo/bin/` — make sure that directory is
+   on your `PATH`. Re-run with `--force` to overwrite an existing install.
 
 ### Usage
 
@@ -69,6 +74,12 @@ Analyze any supported audio file:
 
 ```bash
 sonicprobe "path/to/your/audio/file.flac"
+```
+
+Emit machine-readable JSON instead of the plain-text report:
+
+```bash
+sonicprobe "path/to/your/audio/file.flac" --json
 ```
 
 ## Contributing
@@ -80,4 +91,4 @@ SonicProbe is actively seeking:
 
 ## Requirements
 
-- **Rust**: 1.70+ (latest stable recommended)
+- **Rust**: 1.88+ (latest stable recommended) — uses `slice::as_chunks`, stabilized in 1.88

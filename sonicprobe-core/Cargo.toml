@@ -20,6 +20,14 @@ harness = false
 name = "rms_summation"
 harness = false
 
+[[bench]]
+name = "stereo_correlation"
+harness = false
+
+[[bench]]
+name = "dynamic_range"
+harness = false
+
 [lints.rust]
 # Core Rust warnings
 unused = "warn"

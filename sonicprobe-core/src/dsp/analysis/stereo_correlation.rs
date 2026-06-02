@@ -2,19 +2,50 @@
 
 use crate::model::Signal;
 
+/// Independent accumulator lanes per sum, to break the serial `addsd` chains.
+///
+/// Lower than the RMS hot path's 8 lanes: this loop carries THREE sums, so
+/// `CORR_LANES * 3` accumulators compete for the 16 xmm registers — too many
+/// lanes spill to the stack and lose more than the extra ILP buys.
+const CORR_LANES: usize = 2;
+
 #[inline]
 pub fn calculate_stereo_correlation(
     left: &Signal,
     right: &Signal
 ) -> f64 {
+    let mut correlation_lanes = [0.0f64; CORR_LANES];
+    let mut left_square_lanes = [0.0f64; CORR_LANES];
+    let mut right_square_lanes = [0.0f64; CORR_LANES];
+
+    // Fixed-width `[f64; CORR_LANES]` chunks: the inner index carries no bounds
+    // check and the lane loop unrolls into independent dependency chains.
+    let (left_chunks, left_remainder) = left.as_chunks::<CORR_LANES>();
+    let (right_chunks, right_remainder) = right.as_chunks::<CORR_LANES>();
+
+    for (left_chunk, right_chunk) in left_chunks.iter().zip(right_chunks.iter()) {
+        for lane in 0..CORR_LANES {
+            correlation_lanes[lane] += left_chunk[lane] * right_chunk[lane];
+            left_square_lanes[lane] += left_chunk[lane] * left_chunk[lane];
+            right_square_lanes[lane] += right_chunk[lane] * right_chunk[lane];
+        }
+    }
+
+    let mut correlation: f64 = 0.0;
     let mut left_square_sum: f64 = 0.0;
     let mut right_square_sum: f64 = 0.0;
-    let mut correlation: f64 = 0.0;
+    for lane in 0..CORR_LANES {
+        correlation += correlation_lanes[lane];
+        left_square_sum += left_square_lanes[lane];
+        right_square_sum += right_square_lanes[lane];
+    }
 
-    for i in 0..left.len() {
-        correlation += (left[i]) * (right[i]);
-        left_square_sum += (left[i]).powi(2);
-        right_square_sum += (right[i]).powi(2);
+    // Tail samples that didn't fill a full lane-width chunk.
+    let remainder = left_remainder.len().min(right_remainder.len());
+    for i in 0..remainder {
+        correlation += left_remainder[i] * right_remainder[i];
+        left_square_sum += left_remainder[i] * left_remainder[i];
+        right_square_sum += right_remainder[i] * right_remainder[i];
     }
 
     correlation / (left_square_sum * right_square_sum).sqrt()

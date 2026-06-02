@@ -2,44 +2,48 @@ use core::f64;
 use std::mem;
 
 use crate::{
-    analysis::root_mean_square::compute_root_mean_square, model::{decibel::Decibel, frequency::Frequency}, sonicprobe_error::SonicProbeError
+    model::{decibel::Decibel, frequency::Frequency}, sonicprobe_error::SonicProbeError
 };
 
 const TARGET_SAMPLE_POPULATION_SHARE: usize = 20;
 
 pub struct DynamicRangeMeter {
-    buffer: Vec<f64>,
-    buffer_size: usize,
-    next_insert_index: usize,
+    chunk_square_sum: f64,
+    samples_in_chunk: usize,
+    chunk_size: usize,
     quiet_parts_rms: Vec<f64>,
     loud_parts_rms: Vec<f64>
 }
 
 impl DynamicRangeMeter {
     pub fn new(samples_count: &usize, sample_rate: &Frequency) -> DynamicRangeMeter {
-        let buffer_size = get_chunk_size(*sample_rate);
-        let target_population = get_target_population_count(samples_count, &buffer_size);
+        let chunk_size = get_chunk_size(*sample_rate);
+        let target_population = get_target_population_count(samples_count, &chunk_size);
 
         Self {
-            buffer: vec![0.0; buffer_size],
-            buffer_size,
-            next_insert_index: 0,
+            chunk_square_sum: 0.0,
+            samples_in_chunk: 0,
+            chunk_size,
             quiet_parts_rms: vec![f64::MAX; target_population],
             loud_parts_rms: vec![f64::MIN; target_population]
         }
     }
 
     pub fn push_sample(&mut self, sample: &f64) -> Result<(), SonicProbeError>{
-        self.buffer[self.next_insert_index] = *sample;
-        self.next_insert_index += 1;
+        // Accumulate the chunk's sum of squares incrementally — no per-sample
+        // buffer is stored and the chunk is never re-scanned. A single running
+        // add (vs Kahan's 4 dependent ops) keeps this per-sample path cheap.
+        self.chunk_square_sum += *sample * *sample;
+        self.samples_in_chunk += 1;
 
-        if self.next_insert_index == self.buffer_size {
-            let new_rms = compute_root_mean_square(&self.buffer)?;
+        if self.samples_in_chunk == self.chunk_size {
+            let new_rms = (self.chunk_square_sum / self.chunk_size as f64).sqrt();
 
             update_quiet_rms_population(&new_rms, &mut self.quiet_parts_rms);
             update_loud_rms_population(&new_rms, &mut self.loud_parts_rms);
 
-            self.next_insert_index = 0;
+            self.chunk_square_sum = 0.0;
+            self.samples_in_chunk = 0;
         }
 
         Ok(())
@@ -103,6 +107,47 @@ const fn get_chunk_size(sample_rate: Frequency) -> usize {
 mod tests {
     use rand::Rng;
     use super::*;
+
+    fn push_all(meter: &mut DynamicRangeMeter, samples: &[f64]) {
+        for sample in samples {
+            meter.push_sample(sample).unwrap();
+        }
+    }
+
+    // --- Full-meter behavior locks (impl-independent, survive any refactor) ---
+
+    #[test]
+    fn meter_constant_signal_gives_zero_dr() {
+        let sample_rate = Frequency::CdQuality;
+        let chunk = sample_rate.to_hz() * 3;
+        let n = chunk * 10;
+        let signal = vec![0.5f64; n];
+
+        let mut meter = DynamicRangeMeter::new(&n, &sample_rate);
+        push_all(&mut meter, &signal);
+
+        // Every 3s chunk has identical RMS → loud_avg == quiet_avg → ratio 1 → 0 dB.
+        assert!(meter.get_dr_value().get_value().abs() < 1e-9);
+    }
+
+    #[test]
+    fn meter_two_level_signal_gives_expected_dr() {
+        let sample_rate = Frequency::CdQuality;
+        let chunk = sample_rate.to_hz() * 3;
+        let n = chunk * 10;
+
+        // 5 quiet chunks @ 0.1, 5 loud chunks @ 0.8. RMS of a constant a is |a|.
+        let mut signal = vec![0.1f64; chunk * 5];
+        signal.extend(std::iter::repeat(0.8f64).take(chunk * 5));
+        assert_eq!(signal.len(), n);
+
+        let mut meter = DynamicRangeMeter::new(&n, &sample_rate);
+        push_all(&mut meter, &signal);
+
+        // Top-20% population ≈ 0.8, bottom-20% ≈ 0.1 → DR = 20*log10(0.8/0.1).
+        let expected = 20.0 * (0.8f64 / 0.1).log10();
+        assert!((meter.get_dr_value().get_value() - expected).abs() < 1e-6);
+    }
 
     #[test]
     fn insert_quiet_rms_insert_empty_array() {

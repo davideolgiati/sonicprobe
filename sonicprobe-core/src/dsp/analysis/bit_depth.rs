@@ -19,7 +19,16 @@ pub fn calculate_true_depth(source: &StereoSignal) -> Result<u8, SonicProbeError
             continue;
         }
 
-        let reconstructed_value: i32 = unsafe { (sample * factor).trunc().to_int_unchecked() };
+        // `to_int_unchecked::<i32>()` already truncates toward zero — an explicit
+        // `.trunc()` lowers to a per-sample libm call for nothing. Drop it.
+        let reconstructed_value: i32 = unsafe { (sample * factor).to_int_unchecked() };
+
+        // A non-zero sample below 0.5 LSB reconstructs to 0; `trailing_zeros(0)`
+        // is 32 and would underflow `to_bits() - …`. Such a sample carries no
+        // depth information, so skip it.
+        if reconstructed_value == 0 {
+            continue;
+        }
 
         let sample_depth: u8 =
             source.depth.to_bits() - u8::try_from(reconstructed_value.trailing_zeros())?;
@@ -38,7 +47,16 @@ pub fn calculate_true_depth(source: &StereoSignal) -> Result<u8, SonicProbeError
             continue;
         }
 
-        let reconstructed_value: i32 = unsafe { (sample * factor).trunc().to_int_unchecked() };
+        // `to_int_unchecked::<i32>()` already truncates toward zero — an explicit
+        // `.trunc()` lowers to a per-sample libm call for nothing. Drop it.
+        let reconstructed_value: i32 = unsafe { (sample * factor).to_int_unchecked() };
+
+        // A non-zero sample below 0.5 LSB reconstructs to 0; `trailing_zeros(0)`
+        // is 32 and would underflow `to_bits() - …`. Such a sample carries no
+        // depth information, so skip it.
+        if reconstructed_value == 0 {
+            continue;
+        }
 
         let sample_depth: u8 =
             source.depth.to_bits() - u8::try_from(reconstructed_value.trailing_zeros())?;
@@ -105,6 +123,23 @@ mod tests {
         let res = calculate_true_depth(&stereo).unwrap();
 
         assert_eq!(res, 8u8);
+    }
+
+    // Non-zero sample below 0.5 LSB: sample*factor truncates to 0.
+    // Must contribute no depth (skip), never underflow `to_bits() - 32`.
+    #[test]
+    fn sub_lsb_sample_does_not_underflow() {
+        let left: crate::model::Signal = [0.4 / MAX_16_BIT].iter().copied().collect();
+        let right: crate::model::Signal = [0.0].iter().copied().collect();
+        let depth = BitDepth::new(16).unwrap();
+        let stereo = StereoSignal {
+            left,
+            right,
+            sample_rate: Frequency::CdQuality,
+            depth,
+        };
+        let res = calculate_true_depth(&stereo).unwrap();
+        assert_eq!(res, 0u8);
     }
 
     #[test]

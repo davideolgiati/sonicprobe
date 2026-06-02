@@ -27,6 +27,9 @@ harness = false
 [[bench]]
 name = "dynamic_range"
 harness = false
+[[bench]]
+name = "true_depth"
+harness = false
 
 [lints.rust]
 # Core Rust warnings

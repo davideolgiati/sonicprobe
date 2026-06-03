@@ -8,7 +8,7 @@ use sonicprobe_core::audio_file::AudioFile;
 
 use crate::{
     ui::{
-        entry::Entry, filesystem::{filename_from_path, get_formatted_file_size}, section::Section, table::Table
+        entry::Entry, filesystem::{filename_from_path, get_formatted_file_size}, section::{Layout, Section}, table::Table
     },
 };
 
@@ -31,17 +31,22 @@ pub fn print_file_details(filepath: &str, file: &AudioFile) {
     println!("{:^70}", "SONICPROBE - AUDIO ANALYSIS REPORT");
     println!("{}\n", "=".repeat(70));
 
-    let file_details = Section::new("FILE DETAILS")
+    let file_details = Section::new("FILE DETAILS", Layout::Text)
         .add("Filename", Entry::from(filename))
-        .add("Size", Entry::from(formatted_size))
-        .add("Sample Count", Entry::from(file.samples_per_channel * usize::from(file.channels)))
+        .add("Sample Rate", Entry::from(file.sample_rate.summary().to_owned()))
+        .add("Bit Depth", Entry::from(file.depth.summary().to_owned()))
         .add("Duration", Entry::from(seconds_to_minute_mark(file.duration)))
-        .add("Sample Rate", Entry::from(file.sample_rate.description().to_owned()))
-        .add("Bit Depth", Entry::from(file.depth.description().to_owned()))
-        .add("Bit depth usage", Entry::from_bit(file.true_depth))
+        .add("Size", Entry::from(formatted_size))
         .build();
 
-    let stereo_field_analisys = Section::new("STEREO FIELD ANALYSIS")
+    let signal_details = Section::new("SIGNAL DETAILS", Layout::Signal)
+        .add("Sample Count", Entry::from(file.samples_per_channel * usize::from(file.channels)))
+        .add("Sample Rate", Entry::from_rate(file.sample_rate.khz_label()))
+        .add("Bit Depth", Entry::from_bit(file.depth.to_bits()))
+        .add("Bit Depth Usage", Entry::from_bit(file.true_depth))
+        .build();
+
+    let stereo_field_analisys = Section::new("STEREO FIELD ANALYSIS", Layout::Stereo)
         .add("Channels", Entry::from(file.channels as usize))
         .add("RMS Balance (L/R)",Entry::from(file.rms_balance()))
         .add("Stereo Correlation", Entry::from_percent(file.stereo_correlation * 100.0))
@@ -69,6 +74,7 @@ pub fn print_file_details(filepath: &str, file: &AudioFile) {
         .build();
 
     println!("{file_details}");
+    println!("{signal_details}");
     println!("{stereo_field_analisys}");
     println!("{channels_details_table}");
 }

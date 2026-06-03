@@ -44,10 +44,19 @@ impl BitDepth {
 
     pub const fn description(self) -> &'static str {
         match self {
-            Self::Legacy => " 8  bit - Legacy format",
-            Self::CdStandard => "16  bit - CD standard",
-            Self::Professional => "24  bit - Professional standard",
-            Self::StudioMaster => "32  bit - Studio master quality",
+            Self::Legacy => "8 bit - Legacy format",
+            Self::CdStandard => "16 bit - CD standard",
+            Self::Professional => "24 bit - Professional standard",
+            Self::StudioMaster => "32 bit - Studio master quality",
+        }
+    }
+
+    pub const fn summary(self) -> &'static str {
+        match self {
+            Self::Legacy => "Legacy format",
+            Self::CdStandard => "CD standard",
+            Self::Professional => "Professional standard",
+            Self::StudioMaster => "Studio master quality",
         }
     }
 }
@@ -104,22 +113,42 @@ mod tests {
 
     #[test]
     fn description_legacy() {
-        assert_eq!(BitDepth::Legacy.description(), " 8  bit - Legacy format");
+        assert_eq!(BitDepth::Legacy.description(), "8 bit - Legacy format");
     }
 
     #[test]
     fn description_cd_standard() {
-        assert_eq!(BitDepth::CdStandard.description(), "16  bit - CD standard");
+        assert_eq!(BitDepth::CdStandard.description(), "16 bit - CD standard");
     }
 
     #[test]
     fn description_professional() {
-        assert_eq!(BitDepth::Professional.description(), "24  bit - Professional standard");
+        assert_eq!(BitDepth::Professional.description(), "24 bit - Professional standard");
     }
 
     #[test]
     fn description_studio_master() {
-        assert_eq!(BitDepth::StudioMaster.description(), "32  bit - Studio master quality");
+        assert_eq!(BitDepth::StudioMaster.description(), "32 bit - Studio master quality");
+    }
+
+    #[test]
+    fn summary_legacy() {
+        assert_eq!(BitDepth::Legacy.summary(), "Legacy format");
+    }
+
+    #[test]
+    fn summary_cd_standard() {
+        assert_eq!(BitDepth::CdStandard.summary(), "CD standard");
+    }
+
+    #[test]
+    fn summary_professional() {
+        assert_eq!(BitDepth::Professional.summary(), "Professional standard");
+    }
+
+    #[test]
+    fn summary_studio_master() {
+        assert_eq!(BitDepth::StudioMaster.summary(), "Studio master quality");
     }
 
     #[test]

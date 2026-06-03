@@ -71,6 +71,28 @@ impl Frequency {
             Self::StudioMaster => "192 kHz - Highest professional standard",
         }
     }
+
+    pub const fn summary(self) -> &'static str {
+        match self {
+            Self::CdQuality => "Standard for consumer audio",
+            Self::ProAudio => "Industry standard for video/broadcast",
+            Self::HiResDouble => "2x CD rate for professional recording",
+            Self::DvdAudio => "High-resolution consumer format",
+            Self::UltraHiRes => "4x CD rate for mastering",
+            Self::StudioMaster => "Highest professional standard",
+        }
+    }
+
+    pub const fn khz_label(self) -> &'static str {
+        match self {
+            Self::CdQuality => "44.1",
+            Self::ProAudio => "48",
+            Self::HiResDouble => "88.2",
+            Self::DvdAudio => "96",
+            Self::UltraHiRes => "176.4",
+            Self::StudioMaster => "192",
+        }
+    }
 }
 
 #[cfg(test)]
@@ -172,6 +194,66 @@ mod tests {
     #[test]
     fn description_studio_master() {
         assert_eq!(Frequency::StudioMaster.description(), "192 kHz - Highest professional standard");
+    }
+
+    #[test]
+    fn summary_cd_quality() {
+        assert_eq!(Frequency::CdQuality.summary(), "Standard for consumer audio");
+    }
+
+    #[test]
+    fn summary_pro_audio() {
+        assert_eq!(Frequency::ProAudio.summary(), "Industry standard for video/broadcast");
+    }
+
+    #[test]
+    fn summary_hi_res_double() {
+        assert_eq!(Frequency::HiResDouble.summary(), "2x CD rate for professional recording");
+    }
+
+    #[test]
+    fn summary_dvd_audio() {
+        assert_eq!(Frequency::DvdAudio.summary(), "High-resolution consumer format");
+    }
+
+    #[test]
+    fn summary_ultra_hi_res() {
+        assert_eq!(Frequency::UltraHiRes.summary(), "4x CD rate for mastering");
+    }
+
+    #[test]
+    fn summary_studio_master() {
+        assert_eq!(Frequency::StudioMaster.summary(), "Highest professional standard");
+    }
+
+    #[test]
+    fn khz_label_cd_quality() {
+        assert_eq!(Frequency::CdQuality.khz_label(), "44.1");
+    }
+
+    #[test]
+    fn khz_label_pro_audio() {
+        assert_eq!(Frequency::ProAudio.khz_label(), "48");
+    }
+
+    #[test]
+    fn khz_label_hi_res_double() {
+        assert_eq!(Frequency::HiResDouble.khz_label(), "88.2");
+    }
+
+    #[test]
+    fn khz_label_dvd_audio() {
+        assert_eq!(Frequency::DvdAudio.khz_label(), "96");
+    }
+
+    #[test]
+    fn khz_label_ultra_hi_res() {
+        assert_eq!(Frequency::UltraHiRes.khz_label(), "176.4");
+    }
+
+    #[test]
+    fn khz_label_studio_master() {
+        assert_eq!(Frequency::StudioMaster.khz_label(), "192");
     }
 
     #[test]
